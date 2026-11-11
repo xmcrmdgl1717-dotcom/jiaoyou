@@ -132,5 +132,14 @@
   "legal.terms.title": "Terms of Use",
   "legal.terms.body": "Placeholder terms of use. Before launch, a qualified legal advisor must add, per operating region: account registration and usage rules, user conduct, content standards, intellectual property, disclaimers, dispute resolution and governing law, change notifications, and more.",
   "legal.privacy.title": "Privacy Policy",
-  "legal.privacy.body": "Placeholder privacy policy. Before launch this must cover: data types collected and purposes, legal basis, cookies and tracking, third-party sharing, cross-border transfers, data subject rights, protection of minors, retention and deletion, security measures, and contact channels."
+  "legal.privacy.body": "Placeholder privacy policy. Before launch this must cover: data types collected and purposes, legal basis, cookies and tracking, third-party sharing, cross-border transfers, data subject rights, protection of minors, retention and deletion, security measures, and contact channels.",
+
+  "player.status.connecting": "Connecting to the host…",
+  "player.status.error": "Host is offline or the stream is unavailable. Please try again later.",
+  "player.status.unsupported": "This browser does not support the live stream.",
+  "player.trial": "Preview",
+  "player.paywall.title": "Preview ended",
+  "player.paywall.desc": "Top up to keep watching this host",
+  "player.paywall.cta": "Top up now",
+  "player.paywall.note": "Payment integration in progress"
 }
