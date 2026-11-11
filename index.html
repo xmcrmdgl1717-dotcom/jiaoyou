@@ -77,21 +77,28 @@
     </div>
   </div>
 
-  <!-- 2. 精彩视频 -->
+  <!-- 2. 免费精选 (新增) -->
+  <div class="sec-head">
+    <div class="st" data-i18n="free.title">🎁 免费精选</div>
+    <a class="more" href="free.html" data-i18n="free.more" style="text-decoration:none; cursor:pointer;">全部免费 ›</a>
+  </div>
+  <div class="hot-row" id="index-free-list"></div>
+
+  <!-- 3. 精彩视频 -->
   <div class="sec-head">
     <div class="st" data-i18n="hot.title">🔥 精彩视频</div>
     <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">全部视频 ›</a>
   </div>
   <div class="hot-row" id="index-video-list"></div>
 
-  <!-- 3. 直播推荐 -->
+  <!-- 4. 直播推荐 -->
   <div class="sec-head">
     <div class="st" data-i18n="recommend.title">🔥 直播推荐</div>
     <a class="more" href="live.html" data-i18n="recommend.more" style="text-decoration:none; cursor:pointer;">查看更多 ›</a>
   </div>
   <div class="hot-row" id="index-recommend-list"></div>
 
-  <!-- 4. 功能栏 -->
+  <!-- 5. 功能栏 -->
   <div class="fbar">
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">📍</span><div><div class="ft1" data-i18n="feat.1.t1">同城推荐</div><div class="ft2" data-i18n="feat.1.t2">发现身边的TA</div></div></div>
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">💬</span><div><div class="ft1" data-i18n="feat.2.t1">1V1私聊</div><div class="ft2" data-i18n="feat.2.t2">独享心动时刻</div></div></div>
@@ -101,7 +108,7 @@
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
   </div>
 
-  <!-- 5. 大卡片 -->
+  <!-- 6. 大卡片 -->
   <div class="dual">
     <div class="dcard left" style="cursor:pointer;" onclick="window.location.href='live.html'">
       <span class="tag live" data-i18n="card.live.tag">热门</span>
@@ -123,7 +130,7 @@
     </div>
   </div>
 
-  <!-- 6. 简单四步 -->
+  <!-- 7. 简单四步 -->
   <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
   <div class="steps-card">
     <div class="step"><span class="si ic-pink">🧑‍💻<span class="snum">1</span></span><div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div></div>
@@ -137,7 +144,7 @@
     <div class="step" data-register role="button" tabindex="0"><span class="si ic-orange">💖<span class="snum">4</span></span><div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div></div>
   </div>
 
-  <!-- 7. 动态条 -->
+  <!-- 8. 动态条 -->
   <div class="live-stats-bar">
     <div class="live-pulse-dot"></div>
     <div class="live-avatars" id="live-avatars"><img src="assets/img/ava/ava1.webp" alt=""><img src="assets/img/ava/ava2.webp" alt=""><img src="assets/img/ava/ava3.webp" alt=""></div>
@@ -147,7 +154,7 @@
     </div>
   </div>
 
-  <!-- 8. Hero主视觉 -->
+  <!-- 9. Hero主视觉 -->
   <div class="hero-wrap" style="margin-top: 16px;">
     <div class="hero">
       <div class="arc"></div>
@@ -182,7 +189,7 @@
     </div>
   </div>
 
-  <!-- 9. Footer -->
+  <!-- 10. Footer -->
   <div class="footer">
     <div class="f-top">
       <div class="f-brand"><div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div><div class="brand-sub" data-i18n="footer.subtitle">同城交友 遇见心动</div><div class="f-social"><span>🐦</span><span>📷</span><span>🎵</span><span>✈️</span></div></div>
@@ -257,7 +264,7 @@
   </div>
 </div>
 
-<!-- 🔴 修改：播放器弹窗，增加了倒计时进度条 -->
+<!-- 播放器弹窗 -->
 <div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
   <div style="position: relative; width: 100%; max-width: 480px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
     <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button>
