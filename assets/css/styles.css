@@ -131,7 +131,7 @@ a{text-decoration:none;color:inherit}
 
 /* ---------- Hot picks ---------- */
 .hot-row{display:flex;gap:9px}
-.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden}
+.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden;cursor:pointer}
 .hcard .live{position:absolute;top:7px;left:7px;background:#ff3b5c;color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.5px}
 .hcard .ov{position:absolute;left:0;right:0;bottom:0;padding:16px 7px 7px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6));color:#fff}
 .hcard .nm{font-size:11px;font-weight:700}
@@ -314,3 +314,30 @@ a{text-decoration:none;color:inherit}
 .modal-success{width:52px;height:52px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(135deg,#48d19a,#25b07f);color:#fff;font-size:26px;line-height:52px;font-weight:800}
 body.modal-open{overflow:hidden}
 @media (max-width:560px){.modal-dialog{max-width:none;border-radius:14px;padding:20px 16px 16px}}
+
+/* ===== Live player modal (新增) ===== */
+#player-modal{padding:18px}
+.player-dialog{position:relative;width:100%;max-width:760px;background:#000;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.5);outline:none}
+.player-stage{position:relative;aspect-ratio:16/9;background:#000}
+#live-player{width:100%;height:100%;display:block;background:#000}
+.player-status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;color:#fff;font-size:13px;text-align:center;background:rgba(0,0,0,.55)}
+.player-status[hidden]{display:none}
+.trial-badge{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.58);color:#fff;font-size:11px;padding:4px 10px;border-radius:12px;letter-spacing:.3px}
+.trial-badge[hidden]{display:none}
+.trial-badge b{color:#ffb0cf;font-weight:800}
+.paywall-mask{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,6,18,.84)}
+.paywall-mask[hidden]{display:none}
+.paywall-card{max-width:320px;text-align:center;color:#fff}
+.paywall-emoji{font-size:36px;line-height:1;margin-bottom:10px}
+.paywall-card h3{font-size:16px;font-weight:800;margin-bottom:6px}
+.paywall-card p{font-size:12px;opacity:.82;margin-bottom:14px}
+.paywall-btn{border:0;border-radius:22px;padding:10px 26px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(90deg,#ff9a4d,#ff4d94);box-shadow:0 10px 20px rgba(255,90,150,.35)}
+.paywall-card small{display:block;margin-top:10px;font-size:10px;opacity:.55}
+.player-close{position:absolute;top:10px;right:12px;z-index:5;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;cursor:pointer}
+body.player-open{overflow:hidden}
+[dir="rtl"] .player-close{right:auto;left:12px}
+[dir="rtl"] .trial-badge{left:auto;right:12px}
+@media (max-width:560px){
+  .player-dialog{border-radius:14px}
+  .paywall-card h3{font-size:15px}
+}
