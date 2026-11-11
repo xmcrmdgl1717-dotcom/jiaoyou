@@ -5,77 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CMS 管理后台</title>
     <style>
-        :root { --primary: #ff6b9d; --bg: #f4f7f6; --border: #e0e0e0; }
+        /* ======= 主题变量定义 ======= */
+        :root {
+            --primary: #ff6b9d;
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --text-muted: #666;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1a1a1a;
+            --sidebar-text: #aaa;
+            --sidebar-hover: #2a2a2a;
+            
+            /* 看板专属亮色 */
+            --dash-card-bg: #ffffff;
+            --dash-card-border: #e0e0e0;
+            --dash-text: #333;
+            --dash-text-muted: #666;
+            --dash-input-bg: #f8f9fa;
+            --dash-input-text: #333;
+            --dash-toolbar-bg: #ffffff;
+        }
+
+        body.dark-theme {
+            --bg-color: #141421;
+            --text-main: #ffffff;
+            --text-muted: #8c8c9e;
+            --border-color: #2b2b40;
+            --card-bg: #1e1e2d;
+            --sidebar-bg: #1a1a1a;
+            --sidebar-text: #aaa;
+            --sidebar-hover: #2a2a2a;
+
+            /* 看板专属暗色 */
+            --dash-card-bg: #1e1e2d;
+            --dash-card-border: #2b2b40;
+            --dash-text: #ffffff;
+            --dash-text-muted: #8c8c9e;
+            --dash-input-bg: #141421;
+            --dash-input-text: #ffffff;
+            --dash-toolbar-bg: #1e1e2d;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 220px; background: #1a1a1a; color: #fff; display: flex; flex-direction: column; }
+        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+        
+        .sidebar { width: 220px; background: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
         .logo { padding: 20px; font-size: 20px; font-weight: bold; text-align: center; color: var(--primary); border-bottom: 1px solid #333; }
-        .nav-item { padding: 15px 20px; cursor: pointer; color: #aaa; border-left: 4px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: #2a2a2a; color: #fff; border-left-color: var(--primary); }
+        .nav-item { padding: 15px 20px; cursor: pointer; color: var(--sidebar-text); border-left: 4px solid transparent; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--sidebar-hover); color: #fff; border-left-color: var(--primary); }
+        
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 15px 30px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .content { flex: 1; overflow-y: auto; padding: 20px 30px; background: #f8f9fa;}
+        .header { padding: 15px 30px; background: var(--card-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s, border-color 0.3s; }
+        .content { flex: 1; overflow-y: auto; padding: 20px 30px; background: var(--bg-color); }
+        
         .tab { display: none; } .tab.active { display: block; }
-        .card { background: #fff; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        h3 { margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: var(--card-bg); padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
+        
+        h3 { margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; word-break: break-all; }
-        input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline:none; }
-        button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; font-size: 13px; word-break: break-all; color: var(--text-main); }
+        
+        input, select, textarea { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-main); transition: border-color 0.3s; }
+        
+        button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
         .btn-secondary { background: #6c757d; } .btn-danger { background: #dc3545; } .btn-text { background: none; color: #1890ff; padding: 0; font-size: 13px; margin-right: 10px;}
+        
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index:999; }
-        .modal-box { background: #fff; padding: 20px; width: 90%; max-width: 600px; border-radius: 8px; }
+        .modal-box { background: var(--card-bg); padding: 20px; width: 90%; max-width: 600px; border-radius: 8px; color: var(--text-main); border: 1px solid var(--border-color); }
         .flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 20px; transition: .4s; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
+        
         .progress-bar-container { display: none; width: 100%; height: 12px; background: #eee; border-radius: 6px; margin-top: 15px; overflow: hidden; }
         .progress-bar { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
-        .progress-text { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 5px; }
-        .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
+        .progress-text { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px;}
         .lang-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
         .action-btns { display: flex; gap: 8px; align-items: center; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
-        .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; }
+        .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: var(--bg-color); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; }
 
-        /* ======= 图三 专属看板样式 ======= */
+        /* ======= 看板专属样式 (变量已适配亮暗) ======= */
         .dashboard-stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .stat-card { background: #1e1e2d; border: 1px solid #2b2b40; border-radius: 8px; padding: 12px 15px; min-width: 120px; flex: 1; color: #fff; }
+        .stat-card { background: var(--dash-card-bg); border: 1px solid var(--dash-card-border); border-radius: 8px; padding: 12px 15px; min-width: 120px; flex: 1; color: var(--dash-text); transition: background 0.3s, border-color 0.3s; }
         .stat-card .val { font-size: 20px; font-weight: bold; margin-top: 5px; }
-        .stat-card .lbl { font-size: 12px; color: #8c8c9e; display: flex; align-items: center; gap: 4px; }
-        .dash-filter-bar { background: #1e1e2d; padding: 15px; border-radius: 8px; border: 1px solid #2b2b40; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .dash-filter-bar select, .dash-filter-bar input { background: #141421; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
+        .stat-card .lbl { font-size: 12px; color: var(--dash-text-muted); display: flex; align-items: center; gap: 4px; }
+        .dash-filter-bar { background: var(--dash-toolbar-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--dash-card-border); margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; transition: background 0.3s; }
+        .dash-filter-bar select, .dash-filter-bar input { background: var(--dash-input-bg); border: 1px solid var(--dash-card-border); color: var(--dash-input-text); padding: 6px 10px; border-radius: 4px; font-size: 12px; }
         .dash-filter-bar select:focus, .dash-filter-bar input:focus { border-color: #409eff; outline: none; }
-        .dash-list-item { background: #1e1e2d; border: 1px solid #2b2b40; border-radius: 8px; padding: 15px 20px; margin-bottom: 10px; color: #fff; }
-        .dash-list-item .row-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #2b2b40; padding-bottom: 10px; margin-bottom: 10px; }
-        .dash-list-item .info-left { font-size: 13px; display: flex; align-items: center; gap: 10px; color: #ccc; }
-        .copy-btn { background: #141421; border: 1px solid #444; color: #aaa; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .copy-btn:hover { color: #fff; border-color: #666; }
-        .dash-list-item .row-bottom { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #888; align-items: center; }
+        .dash-list-item { background: var(--dash-card-bg); border: 1px solid var(--dash-card-border); border-radius: 8px; padding: 15px 20px; margin-bottom: 10px; color: var(--dash-text); transition: background 0.3s, border-color 0.3s; }
+        .dash-list-item .row-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--dash-card-border); padding-bottom: 10px; margin-bottom: 10px; }
+        .dash-list-item .info-left { font-size: 13px; display: flex; align-items: center; gap: 10px; color: var(--dash-text-muted); }
+        .copy-btn { background: var(--dash-input-bg); border: 1px solid var(--dash-card-border); color: var(--dash-text-muted); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .copy-btn:hover { color: var(--dash-text); border-color: var(--primary); }
+        .dash-list-item .row-bottom { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--dash-text-muted); align-items: center; }
         .dash-list-item .row-bottom span { display: flex; align-items: center; gap: 4px; }
+        
         .badge-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-tag.visiting { background: #409eff; color: #fff; }
         .badge-tag.pending { background: #e6a23c; color: #fff; }
         .badge-tag.paid { background: #67c23a; color: #fff; }
         .badge-tag.rejected { background: #f56c6c; color: #fff; }
+        
         .btn-success { background: #20b2aa; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #20b2aa; }
         .btn-danger-outline { background: transparent; color: #f56c6c; border: 1px solid #f56c6c; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
         .btn-danger-outline:hover { background: #f56c6c; color: #fff; }
-        .toolbar-dark { background: #1e1e2d; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
-        .toolbar-dark button { background: #141421; border: 1px solid #333; color: #aaa; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
-        .toolbar-dark button:hover { color: #fff; }
+        .toolbar-dark { background: var(--dash-toolbar-bg); padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 1px solid var(--dash-card-border); transition: background 0.3s; }
+        .toolbar-dark button { background: var(--dash-input-bg); border: 1px solid var(--dash-card-border); color: var(--dash-text-muted); padding: 6px 12px; font-size: 12px; border-radius: 4px; }
+        .toolbar-dark button:hover { color: var(--dash-text); border-color: #409eff; }
         .toolbar-dark .btn-primary { background: #409eff; color: #fff; border-color: #409eff; }
     </style>
 </head>
-<body>
+<body class="dark-theme"> <!-- 默认暗色 -->
     <div class="sidebar">
         <div class="logo">CMS System</div>
         <div class="nav-item" onclick="switchTab('tab-dashboard', this)">📊 汇总看板</div>
-        <div class="nav-item active" onclick="switchTab('tab-collect', this)">📥 采集视频</div>
+        <div class="nav-item" onclick="switchTab('tab-collect', this)">📥 采集视频</div>
         <div class="nav-item" onclick="switchTab('tab-category', this)">🗂 视频分类管理</div>
         <div class="nav-item" onclick="switchTab('tab-config', this)">⚙️ 系统配置</div>
         <div class="nav-item" onclick="switchTab('tab-upload', this)">📤 视频上传管理</div>
@@ -84,7 +137,14 @@
         <div class="nav-item" onclick="switchTab('tab-order', this)">💳 支付订单</div>
     </div>
     <div class="main">
-        <div class="header"><h2 id="page-title">采集视频</h2><button class="btn-secondary" onclick="location.reload()">退出</button></div>
+        <div class="header">
+            <h2 id="page-title">采集视频</h2>
+            <div class="flex">
+                <button id="theme-toggle" class="btn-secondary" onclick="toggleTheme()">☀️ 切换主题</button>
+                <button class="btn-secondary" onclick="openPwdModal()">🔑 修改密码</button>
+                <button class="btn-secondary" onclick="location.reload()">🔄 刷新页面</button>
+            </div>
+        </div>
         <div class="content">
             
             <!-- ================= 汇总看板 ================= -->
@@ -107,18 +167,18 @@
                 <div class="toolbar-dark">
                     <button onclick="loadDashboard()">🔄 刷新</button>
                     <button onclick="exportCSV()">➡️ 导出 CSV (当前筛选)</button>
-                    <span style="margin-left:auto; font-size:12px; color:#888;" id="dash-count-text">共 0 条 (已筛选)</span>
+                    <span style="margin-left:auto; font-size:12px;" id="dash-count-text">共 0 条 (已筛选)</span>
                 </div>
 
                 <div id="dash-list-container"></div>
             </div>
 
             <!-- ================= 采集视频 ================= -->
-            <div id="tab-collect" class="tab active">
+            <div id="tab-collect" class="tab">
                 <div class="card">
                     <h3>资源站列表</h3>
                     <div id="site-list"></div>
-                    <div class="flex" style="margin-top:15px; background:#fafafa; padding:15px;">
+                    <div class="flex" style="margin-top:15px; background:var(--bg-color); padding:15px; border-radius:8px;">
                         <input type="text" id="site-name" placeholder="名称">
                         <input type="text" id="site-url" placeholder="接口地址" style="flex:1;">
                         <select id="site-type"><option value="json">JSON</option><option value="xml">XML</option></select>
@@ -249,7 +309,7 @@
                     <h3>订单管理</h3>
                     <div class="flex" style="margin-bottom: 15px;"><input type="text" id="order-search" placeholder="搜索订单号/视频/邮箱..." oninput="filterOrders()" style="flex:1;"></div>
                     <table>
-                        <thead><tr><th>订单 / 购买项目</th><th>用户 (邮箱)</th><th>联系方式 / 付款地址</th><th>金额</th><th>状态 / Hash</th><th>时间</th><th>操作</th></tr></thead>
+                        <thead><tr><th>订单 / 购买项目</th><th>用户 (邮箱)</th><th>联系方式 / 付款地址</th><th>金额</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
                         <tbody id="order-list"></tbody>
                     </table>
                 </div>
@@ -257,7 +317,7 @@
         </div>
     </div>
 
-    <!-- 弹窗 -->
+    <!-- 弹窗集合 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -268,6 +328,7 @@
             </div>
         </div>
     </div>
+    
     <div id="generic-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3 id="gm-title">编辑</h3>
@@ -278,6 +339,7 @@
             </div>
         </div>
     </div>
+    
     <div id="lang-modal" class="modal">
         <div class="modal-box">
             <h3>添加国家语言 (勾选后添加)</h3>
@@ -288,10 +350,11 @@
             </div>
         </div>
     </div>
+    
     <div id="order-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3>订单审核</h3>
-            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">请核对链上转账金额，输入对应金额以确认通过。</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">请核对链上转账金额，输入对应金额以确认通过。</p>
             <div style="margin-bottom:10px;"><label>订单金额：</label><strong id="o-amount-display" style="color:red; font-size: 18px;"></strong></div>
             <div style="margin-bottom:10px;"><label>输入确认金额：</label><input type="number" id="o-amount-input" style="width:100%;" placeholder="请输入订单显示的确切金额"></div>
             <div style="text-align:right;">
@@ -301,9 +364,22 @@
         </div>
     </div>
 
+    <!-- 修改密码弹窗 -->
+    <div id="pwd-modal" class="modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <h3>修改后台密码</h3>
+            <div style="margin-bottom:10px;"><label>旧密码：</label><input type="password" id="old-pwd" style="width:100%;" placeholder="请输入旧密码"></div>
+            <div style="margin-bottom:10px;"><label>新密码：</label><input type="password" id="new-pwd" style="width:100%;" placeholder="请输入新密码 (至少4位)"></div>
+            <div style="text-align:right; margin-top: 20px;">
+                <button class="btn-secondary" onclick="document.getElementById('pwd-modal').style.display='none'">取消</button>
+                <button onclick="confirmChangePwd()">确认修改</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const API = 'https://jiaoyouweb.onrender.com';
-    const token = 'admin888';
+    let token = localStorage.getItem('admin_password') || 'admin888'; // 动态 Token
     let editLang = '', bindSiteId = '';
     let genericAction = '', genericId = '';
     let allUsers = [], allOrders = [], dashData = [], dashStats = {};
@@ -317,11 +393,36 @@
         { code: 'ar', name: '🇸🇦 العربية' }, { code: 'th', name: '🇹🇭 ไทย' }
     ];
 
+    // ================= 主题切换与状态保持 =================
+    function toggleTheme() {
+        const body = document.body;
+        body.classList.toggle('dark-theme');
+        const isDark = body.classList.contains('dark-theme');
+        localStorage.setItem('admin_theme', isDark ? 'dark' : 'light');
+        document.getElementById('theme-toggle').innerText = isDark ? '☀️ 切换主题' : '🌙 切换主题';
+    }
+
+    // 初始化主题
+    const savedTheme = localStorage.getItem('admin_theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.remove('dark-theme');
+        document.getElementById('theme-toggle').innerText = '🌙 切换主题';
+    }
+
     function switchTab(id, el) {
+        if (!el) el = document.querySelector(`.nav-item[onclick*="${id}"]`);
+        if (!el) return;
+        
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).classList.add('active'); el.classList.add('active');
-        document.getElementById('page-title').innerText = el.innerText.substring(2);
+        
+        document.getElementById(id).classList.add('active'); 
+        el.classList.add('active');
+        document.getElementById('page-title').innerText = el.innerText.substring(2).trim();
+        
+        // 记住当前标签页，防止刷新跳动
+        localStorage.setItem('admin_current_tab', id);
+
         if(id === 'tab-dashboard') loadDashboard();
         if(id === 'tab-collect') loadCollectData();
         if(id === 'tab-category') loadCategories();
@@ -330,6 +431,35 @@
         if(id === 'tab-user') loadUsers();
         if(id === 'tab-i18n') loadLangs();
         if(id === 'tab-order') loadOrders();
+    }
+
+    /* ================= 修改密码逻辑 ================= */
+    function openPwdModal() {
+        document.getElementById('old-pwd').value = '';
+        document.getElementById('new-pwd').value = '';
+        document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    async function confirmChangePwd() {
+        const oldPwd = document.getElementById('old-pwd').value;
+        const newPwd = document.getElementById('new-pwd').value;
+        if(!newPwd || newPwd.length < 4) return alert('新密码不能少于4位');
+        
+        try {
+            const res = await fetch(`${API}/api/admin/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
+            });
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.error);
+            
+            alert('密码修改成功！请重新登录。');
+            localStorage.removeItem('admin_password');
+            location.reload();
+        } catch(e) {
+            alert('修改失败: ' + e.message);
+        }
     }
 
     /* ================= 汇总看板 ================= */
@@ -406,10 +536,8 @@
             else if (v.status === 'paid') badgeHtml = '<span class="badge-tag paid">已通过</span>';
             else if (v.status === 'rejected') badgeHtml = '<span class="badge-tag rejected">已拒绝</span>';
 
-            // 根据状态决定操作按钮
             let actionHtml = '';
             if (v.status === 'pending') {
-                // 查找绑定的订单
                 actionHtml = `
                     <button class="btn-success" onclick="reviewDash('${v.id}', 'paid')">✅ 通过</button>
                     <button class="btn-danger-outline" onclick="reviewDash('${v.id}', 'rejected')" style="margin-left:8px;">❌ 拒绝</button>
@@ -434,7 +562,7 @@
                         <div>${badgeHtml} ${actionHtml}</div>
                     </div>
                     ${v.contact ? `
-                    <div style="margin-bottom:10px; font-size:12px; color:#aaa; display:flex; align-items:center; gap:10px;">
+                    <div style="margin-bottom:10px; font-size:12px; color:var(--dash-text-muted); display:flex; align-items:center; gap:10px;">
                         💬 联系方式: ${v.contact} <button class="copy-btn" onclick="copyText('${v.contact}')">复制</button>
                     </div>` : ''}
                     <div class="row-bottom">
@@ -455,26 +583,20 @@
     async function reviewDash(visitId, status) {
         if(!confirm(`确定要将该用户标记为 ${status === 'paid' ? '已通过' : '已拒绝'} 吗？`)) return;
         
-        // 查找对应的订单
         const order = allOrders.find(o => o.visitId === visitId && o.status === 'pending');
         if(order) {
-            const endpoint = status === 'paid' ? 'review' : 'reject';
-            const method = 'POST';
-            // 如果通过，需要输入金额 (这里为了快捷，后台直接使用审核接口)
             if(status === 'paid') {
                 const inputVal = prompt(`请输入订单的确切金额 ${order.amount.toFixed(2)} 以确认通过：`);
                 if(parseFloat(inputVal) !== order.amount) return alert('金额输入不一致，取消操作。');
-                await fetch(`${API}/api/admin/orders/${order.id}/review`, { method, headers: { 'x-admin-token': token } });
+                await fetch(`${API}/api/admin/orders/${order.id}/review`, { method: 'POST', headers: { 'x-admin-token': token } });
             } else {
-                await fetch(`${API}/api/admin/orders/${order.id}/reject`, { method, headers: { 'x-admin-token': token } });
+                await fetch(`${API}/api/admin/orders/${order.id}/reject`, { method: 'POST', headers: { 'x-admin-token': token } });
             }
             alert('操作成功');
             loadDashboard();
-            // 如果当前在订单页，刷新一下
             if(document.getElementById('tab-order').classList.contains('active')) loadOrders();
         } else {
-            // 如果没有生成订单直接是 pending 状态（可能是异常情况），直接更新 Visit 状态
-            alert('未找到关联的订单记录，请前往订单页检查。');
+            alert('未找到关联的待审核订单记录，请前往订单页检查。');
         }
     }
 
@@ -491,14 +613,13 @@
         link.click();
     }
 
-    /* ================= 其他管理逻辑 ================= */
+    /* ================= 其它原有逻辑 ================= */
     async function loadCategories() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('cat-list').innerHTML = cats.map(c => `<tr><td>${c.name}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button><button class="btn-danger" onclick="delCategory('${c.id}')">删除</button></div></td></tr>`).join('');
     }
     async function addCategory() {
-        const name = document.getElementById('new-cat-name').value.trim();
-        if(!name) return;
+        const name = document.getElementById('new-cat-name').value.trim(); if(!name) return;
         await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name }) });
         document.getElementById('new-cat-name').value = ''; loadCategories();
     }
@@ -513,28 +634,24 @@
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('set-trc20').value = s.trc20 || '';
-        
         const renderCheckboxes = (boxId, selectedArr) => {
             document.getElementById(boxId).innerHTML = cats.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}</label>`).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
         };
         renderCheckboxes('set-hotCats-box', s.hotCats || []);
         renderCheckboxes('set-recommendCats-box', s.recommendCats || []);
         renderCheckboxes('set-freeCats-box', s.freeCats || []);
-        
         const hc = s.hotConfig || {};
-        document.getElementById('hot-preview').value = hc.previewLimit !== null && hc.previewLimit !== undefined ? hc.previewLimit : '';
-        document.getElementById('hot-reg').value = hc.regLimit !== null && hc.regLimit !== undefined ? hc.regLimit : '';
-        document.getElementById('hot-price').value = hc.unlockPrice !== null && hc.unlockPrice !== undefined ? hc.unlockPrice : '';
-
+        document.getElementById('hot-preview').value = hc.previewLimit ?? '';
+        document.getElementById('hot-reg').value = hc.regLimit ?? '';
+        document.getElementById('hot-price').value = hc.unlockPrice ?? '';
         const rc = s.recommendConfig || {};
-        document.getElementById('rec-preview').value = rc.previewLimit !== null && rc.previewLimit !== undefined ? rc.previewLimit : '';
-        document.getElementById('rec-reg').value = rc.regLimit !== null && rc.regLimit !== undefined ? rc.regLimit : '';
-        document.getElementById('rec-price').value = rc.unlockPrice !== null && rc.unlockPrice !== undefined ? rc.unlockPrice : '';
-
+        document.getElementById('rec-preview').value = rc.previewLimit ?? '';
+        document.getElementById('rec-reg').value = rc.regLimit ?? '';
+        document.getElementById('rec-price').value = rc.unlockPrice ?? '';
         const fc = s.freeConfig || {};
-        document.getElementById('free-preview').value = fc.previewLimit !== null && fc.previewLimit !== undefined ? fc.previewLimit : '';
-        document.getElementById('free-reg').value = fc.regLimit !== null && fc.regLimit !== undefined ? fc.regLimit : '';
-        document.getElementById('free-price').value = fc.unlockPrice !== null && fc.unlockPrice !== undefined ? fc.unlockPrice : '';
+        document.getElementById('free-preview').value = fc.previewLimit ?? '';
+        document.getElementById('free-reg').value = fc.regLimit ?? '';
+        document.getElementById('free-price').value = fc.unlockPrice ?? '';
     }
     async function saveSettings() {
         const getVal = (id) => { const val = document.getElementById(id).value.trim(); return val === '' ? null : Number(val); };
@@ -557,13 +674,10 @@
         document.getElementById('video-manage-list').innerHTML = vids.map(v => `<tr><td>${v.name}</td><td>${v.category}</td><td><div class="action-btns"><button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></div></td></tr>`).join('');
     }
     async function uploadVideoBatch() {
-        const files = document.getElementById('up-file').files;
-        if(files.length === 0) return alert('请选择视频');
-        const baseName = document.getElementById('up-name').value.trim();
-        const category = document.getElementById('up-cat').value;
+        const files = document.getElementById('up-file').files; if(files.length === 0) return alert('请选择视频');
+        const baseName = document.getElementById('up-name').value.trim(); const category = document.getElementById('up-cat').value;
         const container = document.getElementById('progress-container'), bar = document.getElementById('progress-bar'), textContainer = document.getElementById('progress-text'), statusText = document.getElementById('progress-status'), percentText = document.getElementById('progress-percent');
-        container.style.display = 'block'; textContainer.style.display = 'flex';
-        let successCount = 0;
+        container.style.display = 'block'; textContainer.style.display = 'flex'; let successCount = 0;
         for (let i = 0; i < files.length; i++) {
             const file = files[i]; const title = baseName ? `${baseName}_${i+1}` : file.name;
             statusText.innerText = `上传中 (${i+1}/${files.length}): ${title}`;
@@ -587,13 +701,10 @@
 
     async function loadCollectData() {
         const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('site-list').innerHTML = sites.map(s => `<div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;"><span>${s.name} (${s.url})</span><div class="action-btns"><button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div></div>`).join('');
+        document.getElementById('site-list').innerHTML = sites.map(s => `<div style="border:1px solid var(--border-color); padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;"><span>${s.name} (${s.url})</span><div class="action-btns"><button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div></div>`).join('');
         document.getElementById('collect-site-select').innerHTML = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     }
-    async function addSite() {
-        await fetch(`${API}/api/admin/sites`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name: document.getElementById('site-name').value, url: document.getElementById('site-url').value, type: document.getElementById('site-type').value }) });
-        loadCollectData();
-    }
+    async function addSite() { await fetch(`${API}/api/admin/sites`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name: document.getElementById('site-name').value, url: document.getElementById('site-url').value, type: document.getElementById('site-type').value }) }); loadCollectData(); }
     async function delSite(id) { if(!confirm('确定删除该资源站？'))return; await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCollectData(); }
     async function openBind(id) {
         bindSiteId = id; document.getElementById('bind-panel').style.display = 'block';
@@ -602,8 +713,7 @@
         document.getElementById('bind-tbody').innerHTML = cats.map(c => `<tr><td>${c.name} (${c.id})</td><td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td></tr>`).join('');
     }
     async function saveBindings() {
-        const inputs = document.querySelectorAll('#bind-tbody tr');
-        let mappings = [];
+        const inputs = document.querySelectorAll('#bind-tbody tr'); let mappings = [];
         inputs.forEach(tr => { mappings.push({ sourceId: tr.querySelector('.bind-sid').value, sourceName: tr.querySelector('.bind-sid').dataset.name, localCategory: tr.querySelector('.bind-local').value }); });
         await fetch(`${API}/api/admin/sites/${bindSiteId}/bind`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ mappings }) });
         alert('保存成功'); document.getElementById('bind-panel').style.display = 'none';
@@ -620,11 +730,8 @@
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const enabled = s.enabledLangs || ['zh'];
         document.getElementById('lang-list').innerHTML = list.map(lang => `
-            <tr>
-                <td>${lang}</td>
-                <td><label class="switch"><input type="checkbox" ${enabled.includes(lang) ? 'checked' : ''} onchange="toggleLang('${lang}', this.checked)"><span class="slider"></span></label></td>
-                <td><div class="action-btns"><button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button><button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}</div></td>
-            </tr>
+            <tr><td>${lang}</td><td><label class="switch"><input type="checkbox" ${enabled.includes(lang) ? 'checked' : ''} onchange="toggleLang('${lang}', this.checked)"><span class="slider"></span></label></td>
+                <td><div class="action-btns"><button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button><button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}</div></td></tr>
         `).join('');
     }
     async function toggleLang(lang, isEnabled) {
@@ -666,8 +773,8 @@
         const kw = document.getElementById('order-search').value.toLowerCase();
         document.getElementById('order-list').innerHTML = allOrders.filter(o => o.id.toLowerCase().includes(kw) || (o.videoName && o.videoName.toLowerCase().includes(kw)) || (o.userEmail && o.userEmail.toLowerCase().includes(kw))).map(o => `
             <tr>
-                <td><div style="font-weight:bold;">${o.id}</div><div style="color:#666; font-size:12px;">${o.videoName} (${o.configType})</div></td>
-                <td><div>${o.userName}</div><div style="color:#666; font-size:12px;">${o.userEmail}</div></td>
+                <td><div style="font-weight:bold;">${o.id}</div><div style="color:var(--text-muted); font-size:12px;">${o.videoName} (${o.configType})</div></td>
+                <td><div>${o.userName}</div><div style="color:var(--text-muted); font-size:12px;">${o.userEmail}</div></td>
                 <td><div style="font-size:12px;"><strong>联系方式:</strong> ${o.contact || '-'}</div><div style="font-size:12px; color:#1890ff;"><strong>付款地址:</strong> ${o.payAddress || '-'}</div></td>
                 <td style="color:red;font-weight:bold;font-size:15px;">${o.amount.toFixed(2)}</td>
                 <td><div style="color:${o.status === 'pending' ? '#e67e22' : (o.status === 'paid' ? '#27ae60' : '#f5222d')}; font-weight:bold;">${o.status}</div></td>
@@ -692,7 +799,11 @@
         document.getElementById('generic-modal').style.display = 'none';
     }
 
-    loadCollectData();
+    // 页面加载时，恢复标签页
+    document.addEventListener('DOMContentLoaded', () => {
+        const initTab = localStorage.getItem('admin_current_tab') || 'tab-collect';
+        switchTab(initTab);
+    });
 </script>
 </body>
 </html>
