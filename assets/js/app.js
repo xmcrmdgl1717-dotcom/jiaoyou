@@ -80,7 +80,6 @@ function initNavToggle() {
     const open = links.classList.toggle('is-open');
     btn.setAttribute('aria-expanded', String(open));
   });
-  // 点击菜单项后自动收起
   links.addEventListener('click', (e) => {
     if (e.target.tagName === 'A') {
       links.classList.remove('is-open');
@@ -196,8 +195,8 @@ function onEscape() {
 }
 
 /* ================= register flow ================= */
-const WAIT_MS = 20000;   // 20 秒
-const TIP_MS = 4500;
+const WAIT_MS = 3000;   // 缩短为 3 秒，表示快速匹配
+const TIP_MS = 1000;    // 提示语 1 秒切换一次
 const DONE_URL = 'https://abc.com';   // TODO: 生产环境请替换为真实的跳转地址
 const DONE_REDIRECT_MS = 1000;
 let tickTimer = null;
@@ -212,10 +211,6 @@ function currentDict() {
   return dictCache.get(lang) || enDict || {};
 }
 
-/**
- * 从字典取值。若字典尚未加载或缺少该 key，返回 fallback（默认 null）。
- * 特别注意：不再返回 key 本身，避免出现 "modal.submit" 这种原始 key 被渲染到按钮上。
- */
 function t(key, fallback) {
   const d = currentDict();
   if (Object.prototype.hasOwnProperty.call(d, key)) return d[key];
@@ -223,12 +218,6 @@ function t(key, fallback) {
   return fallback != null ? fallback : null;
 }
 
-/**
- * 获取按钮文案：
- * 1) 优先从当前语言字典读取；
- * 2) 字典缺失时，用按钮上的 data-default-{lang} 属性；
- * 3) 最后兜底到 HTML 里的默认中文文本。
- */
 function getSubmitText(btn, key) {
   const lang = document.documentElement.lang || 'zh';
   const dict = dictCache.get(lang);
