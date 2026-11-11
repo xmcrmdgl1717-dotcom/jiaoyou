@@ -61,10 +61,17 @@
   let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
   let hls = null, videoLimitHandler = null, seekingHandler = null;
 
+  // 🔴 修复：读取 hotConfig 专属配置
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
-      currentConfig = await res.json();
+      const data = await res.json();
+      currentConfig = {
+        previewLimit: data.hotConfig?.previewLimit ?? 15,
+        regLimit: data.hotConfig?.regLimit ?? 120,
+        price: data.hotConfig?.unlockPrice ?? 9.99,
+        trc20: data.trc20 || ''
+      };
     } catch(e) { console.warn('配置拉取失败，使用默认值'); }
   }
 
@@ -154,7 +161,6 @@
 
     let lastTime = 0;
     seekingHandler = () => {
-      // 防拖动：如果拖动超过0.5秒，强制拉回原进度
       if (videoEl.currentTime > lastTime + 0.5) {
         videoEl.currentTime = lastTime;
       }
@@ -190,11 +196,16 @@
     limitMask.style.display = 'flex';
   }
 
+  // 🔴 改进：传递当前专属价格给后端生成唯一金额
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
     btn.disabled = true; btn.innerText = '生成中...';
     try {
-      const res = await fetch(`${API_BASE}/api/orders/create`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/orders/create`, { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseAmount: currentConfig.price })
+      });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       document.getElementById('pay-detail').innerHTML = `
