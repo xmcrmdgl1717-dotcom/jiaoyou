@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const xml2js = require('xml2js');
 
 const app = express();
+// Render 部署必须使用 process.env.PORT
 const PORT = process.env.PORT || 3000;
 
 // ================= 路径与数据初始化 =================
@@ -14,26 +15,32 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const VIDEOS_FILE = path.join(DATA_DIR, 'videos.json');
 const SITES_FILE = path.join(DATA_DIR, 'resource_sites.json');
 
+// 确保 data 文件夹及文件存在
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '[]');
 if (!fs.existsSync(VIDEOS_FILE)) fs.writeFileSync(VIDEOS_FILE, '[]');
 if (!fs.existsSync(SITES_FILE)) fs.writeFileSync(SITES_FILE, '[]');
 
-function readJSON(file) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; } }
-function writeJSON(file, data) { fs.writeFileSync(file, JSON.stringify(data, null, 2)); }
+function readJSON(file) { 
+    try { return JSON.parse(fs.readFileSync(file, 'utf8')); } 
+    catch { return []; } 
+}
+function writeJSON(file, data) { 
+    fs.writeFileSync(file, JSON.stringify(data, null, 2)); 
+}
 
-// ================= 中间件 =================
+// ================= 全局中间件 =================
 app.use(cors());
 app.use(express.json());
-// 关键：托管 public 文件夹，这样访问 /admin.html 才能生效
+// 托管 public 文件夹，允许访问 admin.html 等静态页面
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ================= 根路由（检测服务是否存活） =================
+// 根路由：用于检测服务是否存活
 app.get('/', (req, res) => {
-    res.send('Hiya Live Backend is Running! Access /admin.html for Admin Panel.');
+    res.send('Hiya Live Backend is Running Successfully! Access /admin.html for Admin Panel.');
 });
 
-// ================= 前台：注册/登录 =================
+// ================= 前台：注册与登录接口 =================
 app.post('/api/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -52,6 +59,7 @@ app.post('/api/register', async (req, res) => {
         writeJSON(USERS_FILE, users);
         res.status(201).json({ message: '注册成功', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
     } catch (error) {
+        console.error('注册错误:', error);
         res.status(500).json({ error: '服务器内部错误' });
     }
 });
@@ -68,46 +76,69 @@ app.post('/api/login', async (req, res) => {
 
         res.json({ message: '登录成功', user: { id: user.id, name: user.name, email: user.email } });
     } catch (error) {
+        console.error('登录错误:', error);
         res.status(500).json({ error: '服务器内部错误' });
     }
 });
 
-// ================= 后台鉴权与接口 =================
+// ================= 后台：鉴权与接口 =================
 const ADMIN_PASSWORD = 'admin888';
+
+// 后台鉴权中间件
 const authMiddleware = (req, res, next) => {
-    if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: '未授权' });
+    if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: '未授权，请重新登录' });
+    }
     next();
 };
 
+// 后台登录
 app.post('/api/admin/login', (req, res) => {
-    if (req.body.password === ADMIN_PASSWORD) res.json({ success: true, token: ADMIN_PASSWORD });
-    else res.status(401).json({ error: '密码错误' });
+    if (req.body.password === ADMIN_PASSWORD) {
+        res.json({ success: true, token: ADMIN_PASSWORD, message: '登录成功' });
+    } else {
+        res.status(401).json({ error: '密码错误' });
+    }
 });
 
+// 获取所有资源站
 app.get('/api/admin/sites', authMiddleware, (req, res) => {
     res.json(readJSON(SITES_FILE));
 });
 
+// 添加资源站
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
+    const { name, url, type } = req.body;
+    if (!name || !url) return res.status(400).json({ error: '名称和接口地址必填' });
+    
     const sites = readJSON(SITES_FILE);
-    const newSite = { id: Date.now().toString(), ...req.body, categories: [] };
+    const newSite = { id: Date.now().toString(), name, url, type: type || 'xml', categories: [] };
     sites.push(newSite);
     writeJSON(SITES_FILE, sites);
     res.json(newSite);
 });
 
+// 删除资源站
 app.delete('/api/admin/sites/:id', authMiddleware, (req, res) => {
     let sites = readJSON(SITES_FILE).filter(s => s.id !== req.params.id);
     writeJSON(SITES_FILE, sites);
     res.json({ success: true });
 });
 
+// 获取资源站分类（用于绑定）
 app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => {
     const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
     if (!site) return res.status(404).json({ error: '资源站不存在' });
+    
     try {
-        const url = site.url.replace(/\/$/, '') + '?ac=list';
-        const response = await fetch(url);
+        // 智能清理基础 URL（去掉用户可能误填的 ?ac=list 等参数，去掉尾部斜杠）
+        const baseUrl = site.url.split('?')[0].replace(/\/$/, '');
+        const url = `${baseUrl}?ac=list`;
+        
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
+
         if (site.type === 'json') {
             const data = await response.json();
             res.json((data.class || []).map(c => ({ id: c.type_id, name: c.type_name })));
@@ -121,71 +152,111 @@ app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => {
     }
 });
 
+// 保存分类绑定关系
 app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE);
     const site = sites.find(s => s.id === req.params.id);
     if (!site) return res.status(404).json({ error: '资源站不存在' });
-    site.categories = req.body.mappings;
+    
+    site.categories = req.body.mappings || [];
     writeJSON(SITES_FILE, sites);
     res.json({ success: true });
 });
 
+// 一键采集
 app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
     const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
     if (!site) return res.status(404).json({ error: '资源站不存在' });
+
+    // 如果没有绑定分类，直接拦截报错
+    if (!site.categories || site.categories.length === 0) {
+        return res.status(400).json({ error: '请先在列表中点击“绑定分类”并保存后，再开始采集！' });
+    }
 
     try {
         let count = 0;
         let allVideos = readJSON(VIDEOS_FILE);
         
-        // 为了演示，只采集前3页
+        // 智能清理基础 URL
+        const baseUrl = site.url.split('?')[0].replace(/\/$/, '');
+        
+        // 限制采集前 3 页（可根据需要调整）
         for (let pg = 1; pg <= 3; pg++) {
-            const url = site.url.replace(/\/$/, '') + `?ac=detail&pg=${pg}`;
-            const response = await fetch(url);
+            const url = `${baseUrl}?ac=detail&pg=${pg}`;
+            console.log(`[采集] 正在请求: ${url}`);
+
+            const response = await fetch(url, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            });
+            
             let videoList = [];
 
             if (site.type === 'json') {
                 const data = await response.json();
-                videoList = (data.list || []).map(v => ({
-                    id: v.vod_id, name: v.vod_name, typeId: v.type_id, typeName: v.type_name, pic: v.vod_pic, playUrl: v.vod_play_url
+                const list = data.list || data.data || [];
+                videoList = list.map(v => ({
+                    id: v.vod_id, 
+                    name: v.vod_name, 
+                    typeId: v.type_id, 
+                    typeName: v.type_name, 
+                    pic: v.vod_pic, 
+                    playUrl: v.vod_play_url
                 }));
             } else {
                 const xmlText = await response.text();
                 const result = await new xml2js.Parser().parseStringPromise(xmlText);
                 const list = result.rss?.list?.[0]?.video || [];
                 videoList = list.map(v => ({
-                    id: v.id?.[0], name: v.name?.[0], typeId: v.type?.[0], typeName: v.typename?.[0], pic: v.pic?.[0], playUrl: v.dl?.[0]?.dd?.[0]?._
+                    id: v.id?.[0], 
+                    name: v.name?.[0], 
+                    typeId: v.type?.[0], 
+                    typeName: v.typename?.[0], 
+                    pic: v.pic?.[0], 
+                    playUrl: v.dl?.[0]?.dd?.[0]?._ || ''
                 }));
             }
 
             if (videoList.length === 0) break;
 
             for (const video of videoList) {
+                // 跳过没有播放地址的空数据
                 if (!video.playUrl) continue;
+                
+                // 检查分类是否被绑定了，没绑定的视频直接跳过
                 const binding = site.categories.find(c => c.sourceId == video.typeId);
                 if (!binding) continue;
 
+                // 按名称去重
                 if (!allVideos.find(v => v.name === video.name)) {
                     allVideos.push({
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                        name: video.name, pic: video.pic, category: binding.localCategory, playUrl: video.playUrl
+                        name: video.name, 
+                        pic: video.pic, 
+                        category: binding.localCategory, 
+                        playUrl: video.playUrl,
+                        createdAt: new Date().toISOString()
                     });
                     count++;
                 }
             }
             writeJSON(VIDEOS_FILE, allVideos);
         }
+        
         res.json({ success: true, count, message: `成功采集 ${count} 条视频` });
     } catch (err) {
+        console.error('采集出错:', err);
         res.status(500).json({ error: '采集失败: ' + err.message });
     }
 });
 
+// 获取已采集视频列表（后台预览）
 app.get('/api/admin/videos', authMiddleware, (req, res) => {
     res.json(readJSON(VIDEOS_FILE));
 });
 
+// ================= 启动服务 =================
 app.listen(PORT, () => {
-    console.log(`✅ 服务已启动: http://localhost:${PORT}`);
-    console.log(`🔑 后台地址: http://localhost:${PORT}/admin.html`);
+    console.log(`✅ 后端服务已启动，端口: ${PORT}`);
+    console.log(`🔑 后台管理地址: http://localhost:${PORT}/admin.html`);
+    console.log(`🔐 后台密码: ${ADMIN_PASSWORD}`);
 });
