@@ -1,14 +1,159 @@
 'use strict';
 
+/* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
+// 目前支持的语言列表
+const SUPPORTED = ['zh', 'en', 'vi', 'es', 'tr', 'id'];
+const RTL = new Set(['ar']); // 从右到左的语言
+const LS_KEY = 'hiya_lang';
+const dictCache = new Map();      
+let enDict = null;                
 
-// i18n 相关略（保持原样）
-function resolveInitialLang() { return 'zh'; }
-function initI18n() { }
+/* ================= 1. 语言匹配核心逻辑 ================= */
+// 国家代码映射到语言
+const COUNTRY_TO_LANG = {
+  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh',
+  VN: 'vi',
+  ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es',
+  TR: 'tr',
+  ID: 'id',
+  US: 'en', GB: 'en', AU: 'en', CA: 'en'
+};
+
+async function resolveInitialLang() {
+  // 🔴 优先级 1: IP 定位
+  try {
+    const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
+    const ipData = await ipRes.json();
+    const countryCode = ipData.country_code; // 例如 "CN", "US"
+    if (countryCode && COUNTRY_TO_LANG[countryCode]) {
+      const mappedLang = COUNTRY_TO_LANG[countryCode];
+      if (SUPPORTED.includes(mappedLang)) {
+        console.log('[i18n] 根据 IP 匹配到语言:', mappedLang);
+        return mappedLang;
+      }
+    }
+  } catch (e) {
+    console.warn('[i18n] IP 定位失败或超时，尝试使用手机语言');
+  }
+
+  // 🔴 优先级 2: 手机/浏览器语言
+  const cands = (navigator.languages && navigator.languages.length)
+    ? navigator.languages : [navigator.language || 'en'];
+  for (const tag of cands) {
+    const base = String(tag).toLowerCase().split('-')[0];
+    if (SUPPORTED.includes(base)) {
+      console.log('[i18n] 根据手机/浏览器语言匹配到:', base);
+      return base;
+    }
+  }
+
+  // 🔴 优先级 3: 手动选择 (localStorage)
+  let saved = null;
+  try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
+  if (saved && SUPPORTED.includes(saved)) {
+    console.log('[i18n] 根据本地缓存匹配到:', saved);
+    return saved;
+  }
+
+  // 🔴 优先级 4: 默认兜底英文
+  console.log('[i18n] 全部未匹配，使用默认语言: en');
+  return 'en';
+}
+
+async function loadDict(lang) {
+  if (dictCache.has(lang)) return dictCache.get(lang);
+  try {
+    const res = await fetch('i18n/' + lang + '.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('dict ' + lang + ' ' + res.status);
+    const dict = await res.json();
+    dictCache.set(lang, dict);
+    return dict;
+  } catch (err) {
+    console.warn(`未找到 ${lang}.json，回退到英文`);
+    return null;
+  }
+}
+
+function translate(dict, key) {
+  if (dict && Object.prototype.hasOwnProperty.call(dict, key)) return dict[key];
+  if (enDict && Object.prototype.hasOwnProperty.call(enDict, key)) return enDict[key];
+  return null;
+}
+
+async function applyLang(lang) {
+  if (!SUPPORTED.includes(lang)) lang = 'en';
+  if (!enDict) { try { enDict = await loadDict('en'); } catch (e) { enDict = {}; } }
+  
+  let dict = await loadDict(lang);
+  if (!dict) { dict = enDict; lang = 'en'; } // 如果语言包加载失败，强制回退英文
+
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const v = translate(dict, el.getAttribute('data-i18n'));
+    if (v != null) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+    const v = translate(dict, el.getAttribute('data-i18n-html'));
+    if (v != null) el.innerHTML = v;
+  });
+
+  document.documentElement.lang = lang;
+  document.documentElement.dir = RTL.has(lang) ? 'rtl' : 'ltr';
+  try { localStorage.setItem(LS_KEY, lang); } catch (e) {}
+
+  // 更新下拉菜单的选中状态
+  document.querySelectorAll('.lang-option').forEach(opt => {
+    opt.style.fontWeight = opt.dataset.lang === lang ? 'bold' : 'normal';
+    opt.style.color = opt.dataset.lang === lang ? '#ff3d8b' : '#3a3f5f';
+  });
+
+  const titleMap = { zh: '嗨呀直播', en: 'Hiya Live', vi: 'Hiya Live', es: 'Hiya Live', tr: 'Hiya Live', id: 'Hiya Live' };
+  document.title = titleMap[lang] || titleMap.en;
+}
+
+/* ================= 2. UI 交互逻辑 ================= */
+function initLangSelector() {
+  const langBtn = document.getElementById('lang-btn');
+  const langDropdown = document.getElementById('lang-dropdown');
+  if (!langBtn || !langDropdown) return;
+
+  // 点击地球图标显示/隐藏下拉菜单
+  langBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // 点击页面其他地方关闭下拉
+  document.addEventListener('click', () => {
+    if (langDropdown) langDropdown.style.display = 'none';
+  });
+
+  // 点击语言选项
+  langDropdown.querySelectorAll('.lang-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const selectedLang = opt.dataset.lang;
+      applyLang(selectedLang);
+      langDropdown.style.display = 'none';
+    });
+  });
+}
+
+async function initI18n() {
+  initLangSelector();
+  // 异步解析初始语言
+  const initialLang = await resolveInitialLang();
+  await applyLang(initialLang);
+}
+
+/* ================= 其它业务逻辑 ================= */
 function initNavToggle() {
   const btn = document.querySelector('[data-nav-toggle]');
   const links = document.querySelector('.nav-links');
-  if (btn && links) btn.addEventListener('click', () => links.classList.toggle('is-open'));
+  if (!btn || !links) return;
+  btn.addEventListener('click', () => {
+    const open = links.classList.toggle('is-open');
+    btn.setAttribute('aria-expanded', String(open));
+  });
 }
 
 function parsePlayUrl(urlStr) {
@@ -68,13 +213,13 @@ function renderAuthArea() {
       e.preventDefault(); localStorage.removeItem('hiya_user'); window.location.reload();
     };
   } else {
-    authArea.innerHTML = `<a class="login-btn" data-register role="button" tabindex="0">登录 / 注册</a>`;
+    authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>`;
   }
 }
 
 function initAuthEvents() {
   document.addEventListener('click', (e) => {
-    const noRegister = e.target.closest('[data-legal],[data-lang-select],[data-nav-toggle],.modal-overlay');
+    const noRegister = e.target.closest('[data-legal],.lang-wrap,[data-nav-toggle],.modal-overlay');
     if (noRegister && !e.target.closest('.modal-dialog')) return;
     const hit = e.target.closest('[data-register]');
     if (!hit) return;
@@ -192,7 +337,6 @@ function closeCustomerModal() {
   overlay.hidden = true; overlay.style.display = 'none';
 }
 
-/* ================= 视频播放器 + 15秒试看限制 ================= */
 let hls = null;
 let videoLimitHandler = null;
 
@@ -212,7 +356,7 @@ function openVideoPlayer(card) {
   document.getElementById('video-player-name').textContent = name;
   document.getElementById('video-player-meta').textContent = meta;
   
-  limitOverlay.style.display = 'none'; // 每次打开重置遮罩
+  limitOverlay.style.display = 'none';
 
   if (src.includes('.m3u8')) {
     if (window.Hls && Hls.isSupported()) {
@@ -232,7 +376,6 @@ function openVideoPlayer(card) {
 
   videoEl.play().catch(() => {});
 
-  // 🔴 新增：15秒试看限制逻辑
   if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
   const isLoggedIn = !!localStorage.getItem('hiya_user');
 
@@ -240,7 +383,7 @@ function openVideoPlayer(card) {
     videoLimitHandler = function() {
       if (videoEl.currentTime >= 15 && limitOverlay.style.display !== 'flex') {
         videoEl.pause();
-        limitOverlay.style.display = 'flex'; // 显示试看结束遮罩
+        limitOverlay.style.display = 'flex';
       }
     };
     videoEl.addEventListener('timeupdate', videoLimitHandler);
