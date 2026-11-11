@@ -6,12 +6,12 @@
 <title>嗨呀直播 · 直播推荐</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
+  /* 与 shorts.html 相同 */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #fdf7fa; font-family: sans-serif; padding-bottom: env(safe-area-inset-bottom); }
   .header { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.95); border-bottom: 1px solid #eee; }
   .header h1 { font-size: 18px; font-weight: 800; color: #1f2551; }
   .back-btn { font-size: 13px; color: #ff3d8b; padding: 6px 14px; background: #fff0f5; border-radius: 20px; text-decoration: none;}
-  
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; max-width: 800px; margin: 0 auto; }
   .card { position: relative; aspect-ratio: 9 / 16; background: #f5f5f5; overflow: hidden; cursor: pointer; }
   .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -20,14 +20,12 @@
   .card-meta { font-size: 9px; opacity: 0.9; display: flex; justify-content: space-between; }
   .live-tag { position: absolute; top: 4px; left: 4px; background: #ff3b5c; color: #fff; font-size: 8px; padding: 2px 4px; border-radius: 4px; }
   #sentinel { text-align: center; padding: 20px; font-size: 12px; color: #999; }
-
   #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
   #player-modal.active { display: flex; }
   .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; overflow: hidden; }
   .close-btn { position: absolute; top: 20px; left: 20px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
-
-  /* 底部倒计时条 */
+  
   .player-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 20; pointer-events: none; }
   .time-info { display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
   .time-left { color: #ff6b9d; font-weight: bold; }
@@ -55,7 +53,7 @@
     
     <div class="player-bottom-bar">
       <div class="time-info">
-        <span id="time-text">试看剩余: --</span>
+        <span id="time-text" class="time-left">试看剩余: --</span>
         <span id="time-price"></span>
       </div>
       <div class="progress-track">
@@ -84,22 +82,19 @@
   }
   function markVideoPurchased(vid) {
     let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
-    if(!purchased.includes(vid)) {
-      purchased.push(vid);
-      localStorage.setItem('purchased_videos', JSON.stringify(purchased));
-    }
+    if(!purchased.includes(vid)) { purchased.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(purchased)); }
   }
 
   async function fetchConfig() {
     try {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
-      // 读取直播推荐专属配置
+      // 读取直播推荐的配置
       currentConfig.previewLimit = data.recommendConfig?.previewLimit ?? null;
       currentConfig.regLimit = data.recommendConfig?.regLimit ?? null;
       currentConfig.price = data.recommendConfig?.unlockPrice ?? null;
       currentConfig.trc20 = data.trc20 || '';
-    } catch(e) { console.warn('配置拉取失败'); }
+    } catch(e) {}
   }
 
   function parseUrl(urlStr) {
@@ -188,9 +183,7 @@
       progressFill.style.background = '#4ade80';
     } else {
       timeText.innerText = `试看剩余: ${maxTime} 秒`;
-      if (currentConfig.price !== null) {
-        timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
-      }
+      if (currentConfig.price !== null) timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
       progressFill.style.width = '0%';
       progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
     }
@@ -267,7 +260,6 @@
     markVideoPurchased(currentVideoId); 
     alert('支付成功！已解锁该视频完整版');
     limitMask.style.display = 'none';
-    
     timeText.innerText = "已解锁完整版";
     timePrice.innerText = "";
     progressFill.style.width = '0%';
