@@ -13,29 +13,6 @@
   .lang-wrap { position: relative; z-index: 1100; }
   .lang-dropdown { z-index: 9999 !important; }
 
-  /* 🔴 视频试看结束遮罩 - 深度黑化+毛玻璃 */
-  #video-limit-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0, 0, 0, 0.96);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    z-index: 20;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    text-align: center;
-    padding: 20px;
-  }
-  #video-limit-overlay h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ff6b9d; }
-  #video-limit-overlay p { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }
-  #video-limit-overlay button {
-    background: linear-gradient(90deg, #ff9a4d, #ff4d94);
-    color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
-    font-size: 15px; font-weight: bold; cursor: pointer;
-  }
-
   /* 🔴 在线速配动态条 */
   .live-stats-bar {
     margin-top: 12px; background: linear-gradient(90deg, #fff5f9 0%, #ffeaf3 100%);
@@ -57,6 +34,11 @@
   }
   
   .hero-wrap { margin-top: 12px; }
+
+  /* 播放器弹窗内部样式 */
+  #video-limit-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
+  #video-limit-overlay h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ff6b9d; }
+  .unlock-btn { background: #4ade80 !important; margin-top: 10px !important; }
 </style>
 </head>
 <body>
@@ -213,7 +195,7 @@
     <div class="copyright" data-i18n="footer.copyright">© 2026 嗨呀直播. 保留所有权利。</div>
   </div>
 </div>
-<!-- 弹窗、播放器等保持原样 -->
+
 <div class="modal-overlay" id="register-modal" hidden style="display: none;">
   <div class="modal-dialog" data-modal-dialog tabindex="-1">
     <button class="modal-close" type="button" data-modal-close data-i18n="modal.close">关闭</button>
@@ -275,21 +257,25 @@
   </div>
 </div>
 
+<!-- 🔴 修改：播放器弹窗，增加了倒计时进度条 -->
 <div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
-  <div style="position: relative; width: 100%; max-width: 420px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
-    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 30; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button>
+  <div style="position: relative; width: 100%; max-width: 480px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
+    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button>
     <video id="video-player" controls autoplay playsinline controlsList="nodownload" style="width: 100%; height: 100%; object-fit: contain; background: #000;"></video>
     
-    <div id="video-limit-overlay">
-      <h3 data-i18n="video.limit.title">试看已结束</h3>
-      <p data-i18n="video.limit.desc">注册登录后可无限畅看完整版视频</p>
-      <button onclick="window.closeVideoPlayer(); window.openRegisterModal();" data-i18n="video.limit.btn">免费注册 / 登录</button>
+    <!-- 底部倒计时条 -->
+    <div class="player-bottom-bar" style="position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 20; pointer-events: none;">
+      <div style="display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
+        <span id="video-time-text" style="color: #ff6b9d; font-weight: bold;">试看剩余: --</span>
+        <span id="video-time-price"></span>
+      </div>
+      <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden;">
+        <div id="video-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff9a4d, #ff4d94); transition: width 0.1s;"></div>
+      </div>
     </div>
 
-    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none; z-index: 10;">
-      <div style="font-size: 18px; font-weight: 700;" id="video-player-name"></div>
-      <div style="font-size: 12px; opacity: 0.7;" id="video-player-meta"></div>
-    </div>
+    <!-- 遮罩 -->
+    <div id="video-limit-overlay"></div>
   </div>
 </div>
 
