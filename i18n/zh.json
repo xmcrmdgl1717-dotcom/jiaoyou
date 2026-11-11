@@ -127,4 +127,8 @@
   "legal.terms.body": "这是使用条款占位符。",
   "legal.privacy.title": "隐私政策",
   "legal.privacy.body": "这是隐私政策占位符。"
+  // zh.json 增加
+"video.preview.register_tip": "试看剩余 {n} 秒，注册登录后解锁完整版",
+"video.preview.pay_tip": "试看剩余 {n} 秒，支付后解锁完整版",
+"video.preview.unlocked": "已解锁完整版"
 }
