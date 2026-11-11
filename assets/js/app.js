@@ -3,6 +3,7 @@
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
 let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '' };
+let currentVisitId = '';
 
 async function fetchGlobalConfig() {
     try {
@@ -10,6 +11,22 @@ async function fetchGlobalConfig() {
         globalConfig = await res.json();
         console.log('首页全局配置已加载:', globalConfig);
     } catch(e) { console.warn('配置拉取失败'); }
+}
+
+// 记录访客信息
+async function trackVisit() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/visit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lang: localStorage.getItem('hiya_lang') || 'zh' })
+        });
+        const data = await res.json();
+        if(data.visitId) {
+            currentVisitId = data.visitId;
+            sessionStorage.setItem('hiya_visit_id', data.visitId);
+        }
+    } catch(e) { console.warn('访客记录失败', e); }
 }
 
 /* ================= i18n 多语言逻辑 ================= */
@@ -333,11 +350,17 @@ function initModalEvents() {
   overlay.querySelector('[data-login-form]').onsubmit = onSubmitLogin;
 }
 
+// 注册时携带 visitId
 function onSubmitRegister(e) {
   e.preventDefault(); if (submitting) return;
   const form = e.currentTarget; if (!form.checkValidity()) { form.reportValidity(); return; }
   const btn = form.querySelector('.modal-submit'), errorBox = form.querySelector('[data-form-error]');
-  const data = { name: form.name.value.trim(), email: form.email.value.trim(), password: form.password.value };
+  const data = { 
+      name: form.name.value.trim(), 
+      email: form.email.value.trim(), 
+      password: form.password.value,
+      visitId: currentVisitId || sessionStorage.getItem('hiya_visit_id') 
+  };
   btn.disabled = true; btn.textContent = '提交中…'; if (errorBox) errorBox.style.display = 'none'; submitting = true;
 
   fetch(`${API_BASE_URL}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -443,7 +466,6 @@ function openVideoPlayer(card) {
   const isLogin = !!localStorage.getItem('hiya_user');
   const isPurchased = isVideoPurchased(vid);
   
-  // 读取对应的配置 (支持 free 类型)
   let configData = configType === 'free' ? globalConfig.freeConfig : (configType === 'recommend' ? globalConfig.recommendConfig : globalConfig.hotConfig);
   let previewLimit = configData?.previewLimit ?? null;
   let regLimit = configData?.regLimit ?? null;
@@ -494,6 +516,7 @@ function openVideoPlayer(card) {
   videoEl.addEventListener('timeupdate', videoLimitHandler);
 }
 
+// 拦截弹窗 - 新增表单
 function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
   if (!isLogin) {
     overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
@@ -511,8 +534,18 @@ function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
     <h3>试看已结束</h3>
     <p>开通全集需支付 <strong style="color:#ff1a75;">${price} USDT</strong></p>
     <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
-    <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:15px; width:100%;">${trc20}</div>
-    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">生成专属付款金额</button>
+    <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:10px; width:100%;">${trc20}</div>
+    
+    <div style="text-align:left; font-size:12px; margin-bottom:10px; width:100%;">
+      <label style="display:block; margin-bottom:5px;">Telegram 账号：</label>
+      <input type="text" id="pay-tg" placeholder="请输入TG账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
+      <label style="display:block; margin-bottom:5px;">WhatsApp 账号：</label>
+      <input type="text" id="pay-wa" placeholder="请输入WhatsApp账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
+      <label style="display:block; margin-bottom:5px;">你的付款TRC20地址：</label>
+      <input type="text" id="pay-address" placeholder="请输入你付款的TRC20地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+    </div>
+    
+    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">提交付款信息</button>
     <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
   `;
   overlay.style.display = 'flex';
@@ -520,7 +553,15 @@ function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
 
 async function generateHomeOrder(vid, price, configType) {
   const btn = document.getElementById('gen-home-order-btn');
-  btn.disabled = true; btn.innerText = '生成中...';
+  
+  const tg = document.getElementById('pay-tg').value.trim();
+  const wa = document.getElementById('pay-wa').value.trim();
+  const payAddress = document.getElementById('pay-address').value.trim();
+
+  if(!tg && !wa) return alert('请至少填写一种联系方式 (Telegram 或 WhatsApp)');
+  if(!payAddress) return alert('请填写您的付款 TRC20 地址');
+
+  btn.disabled = true; btn.innerText = '提交中...';
   
   const userStr = localStorage.getItem('hiya_user');
   let user = { id: 'guest', name: '游客', email: '未知' };
@@ -533,7 +574,9 @@ async function generateHomeOrder(vid, price, configType) {
         body: JSON.stringify({ 
             baseAmount: price,
             userId: user.id, userName: user.name, userEmail: user.email,
-            videoId: vid, videoName: currentVideoName, configType: configType 
+            videoId: vid, videoName: currentVideoName, configType: configType,
+            visitId: currentVisitId || sessionStorage.getItem('hiya_visit_id'),
+            contactTg: tg, contactWa: wa, payAddress: payAddress
         })
     });
     const data = await res.json();
@@ -541,12 +584,12 @@ async function generateHomeOrder(vid, price, configType) {
     
     document.getElementById('home-pay-detail').innerHTML = `
       <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后联系客服</p>
+      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账完成后请联系客服，等待审核</p>
       <button onclick="mockHomePaySuccess('${vid}')" class="unlock-btn" style="background:#4ade80; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">【测试】立即解锁</button>
     `;
   } catch(e) {
     alert('生成订单失败: ' + e.message);
-    btn.disabled = false; btn.innerText = '生成专属付款金额';
+    btn.disabled = false; btn.innerText = '提交付款信息';
   }
 }
 
@@ -578,13 +621,14 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await trackVisit(); // 记录访客
   await fetchGlobalConfig(); 
   initI18n(); 
   initNavToggle(); 
   initAuthEvents(); 
   initModalEvents(); 
   renderAuthArea(); 
-  loadFreeVideos(); // 加载免费精选
+  loadFreeVideos(); 
   loadHomeVideos();
   loadRecommendVideos(); 
   initLiveStats(); 
