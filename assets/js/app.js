@@ -18,10 +18,7 @@ const RTL = new Set(['ar']);
 const LS_KEY = 'hiya_lang';
 const dictCache = new Map();      
 let enDict = null;                
-
-const COUNTRY_TO_LANG = {
-  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en'
-};
+const COUNTRY_TO_LANG = { CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en' };
 
 async function resolveInitialLang() {
   try {
@@ -86,7 +83,6 @@ async function applyLang(lang) {
   });
 
   if (window.initLiveStats) window.initLiveStats(); 
-
   const titleMap = { zh: '嗨呀直播', en: 'Hiya Live', vn: 'Hiya Live', es: 'Hiya Live', tr: 'Hiya Live', id: 'Hiya Live' };
   document.title = titleMap[lang] || titleMap.en;
 }
@@ -378,6 +374,7 @@ function closeCustomerModal() {
 let hls = null;
 let videoLimitHandler = null;
 let currentVideoId = null;
+let currentVideoName = '';
 
 function isVideoPurchased(vid) {
   let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
@@ -401,6 +398,7 @@ function openVideoPlayer(card) {
   const src = card.getAttribute('data-video-src');
   const vid = card.getAttribute('data-video-id');
   const configType = card.getAttribute('data-config-type') || 'hot';
+  currentVideoName = card.querySelector('.nm')?.textContent || '未知视频';
   
   if (!src) { alert('该视频暂未配置播放源'); return; }
 
@@ -429,14 +427,19 @@ function openVideoPlayer(card) {
 
   if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
+  // 🔴 前端文案与限制逻辑 (区分登录、未登录、金额、秒数)
   if (isPurchased || maxTime === null || maxTime <= 0) {
     timeText.innerText = "已解锁完整版";
     timePrice.innerText = "";
     progressFill.style.width = '0%';
     progressFill.style.background = '#4ade80';
   } else {
-    timeText.innerText = `试看剩余: ${maxTime} 秒`;
-    if (price !== null) timePrice.innerText = `解锁需 ${price} USDT`;
+    if (!isLogin) {
+      timeText.innerText = `试看剩余: ${maxTime} 秒（注册解锁）`;
+    } else {
+      timeText.innerText = `试看剩余: ${maxTime} 秒`;
+      if (price !== null) timePrice.innerText = `解锁需 ${price} USDT`;
+    }
     progressFill.style.width = '0%';
     progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
   }
@@ -446,7 +449,11 @@ function openVideoPlayer(card) {
     const curTime = videoEl.currentTime;
     if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
       const remain = Math.max(0, maxTime - curTime);
-      timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
+      if (!isLogin) {
+        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒（注册解锁）`;
+      } else {
+        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
+      }
       progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
       
       if (curTime >= maxTime) {
@@ -489,11 +496,21 @@ function showVideoPaywall(overlay, vid, isLogin, price, trc20) {
 async function generateHomeOrder(vid, price) {
   const btn = document.getElementById('gen-home-order-btn');
   btn.disabled = true; btn.innerText = '生成中...';
+  
+  // 🔴 携带用户和视频信息给后端
+  const userStr = localStorage.getItem('hiya_user');
+  let user = { id: 'guest', name: '游客', email: '未知' };
+  if (userStr) { const parsed = JSON.parse(userStr); user = { id: parsed.id, name: parsed.name, email: parsed.email }; }
+
   try {
     const res = await fetch(`${API_BASE_URL}/api/orders/create`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ baseAmount: price })
+        body: JSON.stringify({ 
+            baseAmount: price,
+            userId: user.id, userName: user.name, userEmail: user.email,
+            videoId: vid, videoName: currentVideoName, configType: 'hot' // 如果是首页推荐用 recommend
+        })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -537,7 +554,7 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await fetchGlobalConfig(); // 先拉取配置
+  await fetchGlobalConfig(); 
   initI18n(); 
   initNavToggle(); 
   initAuthEvents(); 
