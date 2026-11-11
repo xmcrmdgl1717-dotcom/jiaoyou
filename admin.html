@@ -23,7 +23,7 @@
         input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline:none; }
         button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { opacity: 0.9; }
-        .btn-secondary { background: #6c757d; } .btn-danger { background: #dc3545; }
+        .btn-secondary { background: #6c757d; } .btn-danger { background: #dc3545; } .btn-text { background: none; color: #1890ff; padding: 0; font-size: 13px; margin-right: 10px;}
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index:999; }
         .modal-box { background: #fff; padding: 20px; width: 90%; max-width: 600px; border-radius: 8px; }
         .flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -33,8 +33,6 @@
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
-        
-        /* 上传进度条样式 */
         .progress-bar-container { display: none; width: 100%; height: 12px; background: #eee; border-radius: 6px; margin-top: 15px; overflow: hidden; }
         .progress-bar { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
         .progress-text { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 5px; }
@@ -60,11 +58,16 @@
                     <h3>资源站列表</h3>
                     <div id="site-list"></div>
                     <div class="flex" style="margin-top:15px; background:#fafafa; padding:15px;">
-                        <input type="text" id="site-name" placeholder="资源站名称">
+                        <input type="text" id="site-name" placeholder="名称">
                         <input type="text" id="site-url" placeholder="接口地址" style="flex:1;">
                         <select id="site-type"><option value="json">JSON</option><option value="xml">XML</option></select>
-                        <button onclick="addSite()">保存</button>
+                        <button onclick="addSite()">添加</button>
                     </div>
+                </div>
+                <div id="bind-panel" class="card" style="display:none;">
+                    <h3>分类绑定 <button class="btn-secondary" onclick="document.getElementById('bind-panel').style.display='none'">关闭</button></h3>
+                    <table><thead><tr><th>源分类</th><th>绑定到本地</th></tr></thead><tbody id="bind-tbody"></tbody></table>
+                    <button style="margin-top:10px;" onclick="saveBindings()">保存绑定</button>
                 </div>
                 <div class="card">
                     <h3>执行采集</h3>
@@ -79,109 +82,89 @@
             <!-- 系统配置 -->
             <div id="tab-config" class="tab">
                 <div class="card">
-                    <h3>系统基础配置</h3>
-                    <div style="display:flex; flex-direction:column; gap:15px; max-width:500px;">
-                        <div><label>TRC20 接收地址：</label><input type="text" id="set-trc20" style="width:100%;" placeholder="输入 TRC20 地址"></div>
-                        <div><label>首页【精彩视频】关联分类：</label><select id="set-hotCat" style="width:100%;"></select></div>
-                        <div><label>首页【直播推荐】关联分类：</label><select id="set-recommendCat" style="width:100%;"></select></div>
-                        <div><label>未登录试看秒数：</label><input type="number" id="set-preview-limit" style="width:100%;" value="15"></div>
-                        <div><label>注册后试看秒数：</label><input type="number" id="set-reg-limit" style="width:100%;" value="120"></div>
-                        <div><label>解锁全集金额 (USDT)：</label><input type="number" id="set-price" style="width:100%;" value="9.99"></div>
-                        <button onclick="saveSettings()">保存配置</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3>视频分类管理</h3>
+                    <h3>基础设置</h3>
                     <div class="flex" style="margin-bottom:15px;">
-                        <input type="text" id="new-cat-name" placeholder="新增分类名称">
-                        <button onclick="addCategory()">添加</button>
+                        <label>TRC20 接收地址：</label><input type="text" id="set-trc20" style="flex:1;">
                     </div>
-                    <table><tbody id="cat-list"></tbody></table>
+                    <div class="flex" style="margin-bottom:15px;">
+                        <label>首页精彩视频分类：</label><select id="set-hotCat"></select>
+                    </div>
+                    <div class="flex">
+                        <label>首页直播推荐分类：</label><select id="set-recommendCat"></select>
+                    </div>
                 </div>
+                <!-- 独立配置区块 -->
+                <div class="flex" style="gap:20px; align-items: flex-start;">
+                    <div class="card" style="flex:1;">
+                        <h3>🔥 精彩视频 配置</h3>
+                        <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
+                            <label>未登录试看秒数：</label><input type="number" id="hot-preview" value="15">
+                            <label>注册后试看秒数：</label><input type="number" id="hot-reg" value="120">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="hot-price" value="9.99">
+                        </div>
+                    </div>
+                    <div class="card" style="flex:1;">
+                        <h3>🔥 直播推荐 配置</h3>
+                        <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
+                            <label>未登录试看秒数：</label><input type="number" id="rec-preview" value="15">
+                            <label>注册后试看秒数：</label><input type="number" id="rec-reg" value="120">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" value="9.99">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px;">保存所有配置</button>
             </div>
 
-            <!-- 视频上传 -->
+            <!-- 上传 -->
             <div id="tab-upload" class="tab">
                 <div class="card">
-                    <h3>上传视频 (批量选择最多10个)</h3>
+                    <h3>批量上传</h3>
                     <div class="flex">
-                        <input type="text" id="up-name" placeholder="视频标题前缀 (可选)">
+                        <input type="text" id="up-name" placeholder="前缀">
                         <select id="up-cat"></select>
                         <input type="file" id="up-file" accept="video/*" multiple>
-                        <button onclick="uploadVideoBatch()">开始上传</button>
+                        <button onclick="uploadVideoBatch()">上传</button>
                     </div>
-                    <!-- 进度条 UI -->
-                    <div class="progress-bar-container" id="progress-container">
-                        <div class="progress-bar" id="progress-bar"></div>
-                    </div>
-                    <div class="progress-text" id="progress-text" style="display:none;">
-                        <span id="progress-status">准备中...</span>
-                        <span id="progress-percent">0%</span>
-                    </div>
+                    <div class="progress-bar-container" id="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+                    <div class="progress-text" id="progress-text" style="display:none;"><span id="progress-status"></span><span id="progress-percent">0%</span></div>
                 </div>
-                <div class="card">
-                    <h3>已上传视频管理</h3>
-                    <table><tbody id="video-manage-list"></tbody></table>
-                </div>
+                <div class="card"><h3>视频列表</h3><table><tbody id="video-manage-list"></tbody></table></div>
             </div>
 
             <!-- 多语言 -->
             <div id="tab-i18n" class="tab">
                 <div class="card">
-                    <h3>DeepL 翻译设置</h3>
+                    <h3>DeepL API 设置</h3>
                     <div class="flex">
                         <input type="text" id="deepl-key" placeholder="输入 API Key" style="flex:1;">
-                        <button onclick="saveKey()">保存 Key</button>
-                        <button class="btn-secondary" onclick="translateMissing()">一键翻译缺失语言</button>
+                        <button onclick="saveKey()">保存</button>
                     </div>
                 </div>
                 <div class="card">
-                    <h3>语言列表 & 快速添加</h3>
+                    <h3>语言字典管理</h3>
                     <div class="flex" style="margin-bottom:15px;">
                         <select id="add-lang-select">
-                            <option value="en">🇺🇸 English</option>
-                            <option value="vn">🇻🇳 Tiếng Việt</option>
-                            <option value="es">🇪🇸 Español</option>
-                            <option value="tr">🇹🇷 Türkçe</option>
-                            <option value="id">🇮🇩 Bahasa Indonesia</option>
+                            <option value="en">🇺🇸 English</option><option value="vn">🇻🇳 Tiếng Việt</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option>
                         </select>
-                        <button onclick="addLanguage()">添加国家语言</button>
+                        <button onclick="addLanguage()">添加语言</button>
                     </div>
-                    <table><thead><tr><th>语言代码</th><th>启用状态</th><th>操作</th></tr></thead><tbody id="lang-list"></tbody></table>
+                    <table><thead><tr><th>语言</th><th>启用状态</th><th>操作</th></tr></thead><tbody id="lang-list"></tbody></table>
                 </div>
             </div>
 
-            <!-- 用户管理 -->
-            <div id="tab-user" class="tab">
-                <div class="card">
-                    <div class="flex" style="justify-content: space-between; margin-bottom: 15px;">
-                        <h3>用户列表</h3>
-                        <button class="btn-secondary" onclick="loadUsers()">刷新数据</button>
-                    </div>
-                    <table>
-                        <thead><tr><th>用户 ID</th><th>邮箱</th><th>昵称</th><th>余额 (USDT)</th><th>注册时间</th><th>操作</th></tr></thead>
-                        <tbody id="user-list"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 支付订单 -->
-            <div id="tab-order" class="tab">
-                <div class="card">
-                    <h3>订单管理</h3>
-                    <table><tbody id="order-list"></tbody></table>
-                </div>
-            </div>
+            <!-- 用户与订单 -->
+            <div id="tab-user" class="tab"><div class="card"><h3>用户列表</h3><table><tbody id="user-list"></tbody></table></div></div>
+            <div id="tab-order" class="tab"><div class="card"><h3>订单</h3><table><tbody id="order-list"></tbody></table></div></div>
         </div>
     </div>
 
     <div id="edit-modal" class="modal">
         <div class="modal-box">
-            <h3 id="edit-title">编辑</h3>
-            <div id="edit-form"></div>
+            <h3 id="edit-title">编辑字典</h3>
+            <textarea id="edit-content" style="width:100%; height:300px; font-family:monospace;"></textarea>
             <div style="margin-top:15px; text-align:right;">
                 <button class="btn-secondary" onclick="document.getElementById('edit-modal').style.display='none'">取消</button>
-                <button onclick="submitEdit()">保存</button>
+                <button onclick="saveDict()">保存</button>
             </div>
         </div>
     </div>
@@ -189,7 +172,7 @@
 <script>
     const API = 'https://jiaoyouweb.onrender.com';
     const token = 'admin888';
-    let editType = '', editTargetId = '', bindSiteId = '';
+    let editLang = '', bindSiteId = '';
 
     function switchTab(id, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -204,163 +187,89 @@
         if(id === 'tab-order') loadOrders();
     }
 
-    // ========== 用户管理 ==========
-    async function loadUsers() {
-        const tbody = document.getElementById('user-list');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">加载中...</td></tr>';
-        try {
-            const res = await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } });
-            const users = await res.json();
-            if(!Array.isArray(users) || users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">暂无用户注册数据</td></tr>';
-                return;
-            }
-            tbody.innerHTML = users.map(u => `
-                <tr>
-                    <td>${u.id || '-'}</td>
-                    <td>${u.email}</td>
-                    <td>${u.name}</td>
-                    <td style="color:green;font-weight:bold;">${u.balance || 0}</td>
-                    <td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
-                    <td><button class="btn-secondary" onclick="editUser('${u.email}', ${u.balance || 0})">修改余额</button></td>
-                </tr>
-            `).join('');
-        } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">数据加载失败，请检查网络</td></tr>';
-        }
+    // ========== 采集 ==========
+    async function loadCollectData() {
+        const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('site-list').innerHTML = sites.map(s => `
+            <div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
+                <span>${s.name} (${s.url})</span>
+                <div>
+                    <button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button>
+                    <button class="btn-danger" onclick="delSite('${s.id}')">删除</button>
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('collect-site-select').innerHTML = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     }
-    function editUser(email, balance) {
-        editType = 'user'; editTargetId = email;
-        document.getElementById('edit-title').innerText = '修改用户余额';
-        document.getElementById('edit-form').innerHTML = `<label>余额 (USDT)：</label><input type="number" id="eu-bal" value="${balance}" style="width:100%;">`;
-        document.getElementById('edit-modal').style.display = 'flex';
+    async function addSite() {
+        await fetch(`${API}/api/admin/sites`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name: document.getElementById('site-name').value, url: document.getElementById('site-url').value, type: document.getElementById('site-type').value }) });
+        loadCollectData();
     }
-
-    // ========== 视频管理 & 批量上传 ==========
-    async function loadVideoManage() {
-        const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        const vids = await (await fetch(`${API}/api/admin/videos`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('video-manage-list').innerHTML = vids.map(v => `
-            <tr><td>${v.name}</td><td>${v.category}</td>
-            <td><button class="btn-secondary" onclick="editVideo('${v.id}', '${v.name}', '${v.category}')">编辑</button>
-            <button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></td></tr>
+    async function delSite(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCollectData(); }
+    
+    async function openBind(id) {
+        bindSiteId = id; document.getElementById('bind-panel').style.display = 'block';
+        const cats = await (await fetch(`${API}/api/admin/sites/${id}/categories`, { headers: { 'x-admin-token': token } })).json();
+        const localCats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('bind-tbody').innerHTML = cats.map(c => `
+            <tr>
+                <td>${c.name} (${c.id})</td>
+                <td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td>
+            </tr>
         `).join('');
     }
-    
-    async function uploadVideoBatch() {
-        const files = document.getElementById('up-file').files;
-        if(files.length === 0) return alert('请选择视频文件');
-        if(files.length > 10) return alert('单次最多只能上传 10 个视频！');
-        
-        const baseName = document.getElementById('up-name').value.trim();
-        const category = document.getElementById('up-cat').value;
-        
-        const container = document.getElementById('progress-container');
-        const bar = document.getElementById('progress-bar');
-        const textContainer = document.getElementById('progress-text');
-        const statusText = document.getElementById('progress-status');
-        const percentText = document.getElementById('progress-percent');
-        
-        container.style.display = 'block';
-        textContainer.style.display = 'flex';
-        
-        let successCount = 0;
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const title = baseName ? `${baseName}_${i+1}` : file.name;
-            statusText.innerText = `正在上传 (${i+1}/${files.length}): ${title}`;
-            
-            try {
-                await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    const fd = new FormData();
-                    fd.append('video', file);
-                    fd.append('name', title);
-                    fd.append('category', category);
-                    
-                    xhr.open('POST', `${API}/api/admin/upload-video`, true);
-                    xhr.setRequestHeader('x-admin-token', token);
-                    
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            // 计算总进度 = 已完成文件的比例 + 当前文件的进度
-                            const percent = Math.round(((i / files.length) * 100) + ((e.loaded / e.total) * (100 / files.length)));
-                            bar.style.width = percent + '%';
-                            percentText.innerText = percent + '%';
-                        }
-                    };
-                    
-                    xhr.onload = () => {
-                        if (xhr.status === 200) resolve();
-                        else reject(new Error('上传失败'));
-                    };
-                    xhr.onerror = () => reject(new Error('网络错误'));
-                    xhr.send(fd);
-                });
-                successCount++;
-            } catch(e) {
-                console.error(e);
-            }
-        }
-        
-        statusText.innerText = `上传结束！成功: ${successCount} / ${files.length}`;
-        bar.style.width = '100%'; percentText.innerText = '100%';
-        document.getElementById('up-file').value = '';
-        setTimeout(() => { container.style.display = 'none'; textContainer.style.display = 'none'; bar.style.width = '0%'; }, 3000);
-        loadVideoManage();
+    async function saveBindings() {
+        const inputs = document.querySelectorAll('#bind-tbody tr');
+        let mappings = [];
+        inputs.forEach(tr => { mappings.push({ sourceId: tr.querySelector('.bind-sid').value, sourceName: tr.querySelector('.bind-sid').dataset.name, localCategory: tr.querySelector('.bind-local').value }); });
+        await fetch(`${API}/api/admin/sites/${bindSiteId}/bind`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ mappings }) });
+        alert('保存成功'); document.getElementById('bind-panel').style.display = 'none';
+    }
+    async function startCollect() {
+        const id = document.getElementById('collect-site-select').value;
+        document.getElementById('collect-status').innerText = '采集中...';
+        const res = await fetch(`${API}/api/admin/collect/${id}`, { method: 'POST', headers: { 'x-admin-token': token } });
+        alert((await res.json()).message); document.getElementById('collect-status').innerText = '';
     }
 
-    function editVideo(id, name, cat) {
-        editType = 'video'; editTargetId = id;
-        document.getElementById('edit-title').innerText = '编辑视频';
-        document.getElementById('edit-form').innerHTML = `
-            <label>标题：</label><input type="text" id="ev-name" value="${name}" style="width:100%;margin-bottom:10px;">
-            <label>分类：</label><input type="text" id="ev-cat" value="${cat}" style="width:100%;">
-        `;
-        document.getElementById('edit-modal').style.display = 'flex';
-    }
-    async function delVideo(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadVideoManage(); }
-
-    async function submitEdit() {
-        if (editType === 'video') {
-            await fetch(`${API}/api/admin/videos/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: editTargetId, name: document.getElementById('ev-name').value, category: document.getElementById('ev-cat').value }) });
-            loadVideoManage();
-        } else if (editType === 'user') {
-            await fetch(`${API}/api/admin/users/balance`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ email: editTargetId, balance: document.getElementById('eu-bal').value }) });
-            loadUsers();
-        }
-        document.getElementById('edit-modal').style.display = 'none';
-    }
-
-    // ========== 配置与采集等其他 ==========
+    // ========== 配置 ==========
     async function loadConfig() {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('set-trc20').value = s.trc20 || '';
-        document.getElementById('set-preview-limit').value = s.videoPreviewLimit || 15;
-        document.getElementById('set-reg-limit').value = s.registeredPreviewLimit || 120;
-        document.getElementById('set-price').value = s.unlockPrice || 9.99;
         let opts = '<option value="all">全部加载</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         document.getElementById('set-hotCat').innerHTML = opts; document.getElementById('set-hotCat').value = s.hotCat || 'all';
         document.getElementById('set-recommendCat').innerHTML = opts; document.getElementById('set-recommendCat').value = s.recommendCat || 'all';
-        document.getElementById('cat-list').innerHTML = cats.map(c => `<tr><td>${c.name}</td><td><button class="btn-danger" onclick="delCat('${c.id}')">删除</button></td></tr>`).join('');
+
+        document.getElementById('hot-preview').value = s.hotConfig?.previewLimit || 15;
+        document.getElementById('hot-reg').value = s.hotConfig?.regLimit || 120;
+        document.getElementById('hot-price').value = s.hotConfig?.unlockPrice || 9.99;
+
+        document.getElementById('rec-preview').value = s.recommendConfig?.previewLimit || 15;
+        document.getElementById('rec-reg').value = s.recommendConfig?.regLimit || 120;
+        document.getElementById('rec-price').value = s.recommendConfig?.unlockPrice || 9.99;
     }
     async function saveSettings() {
-        await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({
+        const data = {
             trc20: document.getElementById('set-trc20').value,
             hotCat: document.getElementById('set-hotCat').value,
             recommendCat: document.getElementById('set-recommendCat').value,
-            videoPreviewLimit: Number(document.getElementById('set-preview-limit').value),
-            registeredPreviewLimit: Number(document.getElementById('set-reg-limit').value),
-            unlockPrice: Number(document.getElementById('set-price').value)
-        })});
+            hotConfig: {
+                previewLimit: Number(document.getElementById('hot-preview').value),
+                regLimit: Number(document.getElementById('hot-reg').value),
+                unlockPrice: Number(document.getElementById('hot-price').value)
+            },
+            recommendConfig: {
+                previewLimit: Number(document.getElementById('rec-preview').value),
+                regLimit: Number(document.getElementById('rec-reg').value),
+                unlockPrice: Number(document.getElementById('rec-price').value)
+            }
+        };
+        await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) });
         alert('保存成功');
     }
-    async function addCategory() { await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ action: 'add', name: document.getElementById('new-cat-name').value }) }); loadConfig(); }
-    async function delCat(id) { if(!confirm('确定?'))return; await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ action: 'delete', id }) }); loadConfig(); }
-    
+
+    // ========== 语言 ==========
     async function loadLangs() {
         const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
@@ -369,27 +278,26 @@
             <tr>
                 <td>${lang}</td>
                 <td><label class="switch"><input type="checkbox" ${enabled.includes(lang) ? 'checked' : ''} onchange="toggleLang('${lang}', this.checked)"><span class="slider"></span></label></td>
-                <td><button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button> <button class="btn-danger" onclick="delLang('${lang}')">删除</button></td>
+                <td>
+                    <button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>
+                    ${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button>` : ''}
+                    ${lang !== 'zh' ? `<button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}
+                </td>
             </tr>
         `).join('');
     }
     async function toggleLang(lang, isEnabled) {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         let en = s.enabledLangs || ['zh'];
-        if (isEnabled) { if(!en.includes(lang)) en.push(lang); }
-        else { en = en.filter(x => x !== lang); }
+        if (isEnabled) { if(!en.includes(lang)) en.push(lang); } else { en = en.filter(x => x !== lang); }
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) });
     }
     async function addLanguage() {
         const lang = document.getElementById('add-lang-select').value;
         await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) });
-        alert('添加成功'); loadLangs();
-    }
-    async function delLang(lang) {
-        if(!confirm('确定删除该语言？')) return;
-        await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
         loadLangs();
     }
+    async function delLang(lang) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadLangs(); }
     async function editLangData(lang) {
         editLang = lang; document.getElementById('edit-title').innerText = '编辑 ' + lang;
         document.getElementById('edit-content').value = '加载中...';
@@ -407,49 +315,61 @@
     }
     function saveKey() { localStorage.setItem('deepl_key', document.getElementById('deepl-key').value); alert('已保存'); }
     if(localStorage.getItem('deepl_key')) document.getElementById('deepl-key').value = localStorage.getItem('deepl_key');
-    async function translateMissing() {
+    async function translateLang(lang) {
         const key = localStorage.getItem('deepl_key');
-        if(!key) return alert('请先输入并保存 Key');
-        if(!confirm('确定一键翻译缺失语言吗？')) return;
-        const res = await fetch(`${API}/api/admin/translate-missing`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
+        if(!key) return alert('请先输入保存 API Key');
+        if(!confirm(`确定用中文翻译 ${lang} 吗？`)) return;
+        const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
         const d = await res.json();
-        alert(d.message); loadLangs();
+        alert(d.message || d.error); loadLangs();
     }
 
-    async function loadCollectData() {
-        const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('site-list').innerHTML = sites.map(s => `
-            <div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
-                <span>${s.name} (${s.url})</span>
-                <div><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div>
-            </div>
-        `).join('');
-        document.getElementById('collect-site-select').innerHTML = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    // ========== 视频与用户 ==========
+    async function loadVideoManage() {
+        const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        const vids = await (await fetch(`${API}/api/admin/videos`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('video-manage-list').innerHTML = vids.map(v => `<tr><td>${v.name}</td><td>${v.category}</td><td><button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></td></tr>`).join('');
     }
-    async function addSite() {
-        const name = document.getElementById('site-name').value;
-        const url = document.getElementById('site-url').value;
-        const type = document.getElementById('site-type').value;
-        await fetch(`${API}/api/admin/sites`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name, url, type }) });
-        loadCollectData();
+    async function uploadVideoBatch() {
+        const files = document.getElementById('up-file').files;
+        if(files.length === 0) return alert('请选择视频');
+        const baseName = document.getElementById('up-name').value.trim();
+        const category = document.getElementById('up-cat').value;
+        const container = document.getElementById('progress-container'), bar = document.getElementById('progress-bar'), textContainer = document.getElementById('progress-text'), statusText = document.getElementById('progress-status'), percentText = document.getElementById('progress-percent');
+        container.style.display = 'block'; textContainer.style.display = 'flex';
+        let successCount = 0;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i]; const title = baseName ? `${baseName}_${i+1}` : file.name;
+            statusText.innerText = `上传中 (${i+1}/${files.length}): ${title}`;
+            try {
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest(); const fd = new FormData();
+                    fd.append('video', file); fd.append('name', title); fd.append('category', category);
+                    xhr.open('POST', `${API}/api/admin/upload-video`, true); xhr.setRequestHeader('x-admin-token', token);
+                    xhr.upload.onprogress = (e) => { if (e.lengthComputable) { const percent = Math.round(((i / files.length) * 100) + ((e.loaded / e.total) * (100 / files.length))); bar.style.width = percent + '%'; percentText.innerText = percent + '%'; } };
+                    xhr.onload = () => { if (xhr.status === 200) resolve(); else reject(); };
+                    xhr.onerror = () => reject(); xhr.send(fd);
+                });
+                successCount++;
+            } catch(e) {}
+        }
+        statusText.innerText = `结束: 成功 ${successCount}/${files.length}`; bar.style.width = '100%'; percentText.innerText = '100%';
+        setTimeout(() => { container.style.display = 'none'; textContainer.style.display = 'none'; bar.style.width = '0%'; }, 3000);
+        document.getElementById('up-file').value = ''; loadVideoManage();
     }
-    async function startCollect() {
-        const id = document.getElementById('collect-site-select').value;
-        document.getElementById('collect-status').innerText = '采集中...';
-        const res = await fetch(`${API}/api/admin/collect/${id}`, { method: 'POST', headers: { 'x-admin-token': token } });
-        const data = await res.json();
-        alert(data.message || data.error);
-        document.getElementById('collect-status').innerText = '';
-    }
-    async function delSite(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCollectData(); }
+    async function delVideo(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadVideoManage(); }
 
+    async function loadUsers() {
+        const users = await (await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('user-list').innerHTML = users.map(u => `<tr><td>${u.email}</td><td>${u.name}</td><td>${u.balance || 0}</td></tr>`).join('');
+    }
     async function loadOrders() {
         const o = await (await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('order-list').innerHTML = o.map(x => `<tr><td>${x.id}</td><td>${x.amount}</td><td>${x.status}</td></tr>`).join('');
     }
 
-    loadCollectData();
-    loadUsers();
+    loadCollectData(); loadUsers();
 </script>
 </body>
 </html>
