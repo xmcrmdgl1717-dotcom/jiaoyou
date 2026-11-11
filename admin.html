@@ -17,7 +17,7 @@
         .content { flex: 1; overflow-y: auto; padding: 30px; }
         .tab { display: none; } .tab.active { display: block; }
         .card { background: #fff; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        h3 { margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
+        h3 { margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
         input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline:none; }
@@ -33,15 +33,21 @@
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
+        
         .progress-bar-container { display: none; width: 100%; height: 12px; background: #eee; border-radius: 6px; margin-top: 15px; overflow: hidden; }
         .progress-bar { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
         .progress-text { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 5px; }
+
+        /* 语言勾选网格 */
+        .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
+        .lang-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <div class="logo">CMS System</div>
         <div class="nav-item active" onclick="switchTab('tab-collect', this)">📥 采集视频</div>
+        <div class="nav-item" onclick="switchTab('tab-category', this)">🗂 视频分类管理</div>
         <div class="nav-item" onclick="switchTab('tab-config', this)">⚙️ 系统配置</div>
         <div class="nav-item" onclick="switchTab('tab-upload', this)">📤 视频上传管理</div>
         <div class="nav-item" onclick="switchTab('tab-i18n', this)">🌍 全局语言</div>
@@ -79,6 +85,24 @@
                 </div>
             </div>
 
+            <!-- 视频分类管理 (独立) -->
+            <div id="tab-category" class="tab">
+                <div class="card">
+                    <h3>添加分类</h3>
+                    <div class="flex">
+                        <input type="text" id="new-cat-name" placeholder="输入分类名称" style="flex:1;">
+                        <button onclick="addCategory()">确认添加</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>分类列表</h3>
+                    <table>
+                        <thead><tr><th>分类名称</th><th>操作</th></tr></thead>
+                        <tbody id="cat-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- 系统配置 -->
             <div id="tab-config" class="tab">
                 <div class="card">
@@ -93,7 +117,6 @@
                         <label>首页直播推荐分类：</label><select id="set-recommendCat"></select>
                     </div>
                 </div>
-                <!-- 独立配置区块 -->
                 <div class="flex" style="gap:20px; align-items: flex-start;">
                     <div class="card" style="flex:1;">
                         <h3>🔥 精彩视频 配置</h3>
@@ -112,7 +135,7 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px;">保存所有配置</button>
+                <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px; margin-top:15px;">保存所有配置</button>
             </div>
 
             <!-- 上传 -->
@@ -138,26 +161,33 @@
                     <div class="flex">
                         <input type="text" id="deepl-key" placeholder="输入 API Key" style="flex:1;">
                         <button onclick="saveKey()">保存</button>
+                        <button class="btn-secondary" onclick="translateAll()">一键翻译全部</button>
                     </div>
                 </div>
                 <div class="card">
                     <h3>语言字典管理</h3>
                     <div class="flex" style="margin-bottom:15px;">
-                        <select id="add-lang-select">
-                            <option value="en">🇺🇸 English</option><option value="vn">🇻🇳 Tiếng Việt</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option>
-                        </select>
-                        <button onclick="addLanguage()">添加语言</button>
+                        <button onclick="openLangModal()">➕ 添加国家语言</button>
                     </div>
-                    <table><thead><tr><th>语言</th><th>启用状态</th><th>操作</th></tr></thead><tbody id="lang-list"></tbody></table>
+                    <table><thead><tr><th>语言代码</th><th>启用状态</th><th>操作</th></tr></thead><tbody id="lang-list"></tbody></table>
                 </div>
             </div>
 
             <!-- 用户与订单 -->
-            <div id="tab-user" class="tab"><div class="card"><h3>用户列表</h3><table><tbody id="user-list"></tbody></table></div></div>
+            <div id="tab-user" class="tab">
+                <div class="card">
+                    <h3>用户列表</h3>
+                    <table>
+                        <thead><tr><th>用户ID</th><th>邮箱</th><th>昵称</th><th>余额</th><th>注册时间</th><th>操作</th></tr></thead>
+                        <tbody id="user-list"></tbody>
+                    </table>
+                </div>
+            </div>
             <div id="tab-order" class="tab"><div class="card"><h3>订单</h3><table><tbody id="order-list"></tbody></table></div></div>
         </div>
     </div>
 
+    <!-- 编辑字典弹窗 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -169,10 +199,53 @@
         </div>
     </div>
 
+    <!-- 编辑用户/分类弹窗 -->
+    <div id="generic-modal" class="modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <h3 id="gm-title">编辑</h3>
+            <div id="gm-content"></div>
+            <div style="margin-top:15px; text-align:right;">
+                <button class="btn-secondary" onclick="document.getElementById('generic-modal').style.display='none'">取消</button>
+                <button onclick="saveGeneric()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选择语言弹窗 -->
+    <div id="lang-modal" class="modal">
+        <div class="modal-box">
+            <h3>添加国家语言 (勾选后添加)</h3>
+            <div class="lang-grid" id="lang-grid"></div>
+            <div style="margin-top:15px; text-align:right;">
+                <button class="btn-secondary" onclick="document.getElementById('lang-modal').style.display='none'">取消</button>
+                <button onclick="confirmAddLangs()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const API = 'https://jiaoyouweb.onrender.com';
     const token = 'admin888';
     let editLang = '', bindSiteId = '';
+    let genericAction = '', genericId = '';
+
+    // 全部可选语言
+    const allLangs = [
+        { code: 'en', name: '🇺🇸 English (英语)' },
+        { code: 'vn', name: '🇻🇳 Tiếng Việt (越南语)' },
+        { code: 'es', name: '🇪🇸 Español (西班牙语)' },
+        { code: 'tr', name: '🇹🇷 Türkçe (土耳其语)' },
+        { code: 'id', name: '🇮🇩 Bahasa Indonesia (印尼语)' },
+        { code: 'ja', name: '🇯🇵 日本語 (日语)' },
+        { code: 'ko', name: '🇰🇷 한국어 (韩语)' },
+        { code: 'fr', name: '🇫🇷 Français (法语)' },
+        { code: 'de', name: '🇩🇪 Deutsch (德语)' },
+        { code: 'ru', name: '🇷🇺 Русский (俄语)' },
+        { code: 'pt', name: '🇵🇹 Português (葡萄牙语)' },
+        { code: 'it', name: '🇮🇹 Italiano (意大利语)' },
+        { code: 'ar', name: '🇸🇦 العربية (阿拉伯语)' },
+        { code: 'th', name: '🇹🇭 ไทย (泰语)' }
+    ];
 
     function switchTab(id, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -180,6 +253,7 @@
         document.getElementById(id).classList.add('active'); el.classList.add('active');
         document.getElementById('page-title').innerText = el.innerText.substring(2);
         if(id === 'tab-collect') loadCollectData();
+        if(id === 'tab-category') loadCategories();
         if(id === 'tab-config') loadConfig();
         if(id === 'tab-upload') loadVideoManage();
         if(id === 'tab-user') loadUsers();
@@ -187,7 +261,86 @@
         if(id === 'tab-order') loadOrders();
     }
 
-    // ========== 采集 ==========
+    // ========== 分类管理 (独立) ==========
+    async function loadCategories() {
+        const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('cat-list').innerHTML = cats.map(c => `
+            <tr>
+                <td>${c.name}</td>
+                <td>
+                    <button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button>
+                    <button class="btn-danger" onclick="delCategory('${c.id}')">删除</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    async function addCategory() {
+        const name = document.getElementById('new-cat-name').value.trim();
+        if(!name) return;
+        await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name }) });
+        document.getElementById('new-cat-name').value = '';
+        loadCategories();
+    }
+    function openEditCat(id, name) {
+        genericAction = 'cat'; genericId = id;
+        document.getElementById('gm-title').innerText = '编辑分类';
+        document.getElementById('gm-content').innerHTML = `<label>分类名称：</label><input type="text" id="gm-input" value="${name}" style="width:100%;">`;
+        document.getElementById('generic-modal').style.display = 'flex';
+    }
+    async function delCategory(id) {
+        if(!confirm('确定删除分类？')) return;
+        await fetch(`${API}/api/admin/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
+        loadCategories();
+    }
+
+    // ========== 用户管理 ==========
+    async function loadUsers() {
+        const users = await (await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } })).json();
+        document.getElementById('user-list').innerHTML = users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.email}</td>
+                <td>${u.name}</td>
+                <td style="color:green;font-weight:bold;">${u.balance}</td>
+                <td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
+                <td>
+                    <button class="btn-text" onclick="openEditUser('${u.id}', '${u.email}', '${u.name}', ${u.balance})">编辑</button>
+                    <button class="btn-danger" onclick="delUser('${u.id}')">删除</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    function openEditUser(id, email, name, balance) {
+        genericAction = 'user'; genericId = id;
+        document.getElementById('gm-title').innerText = '编辑用户';
+        document.getElementById('gm-content').innerHTML = `
+            <div style="margin-bottom:10px;"><label>昵称：</label><input type="text" id="gm-name" value="${name}" style="width:100%;"></div>
+            <div style="margin-bottom:10px;"><label>邮箱：</label><input type="text" id="gm-email" value="${email}" style="width:100%;"></div>
+            <div><label>余额 (USDT)：</label><input type="number" id="gm-balance" value="${balance}" style="width:100%;"></div>
+        `;
+        document.getElementById('generic-modal').style.display = 'flex';
+    }
+    async function delUser(id) {
+        if(!confirm('确定删除该用户？')) return;
+        await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
+        loadUsers();
+    }
+    async function saveGeneric() {
+        if (genericAction === 'cat') {
+            const name = document.getElementById('gm-input').value;
+            await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name }) });
+            loadCategories();
+        } else if (genericAction === 'user') {
+            const name = document.getElementById('gm-name').value;
+            const email = document.getElementById('gm-email').value;
+            const balance = document.getElementById('gm-balance').value;
+            await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name, email, balance }) });
+            loadUsers();
+        }
+        document.getElementById('generic-modal').style.display = 'none';
+    }
+
+    // ========== 采集与配置 ==========
     async function loadCollectData() {
         const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('site-list').innerHTML = sites.map(s => `
@@ -206,7 +359,6 @@
         loadCollectData();
     }
     async function delSite(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCollectData(); }
-    
     async function openBind(id) {
         bindSiteId = id; document.getElementById('bind-panel').style.display = 'block';
         const cats = await (await fetch(`${API}/api/admin/sites/${id}/categories`, { headers: { 'x-admin-token': token } })).json();
@@ -232,7 +384,6 @@
         alert((await res.json()).message); document.getElementById('collect-status').innerText = '';
     }
 
-    // ========== 配置 ==========
     async function loadConfig() {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
@@ -269,7 +420,7 @@
         alert('保存成功');
     }
 
-    // ========== 语言 ==========
+    // ========== 多语言 ==========
     async function loadLangs() {
         const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
@@ -292,11 +443,6 @@
         if (isEnabled) { if(!en.includes(lang)) en.push(lang); } else { en = en.filter(x => x !== lang); }
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) });
     }
-    async function addLanguage() {
-        const lang = document.getElementById('add-lang-select').value;
-        await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) });
-        loadLangs();
-    }
     async function delLang(lang) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadLangs(); }
     async function editLangData(lang) {
         editLang = lang; document.getElementById('edit-title').innerText = '编辑 ' + lang;
@@ -315,16 +461,55 @@
     }
     function saveKey() { localStorage.setItem('deepl_key', document.getElementById('deepl-key').value); alert('已保存'); }
     if(localStorage.getItem('deepl_key')) document.getElementById('deepl-key').value = localStorage.getItem('deepl_key');
+    
     async function translateLang(lang) {
         const key = localStorage.getItem('deepl_key');
-        if(!key) return alert('请先输入保存 API Key');
-        if(!confirm(`确定用中文翻译 ${lang} 吗？`)) return;
+        if(!key) return alert('请先保存 API Key');
+        if(!confirm(`确定翻译 ${lang} 吗？`)) return;
         const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
         const d = await res.json();
         alert(d.message || d.error); loadLangs();
     }
+    
+    async function translateAll() {
+        const key = localStorage.getItem('deepl_key');
+        if(!key) return alert('请先保存 API Key');
+        if(!confirm('确定翻译所有已启用的语言吗？')) return;
+        const res = await fetch(`${API}/api/admin/translate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
+        const d = await res.json();
+        alert(d.message || d.error); loadLangs();
+    }
 
-    // ========== 视频与用户 ==========
+    // 选择语言弹窗
+    async function openLangModal() {
+        const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
+        const grid = document.getElementById('lang-grid');
+        grid.innerHTML = allLangs.map(l => {
+            const exists = list.includes(l.code);
+            return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};">
+                <input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name} ${exists ? '(已添加)' : ''}
+            </label>`;
+        }).join('');
+        document.getElementById('lang-modal').style.display = 'flex';
+    }
+    async function confirmAddLangs() {
+        const checked = Array.from(document.querySelectorAll('#lang-grid input:checked')).map(cb => cb.value);
+        if(checked.length === 0) return;
+        
+        const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
+        let en = s.enabledLangs || ['zh'];
+        
+        for (const lang of checked) {
+            await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) });
+            if(!en.includes(lang)) en.push(lang);
+        }
+        await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) });
+        
+        document.getElementById('lang-modal').style.display = 'none';
+        loadLangs();
+    }
+
+    // ========== 视频与订单 ==========
     async function loadVideoManage() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -360,10 +545,6 @@
     }
     async function delVideo(id) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadVideoManage(); }
 
-    async function loadUsers() {
-        const users = await (await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('user-list').innerHTML = users.map(u => `<tr><td>${u.email}</td><td>${u.name}</td><td>${u.balance || 0}</td></tr>`).join('');
-    }
     async function loadOrders() {
         const o = await (await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('order-list').innerHTML = o.map(x => `<tr><td>${x.id}</td><td>${x.amount}</td><td>${x.status}</td></tr>`).join('');
