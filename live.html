@@ -50,18 +50,18 @@
   let allVideos = [], rendered = 0, isLoading = false, hasMore = false;
   const BATCH = 9;
   
-  let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
+  let currentConfig = { previewLimit: null, regLimit: null, price: null, trc20: '' };
   let hls = null, videoLimitHandler = null;
 
   async function fetchConfig() {
     try {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
-      currentConfig.previewLimit = Number(data.recommendConfig?.previewLimit) || 15;
-      currentConfig.regLimit = Number(data.recommendConfig?.regLimit) || 120;
-      currentConfig.price = Number(data.recommendConfig?.unlockPrice) || 9.99;
+      // 严格读取 recommendConfig
+      currentConfig.previewLimit = data.recommendConfig?.previewLimit ?? null;
+      currentConfig.regLimit = data.recommendConfig?.regLimit ?? null;
+      currentConfig.price = data.recommendConfig?.unlockPrice ?? null;
       currentConfig.trc20 = data.trc20 || '';
-      console.log("【直播推荐配置已加载】:", currentConfig);
     } catch(e) { console.warn('配置拉取失败'); }
   }
 
@@ -136,20 +136,26 @@
 
     const isLogin = !!localStorage.getItem('hiya_user');
     const maxTime = isLogin ? currentConfig.regLimit : currentConfig.previewLimit;
-    console.log(`当前状态: ${isLogin ? '已登录' : '未登录'}, 允许观看时长: ${maxTime} 秒`);
 
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
-    let isBlocked = false;
-    videoLimitHandler = () => {
-      if (videoEl.currentTime >= maxTime && !isBlocked) {
-        videoEl.pause(); isBlocked = true; showPaywall();
-      }
-      if (videoEl.currentTime < maxTime && isBlocked) {
-        isBlocked = false; limitMask.style.display = 'none'; videoEl.play();
-      }
-    };
-    videoEl.addEventListener('timeupdate', videoLimitHandler);
+    // 🔴 核心拦截逻辑
+    if (maxTime !== null && maxTime > 0) {
+      let isBlocked = false;
+      videoLimitHandler = () => {
+        if (videoEl.currentTime >= maxTime && !isBlocked) {
+          videoEl.pause(); 
+          isBlocked = true; 
+          showPaywall();
+        }
+        if (videoEl.currentTime < maxTime && isBlocked) {
+          isBlocked = false;
+          limitMask.style.display = 'none';
+          videoEl.play();
+        }
+      };
+      videoEl.addEventListener('timeupdate', videoLimitHandler);
+    }
   }
 
   function showPaywall() {
@@ -159,6 +165,13 @@
       limitMask.style.display = 'flex';
       return;
     }
+    
+    if (currentConfig.price === null) {
+      limitMask.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
+      limitMask.style.display = 'flex';
+      return;
+    }
+
     limitMask.innerHTML = `
       <h3>试看已结束</h3>
       <p>开通全集需支付 <strong style="color:#ff1a75;">${currentConfig.price} USDT</strong></p>
