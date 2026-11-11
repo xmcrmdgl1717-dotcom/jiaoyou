@@ -121,13 +121,16 @@
 </div>
 
 <script>
+    // 🔴 核心修改：这里填入你的后端 API 地址
+    const API_BASE = 'https://jiaoyouweb.onrender.com';
+    
     let token = localStorage.getItem('admin_token') || '';
     let currentBindSiteId = null;
 
     // ================= 登录/登出 =================
     function login() {
         const pwd = document.getElementById('admin-password').value;
-        fetch('/api/admin/login', {
+        fetch(`${API_BASE}/api/admin/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: pwd })
@@ -142,7 +145,7 @@
                 document.getElementById('login-error').textContent = data.error;
             }
         })
-        .catch(() => alert('登录请求失败，请检查后台服务是否启动'));
+        .catch(() => alert('登录请求失败，请检查后端服务是否已启动（冷启动可能需50秒）'));
     }
 
     function logout() {
@@ -162,7 +165,7 @@
 
     // ================= 资源站管理 =================
     function loadSites() {
-        fetch('/api/admin/sites', { headers: { 'x-admin-token': token } })
+        fetch(`${API_BASE}/api/admin/sites`, { headers: { 'x-admin-token': token } })
         .then(res => res.json())
         .then(sites => {
             const container = document.getElementById('site-list');
@@ -193,7 +196,7 @@
         const url = document.getElementById('site-url').value.trim();
         const type = document.getElementById('site-type').value;
         if (!name || !url) return alert('请填写名称和接口地址');
-        fetch('/api/admin/sites', {
+        fetch(`${API_BASE}/api/admin/sites`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ name, url, type })
@@ -208,7 +211,7 @@
 
     function deleteSite(id) {
         if (!confirm('确定删除该资源站？')) return;
-        fetch(`/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } })
+        fetch(`${API_BASE}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } })
         .then(() => loadSites());
     }
 
@@ -219,11 +222,11 @@
         const tbody = document.getElementById('bind-tbody');
         tbody.innerHTML = '<tr><td colspan="3">加载分类中...</td></tr>';
 
-        fetch(`/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } })
+        fetch(`${API_BASE}/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } })
         .then(res => res.json())
         .then(categories => {
-            if (!categories.length) {
-                tbody.innerHTML = '<tr><td colspan="3" style="color: #dc3545;">未获取到分类，请检查接口地址是否正确</td></tr>';
+            if (!categories.length || categories.error) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #dc3545;">未获取到分类，请检查接口地址是否正确 (${categories.error || ''})</td></tr>`;
                 return;
             }
             tbody.innerHTML = categories.map(c => `
@@ -253,7 +256,7 @@
             }
         });
         if (!mappings.length) return alert('请至少绑定一个分类');
-        fetch(`/api/admin/sites/${currentBindSiteId}/bind`, {
+        fetch(`${API_BASE}/api/admin/sites/${currentBindSiteId}/bind`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ mappings })
@@ -283,7 +286,7 @@
         status.textContent = '正在采集，请稍候...';
         result.textContent = '';
 
-        fetch(`/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } })
+        fetch(`${API_BASE}/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } })
         .then(res => res.json())
         .then(data => {
             if (data.error) {
@@ -304,7 +307,7 @@
 
     // ================= 已采集视频 =================
     function loadVideos() {
-        fetch('/api/admin/videos', { headers: { 'x-admin-token': token } })
+        fetch(`${API_BASE}/api/admin/videos`, { headers: { 'x-admin-token': token } })
         .then(res => res.json())
         .then(videos => {
             const container = document.getElementById('video-list');
