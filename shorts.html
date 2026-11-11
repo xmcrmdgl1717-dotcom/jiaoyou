@@ -50,20 +50,19 @@
   let allVideos = [], renderedIndex = 0, isLoading = false, hasMore = false, isInitialLoaded = false;
   const INITIAL_SIZE = 12, LOAD_MORE_SIZE = 9;
   
-  let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
+  let currentConfig = { previewLimit: null, regLimit: null, price: null, trc20: '' };
   let hls = null, videoLimitHandler = null;
 
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
       const data = await res.json();
-      // 严格读取数值配置
-      currentConfig.previewLimit = Number(data.hotConfig?.previewLimit) || 15;
-      currentConfig.regLimit = Number(data.hotConfig?.regLimit) || 120;
-      currentConfig.price = Number(data.hotConfig?.unlockPrice) || 9.99;
+      // 严格读取，如果是 null 就是 null
+      currentConfig.previewLimit = data.hotConfig?.previewLimit ?? null;
+      currentConfig.regLimit = data.hotConfig?.regLimit ?? null;
+      currentConfig.price = data.hotConfig?.unlockPrice ?? null;
       currentConfig.trc20 = data.trc20 || '';
-      console.log("【精彩视频配置已加载】:", currentConfig);
-    } catch(e) { console.warn('配置拉取失败，使用默认值'); }
+    } catch(e) { console.warn('配置拉取失败'); }
   }
 
   function parseUrl(urlStr) {
@@ -108,7 +107,7 @@
   }
 
   async function init() {
-    await fetchConfig(); // 先拉配置
+    await fetchConfig(); 
     try {
       const res = await fetch(`${API_BASE}/api/videos`);
       allVideos = await res.json();
@@ -144,29 +143,28 @@
     
     videoEl.play().catch(e => console.log('播放失败'));
 
-    // 每次播放时重新检查登录状态
     const isLogin = !!localStorage.getItem('hiya_user');
     const maxTime = isLogin ? currentConfig.regLimit : currentConfig.previewLimit;
-    console.log(`当前状态: ${isLogin ? '已登录' : '未登录'}, 允许观看时长: ${maxTime} 秒`);
 
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
-    let isBlocked = false;
-    videoLimitHandler = () => {
-      // 核心逻辑：只要当前时间超过了配置的 maxTime，立刻暂停并弹出遮罩
-      if (videoEl.currentTime >= maxTime && !isBlocked) {
-        videoEl.pause(); 
-        isBlocked = true; 
-        showPaywall();
-      }
-      // 如果用户往回拖拽进度条，退出了限制区，允许继续看
-      if (videoEl.currentTime < maxTime && isBlocked) {
-        isBlocked = false;
-        limitMask.style.display = 'none';
-        videoEl.play();
-      }
-    };
-    videoEl.addEventListener('timeupdate', videoLimitHandler);
+    // 🔴 核心拦截逻辑：只有 maxTime 存在且大于 0 才生效
+    if (maxTime !== null && maxTime > 0) {
+      let isBlocked = false;
+      videoLimitHandler = () => {
+        if (videoEl.currentTime >= maxTime && !isBlocked) {
+          videoEl.pause(); 
+          isBlocked = true; 
+          showPaywall();
+        }
+        if (videoEl.currentTime < maxTime && isBlocked) {
+          isBlocked = false;
+          limitMask.style.display = 'none';
+          videoEl.play();
+        }
+      };
+      videoEl.addEventListener('timeupdate', videoLimitHandler);
+    }
   }
 
   function showPaywall() {
@@ -177,6 +175,13 @@
       return;
     }
     
+    // 如果没配置金额，显示联系客服
+    if (currentConfig.price === null) {
+      limitMask.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
+      limitMask.style.display = 'flex';
+      return;
+    }
+
     limitMask.innerHTML = `
       <h3>试看已结束</h3>
       <p>开通全集需支付 <strong style="color:#ff1a75;">${currentConfig.price} USDT</strong></p>
