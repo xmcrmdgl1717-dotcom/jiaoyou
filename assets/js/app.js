@@ -11,48 +11,30 @@ const dictCache = new Map();
 let enDict = null;                
 
 const COUNTRY_TO_LANG = {
-  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh',
-  VN: 'vi',
-  ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es',
-  TR: 'tr',
-  ID: 'id',
-  US: 'en', GB: 'en', AU: 'en', CA: 'en'
+  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vi', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en'
 };
 
 async function resolveInitialLang() {
-  // 🔴 优先级 1: IP 定位
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const ipData = await ipRes.json();
     const countryCode = ipData.country_code; 
     if (countryCode && COUNTRY_TO_LANG[countryCode]) {
       const mappedLang = COUNTRY_TO_LANG[countryCode];
-      if (SUPPORTED.includes(mappedLang)) {
-        return mappedLang;
-      }
+      if (SUPPORTED.includes(mappedLang)) return mappedLang;
     }
-  } catch (e) {
-    console.warn('[i18n] IP 定位失败，尝试使用手机语言');
-  }
+  } catch (e) {}
 
-  // 🔴 优先级 2: 手机/浏览器语言
-  const cands = (navigator.languages && navigator.languages.length)
-    ? navigator.languages : [navigator.language || 'en'];
+  const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
-    if (SUPPORTED.includes(base)) {
-      return base;
-    }
+    if (SUPPORTED.includes(base)) return base;
   }
 
-  // 🔴 优先级 3: 手动选择 (localStorage)
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-  if (saved && SUPPORTED.includes(saved)) {
-    return saved;
-  }
+  if (saved && SUPPORTED.includes(saved)) return saved;
 
-  // 🔴 优先级 4: 默认兜底英文
   return 'en';
 }
 
@@ -64,10 +46,7 @@ async function loadDict(lang) {
     const dict = await res.json();
     dictCache.set(lang, dict);
     return dict;
-  } catch (err) {
-    console.warn(`未找到 ${lang}.json，回退到英文`);
-    return null;
-  }
+  } catch (err) { return null; }
 }
 
 function translate(dict, key) {
@@ -121,8 +100,7 @@ function initLangSelector() {
 
   langDropdown.querySelectorAll('.lang-option').forEach(opt => {
     opt.addEventListener('click', () => {
-      const selectedLang = opt.dataset.lang;
-      applyLang(selectedLang);
+      applyLang(opt.dataset.lang);
       langDropdown.style.display = 'none';
     });
   });
@@ -140,8 +118,7 @@ function initNavToggle() {
   const links = document.querySelector('.nav-links');
   if (!btn || !links) return;
   btn.addEventListener('click', () => {
-    const open = links.classList.toggle('is-open');
-    btn.setAttribute('aria-expanded', String(open));
+    links.classList.toggle('is-open');
   });
 }
 
@@ -175,6 +152,59 @@ async function loadHomeVideos() {
       `;
     }).join('');
   } catch (error) {}
+}
+
+/* ================= 🔴 新增：实时在线动态模拟 ================= */
+function initLiveStats() {
+  const countEl = document.getElementById('online-count');
+  const marqueeEl = document.getElementById('live-marquee');
+  const avatarsWrap = document.getElementById('live-avatars');
+  if (!countEl || !marqueeEl) return;
+
+  // 1. 在线人数跳动
+  let baseCount = Math.floor(Math.random() * 5000) + 8000; // 初始 8000~13000
+  countEl.textContent = baseCount.toLocaleString();
+  
+  setInterval(() => {
+    // 每次随机增加 1-5 个人
+    const increase = Math.floor(Math.random() * 5) + 1;
+    baseCount += increase;
+    countEl.textContent = baseCount.toLocaleString();
+  }, 3000);
+
+  // 2. 播报内容轮播
+  const cities = ['北京', '上海', '广州', '深圳', '成都', '杭州', '重庆', '武汉', '南京'];
+  const actions = [
+    '刚刚匹配了同城女生',
+    '成功开启了 1V1 私聊',
+    '给心动主播送出了礼物',
+    '通过了真人认证'
+  ];
+
+  function updateMarquee() {
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    const action = actions[Math.floor(Math.random() * actions.length)];
+    const phone = `1${Math.floor(Math.random() * 9) + 3}${Math.floor(Math.random() * 9)}****${Math.floor(Math.random() * 90) + 10}`;
+    
+    marqueeEl.style.opacity = 0; // 淡出
+    setTimeout(() => {
+      marqueeEl.textContent = `📢 ${city}用户 ${phone} ${action}`;
+      marqueeEl.style.opacity = 1; // 淡入
+    }, 300);
+  }
+  
+  updateMarquee();
+  setInterval(updateMarquee, 4000);
+
+  // 3. 头像轻微轮换效果
+  const avatars = avatarsWrap.querySelectorAll('img');
+  setInterval(() => {
+    const randomIndex = Math.floor(Math.random() * avatars.length);
+    avatars[randomIndex].style.opacity = '0.5';
+    setTimeout(() => {
+      avatars[randomIndex].style.opacity = '1';
+    }, 500);
+  }, 2000);
 }
 
 function renderAuthArea() {
@@ -396,7 +426,13 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', () => {
-  initI18n(); initNavToggle(); initAuthEvents(); initModalEvents(); renderAuthArea(); loadHomeVideos();
+  initI18n(); 
+  initNavToggle(); 
+  initAuthEvents(); 
+  initModalEvents(); 
+  renderAuthArea(); 
+  loadHomeVideos();
+  initLiveStats(); // 🔴 启动实时动态模拟
 
   const cModal = document.getElementById('customer-modal');
   if (cModal) {
