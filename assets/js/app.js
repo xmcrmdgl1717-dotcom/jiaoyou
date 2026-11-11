@@ -5,13 +5,15 @@ const API_BASE_URL = 'https://jiaoyouweb.onrender.com';
 let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '' };
 let currentVisitId = '';
 
-async function fetchGlobalConfig() {
+// 立即拉取配置并初始化 LiveChat
+(async function initEarlyConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
-        console.log('首页全局配置已加载:', globalConfig);
+        console.log('全局配置已加载:', globalConfig);
+        initLiveChat(); // 拿到配置立刻注入客服
     } catch(e) { console.warn('配置拉取失败'); }
-}
+})();
 
 async function trackVisit() {
     try {
@@ -29,11 +31,17 @@ async function trackVisit() {
 }
 
 // 动态加载 LiveChat 客服
-async function initLiveChat() {
-    if (!globalConfig.livechat_license) return; // 如果没配置则不加载
+function initLiveChat() {
+    if (!globalConfig || !globalConfig.livechat_license) return;
+    
+    const licenseId = String(globalConfig.livechat_license).trim();
+    if (!licenseId || isNaN(Number(licenseId))) {
+        console.warn('LiveChat License ID 格式错误:', licenseId);
+        return;
+    }
     
     window.__lc = window.__lc || {};
-    window.__lc.license = Number(globalConfig.livechat_license);
+    window.__lc.license = Number(licenseId);
     window.__lc.integration_name = "manual_channels";
     window.__lc.product_name = "livechat";
     (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
@@ -639,7 +647,6 @@ window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await trackVisit(); 
-  await fetchGlobalConfig(); 
   initI18n(); 
   initNavToggle(); 
   initAuthEvents(); 
@@ -649,7 +656,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadHomeVideos();
   loadRecommendVideos(); 
   initLiveStats(); 
-  initLiveChat(); // 加载客服
 
   const cModal = document.getElementById('customer-modal');
   if (cModal) {
