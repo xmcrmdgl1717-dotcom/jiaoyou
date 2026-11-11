@@ -1,13 +1,16 @@
 {
-  "name": "hiya-backend",
+  "name": "hiya-server",
   "version": "1.0.0",
+  "description": "Hiya Live Backend & Admin Server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "admin": "node admin-server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "xml2js": "^0.6.2"
   }
 }
