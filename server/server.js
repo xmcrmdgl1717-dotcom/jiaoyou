@@ -5,28 +5,42 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const PORT = 3000;
+// 🔴 关键修改：Render 会动态分配端口，必须使用 process.env.PORT
+const PORT = process.env.PORT || 3000; 
 const DB_FILE = path.join(__dirname, 'users.json');
 
 // 中间件
 app.use(cors()); // 允许前端跨域请求
 app.use(express.json()); // 解析 JSON 请求体
 
-// 初始化数据库文件
+// 初始化数据库文件（Render 免费版文件系统是临时的，重启会重置）
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([]));
 }
 
 // 读取用户数据
 function getUsers() {
-  const data = fs.readFileSync(DB_FILE);
-  return JSON.parse(data);
+  try {
+    const data = fs.readFileSync(DB_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
 }
 
 // 保存用户数据
 function saveUsers(users) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+  } catch (error) {
+    console.error('保存数据失败:', error);
+  }
 }
+
+// 测试接口 (防止 Render 根路径 404)
+app.get('/', (req, res) => {
+  res.send('Hiya Live Backend is Running!');
+});
 
 // 注册接口
 app.post('/api/register', async (req, res) => {
