@@ -1,5 +1,9 @@
 'use strict';
 
+/* ================= 核心配置区域 ================= */
+const API_BASE_URL = 'http://localhost:3000'; // 你的后端地址
+const MOCK_MODE = true; // 🔴 如果你还没启动 Node.js 后端，请保持为 true；如果后端已启动，请改为 false！
+
 /* ================= i18n ================= */
 const SUPPORTED = ['zh', 'en'];
 const RTL = new Set(['ar']);
@@ -45,7 +49,6 @@ async function applyLang(lang) {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n'));
     if (v != null) el.textContent = v;
-    else console.warn('[i18n] missing key:', el.getAttribute('data-i18n'));
   });
   document.querySelectorAll('[data-i18n-html]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n-html'));
@@ -185,10 +188,7 @@ function initModal() {
   });
 }
 
-/* ================= register flow (Real API) ================= */
-// 配置你的后端 API 地址（生产环境请改为真实域名）
-const API_BASE_URL = 'http://localhost:3000'; 
-
+/* ================= register flow (Real API / Mock) ================= */
 let submitting = false;
 
 function currentDict() {
@@ -235,7 +235,6 @@ function onSubmit(e) {
   const form = e.currentTarget;
   if (submitting) return;
   
-  // 浏览器原生格式校验
   if (!form.checkValidity()) { 
     form.reportValidity(); 
     return; 
@@ -244,7 +243,6 @@ function onSubmit(e) {
   const btn = form.querySelector('.modal-submit');
   const errorBox = form.querySelector('[data-form-error]');
   
-  // 收集数据
   const formData = new FormData(form);
   const data = {
     name: formData.get('name').trim(),
@@ -261,7 +259,17 @@ function onSubmit(e) {
   }
   submitting = true;
 
-  // 发送真实请求到后端
+  // 🟢 路径 A：开启模拟模式（如果你没有后端，直接走这里）
+  if (MOCK_MODE) {
+    setTimeout(() => {
+      submitting = false;
+      form.reset();
+      showView('complete');
+    }, 1000); // 假装请求了 1 秒钟
+    return;
+  }
+
+  // 🔴 路径 B：真实后端请求
   fetch(`${API_BASE_URL}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -270,21 +278,26 @@ function onSubmit(e) {
   .then(async (res) => {
     const result = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(result.error || 'Registration failed');
+      throw new Error(result.error || '注册失败');
     }
     return result;
   })
   .then(() => {
     submitting = false;
-    form.reset(); // 注册成功，清空表单
-    showView('complete'); // 展示成功界面
+    form.reset();
+    showView('complete');
   })
   .catch((err) => {
     submitting = false;
     btn.disabled = false;
     btn.textContent = getSubmitText(btn, 'modal.submit');
     if (errorBox) {
-      errorBox.textContent = err.message || '网络异常，请稍后重试';
+      // 友好的错误提示
+      let msg = err.message;
+      if (msg === 'Failed to fetch') {
+        msg = '网络请求失败。请确认：1. 后端是否已启动(npm start)；2. 浏览器是否拦截了 localhost。';
+      }
+      errorBox.textContent = msg;
       errorBox.style.display = 'block';
     }
   });
