@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CMS 管理后台</title>
     <style>
-        /* ======= 主题变量定义 ======= */
         :root {
             --primary: #ff6b9d;
             --bg-color: #f4f7f6;
@@ -16,8 +15,6 @@
             --sidebar-bg: #1a1a1a;
             --sidebar-text: #aaa;
             --sidebar-hover: #2a2a2a;
-            
-            /* 看板专属亮色 */
             --dash-card-bg: #ffffff;
             --dash-card-border: #e0e0e0;
             --dash-text: #333;
@@ -36,8 +33,6 @@
             --sidebar-bg: #1a1a1a;
             --sidebar-text: #aaa;
             --sidebar-hover: #2a2a2a;
-
-            /* 看板专属暗色 */
             --dash-card-bg: #1e1e2d;
             --dash-card-border: #2b2b40;
             --dash-text: #ffffff;
@@ -93,7 +88,6 @@
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: var(--bg-color); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; }
 
-        /* ======= 看板专属样式 ======= */
         .dashboard-stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .stat-card { background: var(--dash-card-bg); border: 1px solid var(--dash-card-border); border-radius: 8px; padding: 12px 15px; min-width: 120px; flex: 1; color: var(--dash-text); transition: background 0.3s, border-color 0.3s; }
         .stat-card .val { font-size: 20px; font-weight: bold; margin-top: 5px; }
@@ -149,14 +143,21 @@
         </div>
         <div class="content">
             
-            <!-- ================= 汇总看板 ================= -->
             <div id="tab-dashboard" class="tab">
                 <div class="dashboard-stats" id="dash-stats"></div>
                 
                 <div class="dash-filter-bar">
-                    <input type="date" id="f-start-date" title="开始日期">
-                    <span style="color:var(--dash-text-muted)">-</span>
-                    <input type="date" id="f-end-date" title="结束日期">
+                    <select id="f-time" onchange="handleTimeChange()">
+                        <option value="all">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="yesterday">昨天</option>
+                        <option value="7days">近7天</option>
+                        <option value="30days">近30天</option>
+                        <option value="custom">自定义日期</option>
+                    </select>
+                    <input type="date" id="f-start-date" style="display:none;">
+                    <span id="date-separator" style="display:none; color:var(--dash-text-muted)">-</span>
+                    <input type="date" id="f-end-date" style="display:none;">
                     
                     <select id="f-status"><option value="all">全部状态</option><option value="visiting">访问中</option><option value="pending">等待审核</option><option value="paid">已通过</option><option value="rejected">已拒绝</option></select>
                     <select id="f-device"><option value="all">全部设备</option><option value="苹果">苹果</option><option value="安卓">安卓</option><option value="桌面">桌面</option></select>
@@ -178,7 +179,6 @@
                 <div id="dash-list-container"></div>
             </div>
 
-            <!-- ================= 采集视频 ================= -->
             <div id="tab-collect" class="tab">
                 <div class="card">
                     <h3>资源站列表</h3>
@@ -205,7 +205,6 @@
                 </div>
             </div>
 
-            <!-- ================= 视频分类管理 ================= -->
             <div id="tab-category" class="tab">
                 <div class="card">
                     <h3>添加分类</h3>
@@ -220,12 +219,15 @@
                 </div>
             </div>
 
-            <!-- ================= 系统配置 ================= -->
             <div id="tab-config" class="tab">
                 <div class="card">
                     <h3>基础设置</h3>
                     <div class="flex" style="margin-bottom:15px;">
-                        <label>TRC20 接收地址：</label><input type="text" id="set-trc20" style="flex:1;">
+                        <label style="width: 130px;">TRC20 接收地址：</label><input type="text" id="set-trc20" style="flex:1;">
+                    </div>
+                    <div class="flex" style="margin-bottom:15px;">
+                        <label style="width: 130px;">LiveChat License ID：</label>
+                        <input type="text" id="set-livechat" placeholder="填入纯数字 License ID，留空则不启用客服" style="flex:1;">
                     </div>
                     <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
                         <label style="width: 130px;">首页精彩视频分类：</label><div id="set-hotCats-box" class="checkbox-group" style="flex:1;"></div>
@@ -266,7 +268,6 @@
                 <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px; margin-top:15px;">保存所有配置</button>
             </div>
 
-            <!-- ================= 视频上传管理 ================= -->
             <div id="tab-upload" class="tab">
                 <div class="card">
                     <h3>批量上传</h3>
@@ -282,7 +283,6 @@
                 <div class="card"><h3>视频列表</h3><table><tbody id="video-manage-list"></tbody></table></div>
             </div>
 
-            <!-- ================= 多语言管理 ================= -->
             <div id="tab-i18n" class="tab">
                 <div class="card">
                     <h3>DeepL API 设置</h3>
@@ -299,7 +299,6 @@
                 </div>
             </div>
 
-            <!-- ================= 用户管理 ================= -->
             <div id="tab-user" class="tab">
                 <div class="card">
                     <h3>用户列表</h3>
@@ -308,7 +307,6 @@
                 </div>
             </div>
 
-            <!-- ================= 订单管理 ================= -->
             <div id="tab-order" class="tab">
                 <div class="card">
                     <h3>订单管理</h3>
@@ -322,7 +320,6 @@
         </div>
     </div>
 
-    <!-- 弹窗集合 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -369,7 +366,6 @@
         </div>
     </div>
 
-    <!-- 修改密码弹窗 -->
     <div id="pwd-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3>修改后台密码</h3>
@@ -398,7 +394,6 @@
         { code: 'ar', name: '🇸🇦 العربية' }, { code: 'th', name: '🇹🇭 ไทย' }
     ];
 
-    // ================= 主题切换与状态保持 =================
     function toggleTheme() {
         const body = document.body;
         body.classList.toggle('dark-theme');
@@ -436,7 +431,6 @@
         if(id === 'tab-order') loadOrders();
     }
 
-    /* ================= 修改密码逻辑 ================= */
     function openPwdModal() {
         document.getElementById('old-pwd').value = '';
         document.getElementById('new-pwd').value = '';
@@ -465,7 +459,6 @@
         }
     }
 
-    /* ================= 汇总看板 ================= */
     async function loadDashboard() {
         const res = await fetch(`${API}/api/admin/dashboard`, { headers: { 'x-admin-token': token } });
         const data = await res.json();
@@ -486,7 +479,27 @@
         renderDashboardList();
     }
 
+    function handleTimeChange() {
+        const val = document.getElementById('f-time').value;
+        const startEl = document.getElementById('f-start-date');
+        const endEl = document.getElementById('f-end-date');
+        const sepEl = document.getElementById('date-separator');
+        
+        if (val === 'custom') {
+            startEl.style.display = 'inline-block';
+            endEl.style.display = 'inline-block';
+            sepEl.style.display = 'inline-block';
+        } else {
+            startEl.style.display = 'none';
+            endEl.style.display = 'none';
+            sepEl.style.display = 'none';
+        }
+        renderDashboardList();
+    }
+
     function resetDashFilters() {
+        document.getElementById('f-time').value = 'all';
+        handleTimeChange();
         document.getElementById('f-start-date').value = '';
         document.getElementById('f-end-date').value = '';
         document.getElementById('f-status').value = 'all';
@@ -515,6 +528,7 @@
     }
 
     function renderDashboardList() {
+        const fTime = document.getElementById('f-time').value;
         const startDate = document.getElementById('f-start-date').value;
         const endDate = document.getElementById('f-end-date').value;
         const fStatus = document.getElementById('f-status').value;
@@ -528,8 +542,20 @@
         const now = Date.now();
         let startTimestamp = 0;
         let endTimestamp = Infinity;
-        if (startDate) startTimestamp = new Date(startDate).setHours(0,0,0,0);
-        if (endDate) endTimestamp = new Date(endDate).setHours(23,59,59,999);
+
+        if (fTime === 'today') {
+            startTimestamp = new Date().setHours(0,0,0,0);
+        } else if (fTime === 'yesterday') {
+            startTimestamp = new Date(new Date().setDate(new Date().getDate() - 1)).setHours(0,0,0,0);
+            endTimestamp = new Date().setHours(0,0,0,0) - 1;
+        } else if (fTime === '7days') {
+            startTimestamp = now - 7 * 24 * 60 * 60 * 1000;
+        } else if (fTime === '30days') {
+            startTimestamp = now - 30 * 24 * 60 * 60 * 1000;
+        } else if (fTime === 'custom') {
+            if (startDate) startTimestamp = new Date(startDate).setHours(0,0,0,0);
+            if (endDate) endTimestamp = new Date(endDate).setHours(23,59,59,999);
+        }
 
         const filtered = dashData.filter(v => {
             if (v.enterTime < startTimestamp || v.enterTime > endTimestamp) return false;
@@ -556,7 +582,6 @@
             else if (v.status === 'paid') badgeHtml = '<span class="badge-tag paid">已通过</span>';
             else if (v.status === 'rejected') badgeHtml = '<span class="badge-tag rejected">已拒绝</span>';
 
-            // 审核按钮逻辑：如果是 pending 且有订单关联，显示通过/拒绝
             let actionHtml = '';
             if (v.status === 'pending' && v.orderId) {
                 actionHtml = `
@@ -567,7 +592,6 @@
                 actionHtml = `<span style="color:#f56c6c; font-size:12px;">无关联订单</span>`;
             }
 
-            // 订单信息展示
             let orderInfoHtml = '';
             if (v.orderId) {
                 orderInfoHtml = `<span style="color:#1890ff; font-size:12px; margin-left:10px;">[订单号: ${v.orderId}]</span>`;
@@ -617,7 +641,6 @@
 
     async function reviewDash(orderId, status) {
         if(!confirm(`确定要将该订单标记为 ${status === 'paid' ? '已通过' : '已拒绝'} 吗？`)) return;
-        
         const order = allOrders.find(o => o.id === orderId);
         if(!order) return alert('未找到关联订单信息，请刷新重试。');
 
@@ -653,7 +676,6 @@
         link.click();
     }
 
-    /* ================= 其它原有逻辑 ================= */
     async function loadCategories() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('cat-list').innerHTML = cats.map(c => `<tr><td>${c.name}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button><button class="btn-danger" onclick="delCategory('${c.id}')">删除</button></div></td></tr>`).join('');
@@ -674,6 +696,7 @@
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('set-trc20').value = s.trc20 || '';
+        document.getElementById('set-livechat').value = s.livechat_license || ''; // 加载 LiveChat 配置
         const renderCheckboxes = (boxId, selectedArr) => {
             document.getElementById(boxId).innerHTML = cats.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}</label>`).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
         };
@@ -698,6 +721,7 @@
         const getChecked = (boxId) => Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value);
         const data = {
             trc20: document.getElementById('set-trc20').value,
+            livechat_license: document.getElementById('set-livechat').value.trim(), // 提交 LiveChat 配置
             hotCats: getChecked('set-hotCats-box'), recommendCats: getChecked('set-recommendCats-box'), freeCats: getChecked('set-freeCats-box'),
             hotConfig: { previewLimit: getVal('hot-preview'), regLimit: getVal('hot-reg'), unlockPrice: getVal('hot-price') },
             recommendConfig: { previewLimit: getVal('rec-preview'), regLimit: getVal('rec-reg'), unlockPrice: getVal('rec-price') },
@@ -839,7 +863,6 @@
         document.getElementById('generic-modal').style.display = 'none';
     }
 
-    // 页面加载时，恢复标签页
     document.addEventListener('DOMContentLoaded', () => {
         const initTab = localStorage.getItem('admin_current_tab') || 'tab-collect';
         switchTab(initTab);
