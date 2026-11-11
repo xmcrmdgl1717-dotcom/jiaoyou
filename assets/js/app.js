@@ -1,8 +1,8 @@
 'use strict';
 
 /* ================= 核心配置区域 ================= */
-const API_BASE_URL = 'http://localhost:3000'; // 你的后端地址
-const MOCK_MODE = true; // 🔴 如果你还没启动 Node.js 后端，请保持为 true；如果后端已启动，请改为 false！
+const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; // 🔴 已修改为你的 Render 后端地址
+const MOCK_MODE = false; // 🔴 改为 false，关闭模拟模式，启用真实请求
 
 /* ================= i18n ================= */
 const SUPPORTED = ['zh', 'en'];
@@ -259,17 +259,17 @@ function onSubmit(e) {
   }
   submitting = true;
 
-  // 🟢 路径 A：开启模拟模式（如果你没有后端，直接走这里）
+  // 🟢 模拟模式（已关闭）
   if (MOCK_MODE) {
     setTimeout(() => {
       submitting = false;
       form.reset();
       showView('complete');
-    }, 1000); // 假装请求了 1 秒钟
+    }, 1000);
     return;
   }
 
-  // 🔴 路径 B：真实后端请求
+  // 🔴 真实后端请求 (发往 Render)
   fetch(`${API_BASE_URL}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -292,10 +292,10 @@ function onSubmit(e) {
     btn.disabled = false;
     btn.textContent = getSubmitText(btn, 'modal.submit');
     if (errorBox) {
-      // 友好的错误提示
       let msg = err.message;
       if (msg === 'Failed to fetch') {
-        msg = '网络请求失败。请确认：1. 后端是否已启动(npm start)；2. 浏览器是否拦截了 localhost。';
+        // 针对 Render 免费版休眠特性优化提示
+        msg = '网络请求失败。可能是服务器正在唤醒（需等待约50秒），请稍后重试。';
       }
       errorBox.textContent = msg;
       errorBox.style.display = 'block';
