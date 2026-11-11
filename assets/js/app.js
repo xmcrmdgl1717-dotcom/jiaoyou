@@ -2,6 +2,15 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
+let globalConfig = { hotConfig: {}, recommendConfig: {}, trc20: '' };
+
+async function fetchGlobalConfig() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/config`);
+        globalConfig = await res.json();
+        console.log('首页全局配置已加载:', globalConfig);
+    } catch(e) { console.warn('配置拉取失败'); }
+}
 
 /* ================= i18n 多语言逻辑 ================= */
 const SUPPORTED = ['zh', 'en', 'vn', 'es', 'tr', 'id'];
@@ -11,16 +20,10 @@ const dictCache = new Map();
 let enDict = null;                
 
 const COUNTRY_TO_LANG = {
-  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh',
-  VN: 'vn', 
-  ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es',
-  TR: 'tr',
-  ID: 'id',
-  US: 'en', GB: 'en', AU: 'en', CA: 'en'
+  CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en'
 };
 
 async function resolveInitialLang() {
-  // 1. IP 定位
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const ipData = await ipRes.json();
@@ -30,20 +33,14 @@ async function resolveInitialLang() {
       if (SUPPORTED.includes(mappedLang)) return mappedLang;
     }
   } catch (e) {}
-
-  // 2. 设备语言
   const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
     if (SUPPORTED.includes(base)) return base;
   }
-
-  // 3. 手动选择
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
   if (saved && SUPPORTED.includes(saved)) return saved;
-
-  // 4. 默认英文
   return 'en';
 }
 
@@ -67,7 +64,6 @@ function translate(dict, key) {
 async function applyLang(lang) {
   if (!SUPPORTED.includes(lang)) lang = 'en';
   if (!enDict) { try { enDict = await loadDict('en'); } catch (e) { enDict = {}; } }
-  
   let dict = await loadDict(lang);
   if (!dict) { dict = enDict; lang = 'en'; } 
 
@@ -99,16 +95,13 @@ function initLangSelector() {
   const langBtn = document.getElementById('lang-btn');
   const langDropdown = document.getElementById('lang-dropdown');
   if (!langBtn || !langDropdown) return;
-
   langBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
   });
-
   document.addEventListener('click', () => {
     if (langDropdown) langDropdown.style.display = 'none';
   });
-
   langDropdown.querySelectorAll('.lang-option').forEach(opt => {
     opt.addEventListener('click', () => {
       applyLang(opt.dataset.lang);
@@ -129,12 +122,10 @@ function initLiveStats() {
   const marqueeEl = document.getElementById('live-marquee');
   const avatarsWrap = document.getElementById('live-avatars');
   if (!countEl || !marqueeEl) return;
-
   if (statsTimer) clearInterval(statsTimer);
 
   let baseCount = Math.floor(Math.random() * 5000) + 8000; 
   countEl.textContent = baseCount.toLocaleString();
-  
   setInterval(() => {
     const increase = Math.floor(Math.random() * 5) + 1;
     baseCount += increase;
@@ -142,11 +133,9 @@ function initLiveStats() {
   }, 3000);
 
   const cities = ['北京', '上海', '广州', '深圳', '成都', '杭州', '重庆', '武汉', '南京'];
-  
   function updateMarquee() {
     const city = cities[Math.floor(Math.random() * cities.length)];
     const phone = `1${Math.floor(Math.random() * 9) + 3}${Math.floor(Math.random() * 9)}****${Math.floor(Math.random() * 90) + 10}`;
-    
     const dict = dictCache.get(document.documentElement.lang) || {};
     const actions = [
       translate(dict, 'stats.action1') || '刚刚匹配了同城女生',
@@ -156,16 +145,10 @@ function initLiveStats() {
     ];
     const action = actions[Math.floor(Math.random() * actions.length)];
     const template = translate(dict, 'stats.marquee') || '📢 {city}用户 {phone} {action}';
-    
     let text = template.replace('{city}', city).replace('{phone}', phone).replace('{action}', action);
-
     marqueeEl.style.opacity = 0; 
-    setTimeout(() => {
-      marqueeEl.textContent = text;
-      marqueeEl.style.opacity = 1;
-    }, 300);
+    setTimeout(() => { marqueeEl.textContent = text; marqueeEl.style.opacity = 1; }, 300);
   }
-  
   updateMarquee();
   statsTimer = setInterval(updateMarquee, 4000);
 
@@ -182,9 +165,7 @@ function initNavToggle() {
   const btn = document.querySelector('[data-nav-toggle]');
   const links = document.querySelector('.nav-links');
   if (!btn || !links) return;
-  btn.addEventListener('click', () => {
-    links.classList.toggle('is-open');
-  });
+  btn.addEventListener('click', () => { links.classList.toggle('is-open'); });
 }
 
 function parsePlayUrl(urlStr) {
@@ -210,6 +191,7 @@ async function loadHomeVideos() {
       const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
       return `
         <div class="hcard" data-register role="button" tabindex="0" 
+             data-config-type="hot" data-video-id="${v.id}"
              data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
           <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
           <span class="live">LIVE</span>
@@ -220,7 +202,7 @@ async function loadHomeVideos() {
   } catch (error) {}
 }
 
-// 🔴 新增：加载直播推荐
+// 加载直播推荐
 async function loadRecommendVideos() {
   const recommendRow = document.getElementById('index-recommend-list');
   if (!recommendRow) return;
@@ -234,6 +216,7 @@ async function loadRecommendVideos() {
       const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
       return `
         <div class="hcard" data-register role="button" tabindex="0" 
+             data-config-type="recommend" data-video-id="${v.id}"
              data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
           <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
           <span class="live">LIVE</span>
@@ -272,9 +255,7 @@ function renderAuthArea() {
     authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>`;
     const lang = document.documentElement.lang || 'zh';
     const dict = dictCache.get(lang) || enDict || {};
-    if (dict['nav.login']) {
-      authArea.querySelector('.login-btn').textContent = dict['nav.login'];
-    }
+    if (dict['nav.login']) authArea.querySelector('.login-btn').textContent = dict['nav.login'];
   }
 }
 
@@ -295,13 +276,9 @@ function initAuthEvents() {
 }
 
 let lastFocused = null, scrollY = 0, submitting = false;
-
 function showView(name) {
-  document.querySelectorAll('#register-modal .modal-view').forEach((v) => {
-    v.hidden = v.getAttribute('data-view') !== name;
-  });
+  document.querySelectorAll('#register-modal .modal-view').forEach((v) => { v.hidden = v.getAttribute('data-view') !== name; });
 }
-
 function openRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay) return;
@@ -314,7 +291,6 @@ function openRegisterModal() {
   document.body.style.position = 'fixed'; document.body.style.width = '100%';
 }
 window.openRegisterModal = openRegisterModal;
-
 function closeRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay || overlay.hidden) return;
@@ -398,83 +374,177 @@ function closeCustomerModal() {
   overlay.hidden = true; overlay.style.display = 'none';
 }
 
+/* ================= 首页视频播放与限制逻辑 ================= */
 let hls = null;
 let videoLimitHandler = null;
+let currentVideoId = null;
+
+function isVideoPurchased(vid) {
+  let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+  return purchased.includes(vid);
+}
+function markVideoPurchased(vid) {
+  let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+  if(!purchased.includes(vid)) { purchased.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(purchased)); }
+}
 
 function openVideoPlayer(card) {
   const playerModal = document.getElementById('video-player-modal');
   const videoEl = document.getElementById('video-player');
   const limitOverlay = document.getElementById('video-limit-overlay');
+  const progressFill = document.getElementById('video-progress-fill');
+  const timeText = document.getElementById('video-time-text');
+  const timePrice = document.getElementById('video-time-price');
+  
   if (!playerModal || !videoEl) return;
   
   const src = card.getAttribute('data-video-src');
-  const poster = card.getAttribute('data-video-poster');
-  const name = card.querySelector('.nm')?.textContent || '';
-  const meta = card.querySelector('.meta')?.textContent?.replace(/\s+/g, ' ').trim() || '';
-
+  const vid = card.getAttribute('data-video-id');
+  const configType = card.getAttribute('data-config-type') || 'hot';
+  
   if (!src) { alert('该视频暂未配置播放源'); return; }
 
-  document.getElementById('video-player-name').textContent = name;
-  document.getElementById('video-player-meta').textContent = meta;
-  
+  currentVideoId = vid;
   limitOverlay.style.display = 'none';
-
-  if (src.includes('.m3u8')) {
-    if (window.Hls && Hls.isSupported()) {
-      if (hls) { hls.destroy(); }
-      hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) { videoEl.src = src; }
-  } else {
-    videoEl.src = src;
-  }
-  
-  videoEl.poster = poster || '';
-  videoEl.load();
-
   playerModal.hidden = false; playerModal.style.display = 'flex';
   document.body.classList.add('modal-open');
-  document.body.style.position = 'fixed'; document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
 
+  if (src.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+    if (hls) { hls.destroy(); }
+    hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
+  } else { videoEl.src = src; }
+  
   videoEl.play().catch(() => {});
 
-  if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-  const isLoggedIn = !!localStorage.getItem('hiya_user');
+  const isLogin = !!localStorage.getItem('hiya_user');
+  const isPurchased = isVideoPurchased(vid);
+  
+  let configData = configType === 'recommend' ? globalConfig.recommendConfig : globalConfig.hotConfig;
+  let previewLimit = configData?.previewLimit ?? null;
+  let regLimit = configData?.regLimit ?? null;
+  let price = configData?.unlockPrice ?? null;
 
-  if (!isLoggedIn) {
-    videoLimitHandler = function() {
-      if (videoEl.currentTime >= 15 && limitOverlay.style.display !== 'flex') {
-        videoEl.pause();
-        limitOverlay.style.display = 'flex';
-      }
-    };
-    videoEl.addEventListener('timeupdate', videoLimitHandler);
+  let maxTime = isPurchased ? Infinity : (isLogin ? regLimit : previewLimit);
+
+  if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
+
+  if (isPurchased || maxTime === null || maxTime <= 0) {
+    timeText.innerText = "已解锁完整版";
+    timePrice.innerText = "";
+    progressFill.style.width = '0%';
+    progressFill.style.background = '#4ade80';
+  } else {
+    timeText.innerText = `试看剩余: ${maxTime} 秒`;
+    if (price !== null) timePrice.innerText = `解锁需 ${price} USDT`;
+    progressFill.style.width = '0%';
+    progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
   }
+
+  let isBlocked = false;
+  videoLimitHandler = () => {
+    const curTime = videoEl.currentTime;
+    if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
+      const remain = Math.max(0, maxTime - curTime);
+      timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
+      progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
+      
+      if (curTime >= maxTime) {
+        videoEl.pause(); 
+        isBlocked = true; 
+        showVideoPaywall(limitOverlay, vid, isLogin, price, globalConfig.trc20);
+      }
+    }
+    if (isBlocked && curTime < maxTime - 1) {
+      isBlocked = false; limitOverlay.style.display = 'none'; videoEl.play();
+    }
+  };
+  videoEl.addEventListener('timeupdate', videoLimitHandler);
+}
+
+function showVideoPaywall(overlay, vid, isLogin, price, trc20) {
+  if (!isLogin) {
+    overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
+    overlay.style.display = 'flex';
+    return;
+  }
+  
+  if (price === null) {
+    overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
+    overlay.style.display = 'flex';
+    return;
+  }
+
+  overlay.innerHTML = `
+    <h3>试看已结束</h3>
+    <p>开通全集需支付 <strong style="color:#ff1a75;">${price} USDT</strong></p>
+    <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
+    <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:15px; width:100%;">${trc20}</div>
+    <button onclick="generateHomeOrder('${vid}', ${price})" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">生成专属付款金额</button>
+    <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
+  `;
+  overlay.style.display = 'flex';
+}
+
+async function generateHomeOrder(vid, price) {
+  const btn = document.getElementById('gen-home-order-btn');
+  btn.disabled = true; btn.innerText = '生成中...';
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/orders/create`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseAmount: price })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    
+    document.getElementById('home-pay-detail').innerHTML = `
+      <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
+      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后联系客服</p>
+      <button onclick="mockHomePaySuccess('${vid}')" class="unlock-btn" style="background:#4ade80; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">【测试】立即解锁</button>
+    `;
+  } catch(e) {
+    alert('生成订单失败: ' + e.message);
+    btn.disabled = false; btn.innerText = '生成专属付款金额';
+  }
+}
+
+function mockHomePaySuccess(vid) {
+  markVideoPurchased(vid); 
+  alert('支付成功！已解锁该视频完整版');
+  document.getElementById('video-limit-overlay').style.display = 'none';
+  
+  document.getElementById('video-time-text').innerText = "已解锁完整版";
+  document.getElementById('video-time-price').innerText = "";
+  const fill = document.getElementById('video-progress-fill');
+  fill.style.width = '0%'; fill.style.background = '#4ade80';
+  
+  const videoEl = document.getElementById('video-player');
+  videoEl.currentTime = 0; videoEl.play();
 }
 
 function closeVideoPlayer() {
   const playerModal = document.getElementById('video-player-modal');
   const videoEl = document.getElementById('video-player');
   if (!playerModal || !videoEl) return;
-  
   if (hls) { hls.destroy(); hls = null; }
   if (videoLimitHandler) { videoEl.removeEventListener('timeupdate', videoLimitHandler); videoLimitHandler = null; }
-  
   videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
-  
   playerModal.hidden = true; playerModal.style.display = 'none';
   document.body.classList.remove('modal-open');
-  document.body.style.position = ''; document.body.style.width = '';
+  document.body.style.overflow = '';
 }
 window.closeVideoPlayer = closeVideoPlayer;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await fetchGlobalConfig(); // 先拉取配置
   initI18n(); 
   initNavToggle(); 
   initAuthEvents(); 
   initModalEvents(); 
   renderAuthArea(); 
   loadHomeVideos();
-  loadRecommendVideos(); // 🔴 调用新增的直播推荐加载
+  loadRecommendVideos(); 
   initLiveStats(); 
 
   const cModal = document.getElementById('customer-modal');
@@ -487,8 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (playerModal) {
     document.getElementById('video-close-btn').onclick = closeVideoPlayer;
     playerModal.onclick = (e) => { if (e.target === playerModal) closeVideoPlayer(); };
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !playerModal.hidden) closeVideoPlayer();
-    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !playerModal.hidden) closeVideoPlayer(); });
   }
 });
