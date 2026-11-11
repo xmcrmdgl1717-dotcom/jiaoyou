@@ -221,29 +221,43 @@
       <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
       <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:10px;">${currentConfig.trc20}</div>
       
-      <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%;">
-        <label style="display:block; margin-bottom:5px;">Telegram 账号：</label>
-        <input type="text" id="pay-tg" placeholder="请输入TG账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
-        <label style="display:block; margin-bottom:5px;">WhatsApp 账号：</label>
-        <input type="text" id="pay-wa" placeholder="请输入WhatsApp账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
-        <label style="display:block; margin-bottom:5px;">你的付款TRC20地址：</label>
-        <input type="text" id="pay-address" placeholder="请输入你付款的TRC20地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
-      </div>
-      
-      <button onclick="generateOrder()" id="gen-order-btn">提交付款信息</button>
+      <button onclick="showPayForm()" id="go-pay-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">我已转账，去填写凭证</button>
       <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
     `;
     limitMask.style.display = 'flex';
   }
 
+  window.showPayForm = function() {
+    limitMask.innerHTML = `
+      <h3>提交付款凭证</h3>
+      <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%;">
+        <label style="display:block; margin-bottom:5px; color:#aaa;">选择联系方式并填写：</label>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <select id="pay-contact-type" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+            <option value="Telegram">Telegram</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+          <input type="text" id="pay-contact-value" placeholder="输入账号" style="flex:2; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+        </div>
+        
+        <label style="display:block; margin-bottom:5px; color:#aaa;">你的付款TRC20地址：</label>
+        <input type="text" id="pay-address" placeholder="请输入你付款的TRC20地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+      </div>
+      
+      <button onclick="generateOrder()" id="gen-order-btn" style="margin-top:10px;">确认提交</button>
+      <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
+    `;
+  }
+
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
     
-    const tg = document.getElementById('pay-tg').value.trim();
-    const wa = document.getElementById('pay-wa').value.trim();
+    const cType = document.getElementById('pay-contact-type').value;
+    const cVal = document.getElementById('pay-contact-value').value.trim();
     const payAddress = document.getElementById('pay-address').value.trim();
+    const contact = cVal ? `${cType}: ${cVal}` : '';
 
-    if(!tg && !wa) return alert('请至少填写一种联系方式 (Telegram 或 WhatsApp)');
+    if(!cVal) return alert('请填写联系方式账号');
     if(!payAddress) return alert('请填写您的付款 TRC20 地址');
 
     btn.disabled = true; btn.innerText = '提交中...';
@@ -260,19 +274,19 @@
               userId: user.id, userName: user.name, userEmail: user.email, 
               videoId: currentVideoId, videoName: currentVideoName, configType: 'hot',
               visitId: sessionStorage.getItem('hiya_visit_id'),
-              contactTg: tg, contactWa: wa, payAddress: payAddress
+              contact: contact, payAddress: payAddress
           })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       document.getElementById('pay-detail').innerHTML = `
-        <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账完成后请联系客服，等待审核</p>
+        <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">提交成功！</p>
+        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">请等待客服审核，通过后即可观看</p>
         <button class="unlock-btn" onclick="mockPaySuccess()">【测试】我已支付，立即解锁</button>
       `;
     } catch(e) {
-      alert('生成订单失败: ' + e.message);
-      btn.disabled = false; btn.innerText = '提交付款信息';
+      alert('提交失败: ' + e.message);
+      btn.disabled = false; btn.innerText = '确认提交';
     }
   }
 
