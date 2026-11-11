@@ -41,12 +41,31 @@
         .action-btns { display: flex; gap: 8px; align-items: center; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; }
+
+        /* 看板专用样式 */
+        .dashboard-stats { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { flex: 1; min-width: 100px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; text-align: center; }
+        .stat-card .val { font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .stat-card .lbl { font-size: 12px; color: #666; }
+        .dashboard-filter { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .dashboard-filter select { min-width: 100px; }
+        .dash-list-item { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+        .dash-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .dash-body { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; color: #666; }
+        .dash-body span { display: inline-flex; align-items: center; gap: 4px; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #fff; }
+        .badge-visiting { background: #1890ff; }
+        .badge-registered { background: #52c41a; }
+        .badge-pending { background: #faad14; }
+        .badge-paid { background: #27ae60; }
+        .badge-rejected { background: #f5222d; }
     </style>
 </head>
 <body>
     <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="logo">CMS System</div>
+        <div class="nav-item" onclick="switchTab('tab-dashboard', this)">📊 汇总看板</div>
         <div class="nav-item active" onclick="switchTab('tab-collect', this)">📥 采集视频</div>
         <div class="nav-item" onclick="switchTab('tab-category', this)">🗂 视频分类管理</div>
         <div class="nav-item" onclick="switchTab('tab-config', this)">⚙️ 系统配置</div>
@@ -59,6 +78,33 @@
         <div class="header"><h2 id="page-title">采集视频</h2><button class="btn-secondary" onclick="location.reload()">退出</button></div>
         <div class="content">
             
+            <!-- ================= 汇总看板 ================= -->
+            <div id="tab-dashboard" class="tab">
+                <div class="dashboard-stats" id="dash-stats">
+                    <!-- 动态渲染 -->
+                </div>
+                <div class="dashboard-filter">
+                    <select id="dash-filter-status" onchange="renderDashboardList()">
+                        <option value="all">全部状态</option>
+                        <option value="visiting">访问中</option>
+                        <option value="registered">已注册</option>
+                        <option value="pending">等待审核</option>
+                        <option value="paid">已通过</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                    <select id="dash-filter-device" onchange="renderDashboardList()">
+                        <option value="all">全部设备</option>
+                        <option value="苹果">苹果</option>
+                        <option value="安卓">安卓</option>
+                        <option value="桌面">桌面</option>
+                    </select>
+                    <input type="text" id="dash-search" placeholder="搜索IP/账号/语言..." oninput="renderDashboardList()" style="flex:1;">
+                    <button onclick="loadDashboard()">刷新</button>
+                    <button class="btn-secondary" onclick="exportCSV()">导出 CSV</button>
+                </div>
+                <div id="dash-list-container" style="max-height: 600px; overflow-y: auto;"></div>
+            </div>
+
             <!-- ================= 采集视频 ================= -->
             <div id="tab-collect" class="tab active">
                 <div class="card">
@@ -104,7 +150,7 @@
                 </div>
             </div>
 
-            <!-- ================= 系统配置 (已改为多选并新增免费配置) ================= -->
+            <!-- ================= 系统配置 ================= -->
             <div id="tab-config" class="tab">
                 <div class="card">
                     <h3>基础设置</h3>
@@ -141,7 +187,6 @@
                             <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" placeholder="不填则提示联系客服">
                         </div>
                     </div>
-                    <!-- 新增：免费精选配置 -->
                     <div class="card" style="flex:1; min-width: 300px; border: 2px solid #4ade80;">
                         <h3 style="border-left-color: #4ade80;">🎁 免费精选 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
@@ -215,6 +260,7 @@
                             <tr>
                                 <th>订单 / 购买项目</th>
                                 <th>用户 (邮箱)</th>
+                                <th>联系方式 / 付款地址</th>
                                 <th>金额</th>
                                 <th>状态 / Hash</th>
                                 <th>时间 (创建 / 确认)</th>
@@ -280,7 +326,7 @@
     const token = 'admin888';
     let editLang = '', bindSiteId = '';
     let genericAction = '', genericId = '';
-    let allUsers = [], allOrders = [];
+    let allUsers = [], allOrders = [], dashData = [];
     let currentOrderId = '';
 
     const allLangs = [
@@ -296,6 +342,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active'); el.classList.add('active');
         document.getElementById('page-title').innerText = el.innerText.substring(2);
+        if(id === 'tab-dashboard') loadDashboard();
         if(id === 'tab-collect') loadCollectData();
         if(id === 'tab-category') loadCategories();
         if(id === 'tab-config') loadConfig();
@@ -303,6 +350,76 @@
         if(id === 'tab-user') loadUsers();
         if(id === 'tab-i18n') loadLangs();
         if(id === 'tab-order') loadOrders();
+    }
+
+    /* ================= 0. 汇总看板 ================= */
+    async function loadDashboard() {
+        const res = await fetch(`${API}/api/admin/dashboard`, { headers: { 'x-admin-token': token } });
+        const data = await res.json();
+        dashData = data.list;
+        const s = data.stats;
+        
+        document.getElementById('dash-stats').innerHTML = `
+            <div class="stat-card"><div class="lbl">总记录</div><div class="val">${s.total}</div></div>
+            <div class="stat-card"><div class="lbl">访问中</div><div class="val" style="color:#1890ff;">${s.visiting}</div></div>
+            <div class="stat-card"><div class="lbl">已注册</div><div class="val" style="color:#52c41a;">${s.registered}</div></div>
+            <div class="stat-card"><div class="lbl">等待审核</div><div class="val" style="color:#faad14;">${s.pending}</div></div>
+            <div class="stat-card"><div class="lbl">已通过</div><div class="val" style="color:#27ae60;">${s.paid}</div></div>
+            <div class="stat-card"><div class="lbl">已拒绝</div><div class="val" style="color:#f5222d;">${s.rejected}</div></div>
+            <div class="stat-card"><div class="lbl">苹果设备</div><div class="val">${s.deviceApple}</div></div>
+            <div class="stat-card"><div class="lbl">安卓设备</div><div class="val">${s.deviceAndroid}</div></div>
+            <div class="stat-card"><div class="lbl">桌面设备</div><div class="val">${s.deviceDesktop}</div></div>
+        `;
+        renderDashboardList();
+    }
+
+    function renderDashboardList() {
+        const statusFilter = document.getElementById('dash-filter-status').value;
+        const deviceFilter = document.getElementById('dash-filter-device').value;
+        const kw = document.getElementById('dash-search').value.toLowerCase();
+
+        const filtered = dashData.filter(v => {
+            const matchStatus = statusFilter === 'all' || v.status === statusFilter;
+            const matchDevice = deviceFilter === 'all' || v.device === deviceFilter;
+            const matchKw = !kw || v.ip.includes(kw) || (v.userEmail && v.userEmail.includes(kw)) || (v.userName && v.userName.includes(kw)) || v.lang.includes(kw);
+            return matchStatus && matchDevice && matchKw;
+        });
+
+        document.getElementById('dash-list-container').innerHTML = filtered.map(v => {
+            let statusText = '访问中', badgeClass = 'badge-visiting';
+            if(v.status === 'registered') { statusText = '已注册'; badgeClass = 'badge-registered'; }
+            else if(v.status === 'pending') { statusText = '等待审核'; badgeClass = 'badge-pending'; }
+            else if(v.status === 'paid') { statusText = '已通过'; badgeClass = 'badge-paid'; }
+            else if(v.status === 'rejected') { statusText = '已拒绝'; badgeClass = 'badge-rejected'; }
+
+            return `
+                <div class="dash-list-item">
+                    <div class="dash-header">
+                        <span>${v.ip} <span style="font-size:12px; font-weight:normal; color:#666;">(${v.userEmail || '未注册'})</span></span>
+                        <span class="badge ${badgeClass}">${statusText}</span>
+                    </div>
+                    <div class="dash-body">
+                        <span>🕒 ${new Date(v.time).toLocaleString()}</span>
+                        <span>💻 ${v.device} / ${v.os} / ${v.browser}</span>
+                        <span>🌐 语言: ${v.lang}</span>
+                        ${v.rechargeCount > 0 ? `<span style="color:#27ae60; font-weight:bold;">💰 累计充值: ${v.rechargeAmount.toFixed(2)} USDT (${v.rechargeCount}次)</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div style="text-align:center; color:#999; padding:20px;">暂无数据</div>';
+    }
+
+    function exportCSV() {
+        if(dashData.length === 0) return alert('暂无数据');
+        let csv = '\uFEFF时间,IP,状态,用户,邮箱,设备,系统,浏览器,语言,累计充值,充值次数\n';
+        dashData.forEach(v => {
+            csv += `"${new Date(v.time).toLocaleString()}","${v.ip}","${v.status}","${v.userName||''}","${v.userEmail||''}","${v.device}","${v.os}","${v.browser}","${v.lang}","${v.rechargeAmount}","${v.rechargeCount}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `dashboard_${Date.now()}.csv`;
+        link.click();
     }
 
     /* ================= 1. 视频分类管理 ================= */
@@ -330,7 +447,7 @@
         loadCategories();
     }
 
-    /* ================= 2. 系统配置 (多选支持) ================= */
+    /* ================= 2. 系统配置 ================= */
     async function loadConfig() {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
@@ -579,7 +696,7 @@
     }
     async function delUser(id) { if(!confirm('确定删除该用户？')) return; await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadUsers(); }
 
-    /* ================= 7. 订单管理 ================= */
+    /* ================= 7. 订单管理 (新增展示联系方式) ================= */
     async function loadOrders() {
         const res = await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } });
         allOrders = await res.json();
@@ -601,6 +718,11 @@
                 <td>
                     <div>${o.userName}</div>
                     <div style="color:#666; font-size:12px;">${o.userEmail}</div>
+                </td>
+                <td>
+                    <div style="font-size:12px;"><strong>TG:</strong> ${o.contactTg || '-'}</div>
+                    <div style="font-size:12px;"><strong>WA:</strong> ${o.contactWa || '-'}</div>
+                    <div style="font-size:12px; color:#1890ff;"><strong>付款地址:</strong> ${o.payAddress || '-'}</div>
                 </td>
                 <td style="color:red;font-weight:bold;font-size:15px;">${o.amount.toFixed(2)}</td>
                 <td>
