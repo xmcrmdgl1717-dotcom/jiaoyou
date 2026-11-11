@@ -418,7 +418,7 @@ function closeCustomerModal() {
   overlay.hidden = true; overlay.style.display = 'none';
 }
 
-/* ================= 首页视频播放与限制逻辑 ================= */
+/* ================= 首页视频播放与限制逻辑 (两步式) ================= */
 let hls = null;
 let videoLimitHandler = null;
 let currentVideoId = null;
@@ -516,49 +516,62 @@ function openVideoPlayer(card) {
   videoEl.addEventListener('timeupdate', videoLimitHandler);
 }
 
-// 拦截弹窗 - 新增表单
+// 第一步：展示地址与金额，点击“我已转账”去填写
 function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
   if (!isLogin) {
     overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
-    overlay.style.display = 'flex';
-    return;
+    overlay.style.display = 'flex'; return;
   }
-  
   if (price === null) {
     overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
-    overlay.style.display = 'flex';
-    return;
+    overlay.style.display = 'flex'; return;
   }
 
   overlay.innerHTML = `
     <h3>试看已结束</h3>
     <p>开通全集需支付 <strong style="color:#ff1a75;">${price} USDT</strong></p>
     <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
-    <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:10px; width:100%;">${trc20}</div>
+    <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:20px; width:100%;">${trc20}</div>
     
-    <div style="text-align:left; font-size:12px; margin-bottom:10px; width:100%;">
-      <label style="display:block; margin-bottom:5px;">Telegram 账号：</label>
-      <input type="text" id="pay-tg" placeholder="请输入TG账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
-      <label style="display:block; margin-bottom:5px;">WhatsApp 账号：</label>
-      <input type="text" id="pay-wa" placeholder="请输入WhatsApp账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
-      <label style="display:block; margin-bottom:5px;">你的付款TRC20地址：</label>
-      <input type="text" id="pay-address" placeholder="请输入你付款的TRC20地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
-    </div>
-    
-    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">提交付款信息</button>
+    <button onclick="showPayForm('${vid}', ${price}, '${configType}')" id="go-pay-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">我已转账，去填写凭证</button>
     <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
   `;
   overlay.style.display = 'flex';
 }
 
+// 第二步：下拉框+输入框
+window.showPayForm = function(vid, price, configType) {
+  const overlay = document.getElementById('video-limit-overlay');
+  overlay.innerHTML = `
+    <h3>提交付款凭证</h3>
+    <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%; max-width: 300px;">
+      <label style="display:block; margin-bottom:5px; color:#aaa;">选择联系方式并填写：</label>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <select id="pay-contact-type" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+          <option value="Telegram">Telegram</option>
+          <option value="WhatsApp">WhatsApp</option>
+        </select>
+        <input type="text" id="pay-contact-value" placeholder="输入账号" style="flex:2; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+      </div>
+      
+      <label style="display:block; margin-bottom:5px; color:#aaa;">你的付款TRC20地址：</label>
+      <input type="text" id="pay-address" placeholder="请输入你的付款地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+    </div>
+    
+    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">确认提交</button>
+    <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
+  `;
+}
+
 async function generateHomeOrder(vid, price, configType) {
   const btn = document.getElementById('gen-home-order-btn');
   
-  const tg = document.getElementById('pay-tg').value.trim();
-  const wa = document.getElementById('pay-wa').value.trim();
+  const cType = document.getElementById('pay-contact-type').value;
+  const cVal = document.getElementById('pay-contact-value').value.trim();
   const payAddress = document.getElementById('pay-address').value.trim();
+  const contact = cVal ? `${cType}: ${cVal}` : '';
 
-  if(!tg && !wa) return alert('请至少填写一种联系方式 (Telegram 或 WhatsApp)');
+  if(!cVal) return alert('请填写联系方式账号');
   if(!payAddress) return alert('请填写您的付款 TRC20 地址');
 
   btn.disabled = true; btn.innerText = '提交中...';
@@ -576,20 +589,20 @@ async function generateHomeOrder(vid, price, configType) {
             userId: user.id, userName: user.name, userEmail: user.email,
             videoId: vid, videoName: currentVideoName, configType: configType,
             visitId: currentVisitId || sessionStorage.getItem('hiya_visit_id'),
-            contactTg: tg, contactWa: wa, payAddress: payAddress
+            contact: contact, payAddress: payAddress
         })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     
     document.getElementById('home-pay-detail').innerHTML = `
-      <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账完成后请联系客服，等待审核</p>
+      <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">提交成功！</p>
+      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">请等待客服审核，通过后即可观看</p>
       <button onclick="mockHomePaySuccess('${vid}')" class="unlock-btn" style="background:#4ade80; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">【测试】立即解锁</button>
     `;
   } catch(e) {
-    alert('生成订单失败: ' + e.message);
-    btn.disabled = false; btn.innerText = '提交付款信息';
+    alert('提交失败: ' + e.message);
+    btn.disabled = false; btn.innerText = '确认提交';
   }
 }
 
@@ -621,7 +634,7 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await trackVisit(); // 记录访客
+  await trackVisit(); 
   await fetchGlobalConfig(); 
   initI18n(); 
   initNavToggle(); 
