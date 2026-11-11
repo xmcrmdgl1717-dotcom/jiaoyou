@@ -4,8 +4,8 @@
 const SUPPORTED = ['zh', 'en'];
 const RTL = new Set(['ar']);
 const LS_KEY = 'hiya_lang';
-const dictCache = new Map();      // lang -> {key: value}
-let enDict = null;                // 预加载的英文兜底字典
+const dictCache = new Map();
+let enDict = null;
 
 function resolveInitialLang() {
   let saved = null;
@@ -45,7 +45,6 @@ async function applyLang(lang) {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n'));
     if (v != null) el.textContent = v;
-    else console.warn('[i18n] missing key:', el.getAttribute('data-i18n'));
   });
   document.querySelectorAll('[data-i18n-html]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n-html'));
@@ -80,7 +79,6 @@ function initNavToggle() {
     const open = links.classList.toggle('is-open');
     btn.setAttribute('aria-expanded', String(open));
   });
-  // 点击菜单项后自动收起
   links.addEventListener('click', (e) => {
     if (e.target.tagName === 'A') {
       links.classList.remove('is-open');
@@ -97,13 +95,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initEntry();
     initModal();
   }
+  if (document.getElementById('player-modal')) {
+    initPlayer();
+  }
 });
 
 /* ================= entry delegation ================= */
 const NO_REGISTER = '[data-legal],[data-lang-select],[data-nav-toggle],.modal-overlay';
+
 function initEntry() {
   const trigger = (e) => {
     if (e.target.closest(NO_REGISTER)) return;
+
+    const playerHit = e.target.closest('[data-model]');
+    if (playerHit) {
+      e.preventDefault();
+      openPlayer(playerHit.getAttribute('data-model'));
+      return;
+    }
+
     const hit = e.target.closest('[data-register]');
     if (!hit) return;
     e.preventDefault();
@@ -113,14 +123,21 @@ function initEntry() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
     const el = e.target;
-    if (!el || !el.hasAttribute || !el.hasAttribute('data-register')) return;
+    if (!el || !el.hasAttribute) return;
     if (el.closest(NO_REGISTER)) return;
+
+    if (el.hasAttribute('data-model')) {
+      e.preventDefault();
+      openPlayer(el.getAttribute('data-model'));
+      return;
+    }
+    if (!el.hasAttribute('data-register')) return;
     e.preventDefault();
     openModal(el);
   });
 }
 
-/* ================= modal shell ================= */
+/* ================= register modal shell ================= */
 let lastFocused = null;
 let scrollY = 0;
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
@@ -179,15 +196,6 @@ function initModal() {
   });
   overlay.querySelector('[data-register-form]').addEventListener('submit', onSubmit);
   overlay.querySelector('[data-modal-cancel]').addEventListener('click', cancelWaiting);
-  overlay.addEventListener('focusout', () => {
-    setTimeout(() => {
-      if (overlay.hidden) return;
-      if (!overlay.contains(document.activeElement)) {
-        const dlg = overlay.querySelector('[data-modal-dialog]');
-        if (dlg) dlg.focus();
-      }
-    }, 0);
-  });
 }
 
 function onEscape() {
@@ -196,9 +204,9 @@ function onEscape() {
 }
 
 /* ================= register flow ================= */
-const WAIT_MS = 20000;   // 20 秒
+const WAIT_MS = 20000;
 const TIP_MS = 4500;
-const DONE_URL = 'https://abc.com';   // TODO: 生产环境请替换为真实的跳转地址
+const DONE_URL = 'https://abc.com';
 const DONE_REDIRECT_MS = 1000;
 let tickTimer = null;
 let tipTimer = null;
@@ -212,10 +220,6 @@ function currentDict() {
   return dictCache.get(lang) || enDict || {};
 }
 
-/**
- * 从字典取值。若字典尚未加载或缺少该 key，返回 fallback（默认 null）。
- * 特别注意：不再返回 key 本身，避免出现 "modal.submit" 这种原始 key 被渲染到按钮上。
- */
 function t(key, fallback) {
   const d = currentDict();
   if (Object.prototype.hasOwnProperty.call(d, key)) return d[key];
@@ -223,12 +227,6 @@ function t(key, fallback) {
   return fallback != null ? fallback : null;
 }
 
-/**
- * 获取按钮文案：
- * 1) 优先从当前语言字典读取；
- * 2) 字典缺失时，用按钮上的 data-default-{lang} 属性；
- * 3) 最后兜底到 HTML 里的默认中文文本。
- */
 function getSubmitText(btn, key) {
   const lang = document.documentElement.lang || 'zh';
   const dict = dictCache.get(lang);
@@ -300,13 +298,10 @@ function renderProgress() {
 function renderTip() {
   const tip = document.querySelector('#register-modal [data-tip]');
   if (!tip) return;
-  const txt = t('modal.tips.' + (tipIndex + 1), '');
-  tip.textContent = txt || '';
+  tip.textContent = t('modal.tips.' + (tipIndex + 1), '') || '';
 }
 
-function cancelWaiting() {
-  resetToForm();
-}
+function cancelWaiting() { resetToForm(); }
 
 function completeWaiting() {
   cleanupTimers();
@@ -323,4 +318,198 @@ function completeWaiting() {
 function cleanupTimers() {
   if (tickTimer) { window.clearInterval(tickTimer); tickTimer = null; }
   if (tipTimer) { window.clearInterval(tipTimer); tipTimer = null; }
+}
+
+/* ================= live player ================= */
+const API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || '';
+const PLAYER_TICK_MS = 200;
+
+let hlsInstance = null;
+let playerSession = null;
+
+function getPlayerEls() {
+  const modal = document.getElementById('player-modal');
+  if (!modal) return null;
+  return {
+    modal,
+    dialog: modal.querySelector('.player-dialog'),
+    video: modal.querySelector('#live-player'),
+    status: modal.querySelector('[data-player-status]'),
+    mask: modal.querySelector('#paywall-mask'),
+    badge: modal.querySelector('[data-trial-badge]'),
+    left: modal.querySelector('[data-trial-left]'),
+    payBtn: modal.querySelector('#pay-btn'),
+  };
+}
+
+function setPlayerStatus(text) {
+  const els = getPlayerEls();
+  if (!els) return;
+  if (text) {
+    els.status.textContent = text;
+    els.status.hidden = false;
+  } else {
+    els.status.hidden = true;
+  }
+}
+
+function updateTrialBadge(leftMs) {
+  const els = getPlayerEls();
+  if (!els || !els.left) return;
+  els.left.textContent = String(Math.max(0, Math.ceil(leftMs / 1000)));
+}
+
+function openPlayer(model) {
+  const els = getPlayerEls();
+  if (!els || !model) return;
+  els.modal.hidden = false;
+  els.mask.hidden = true;
+  els.badge.hidden = true;
+  document.body.classList.add('player-open');
+  setPlayerStatus(t('player.status.connecting', '正在连接主播…'));
+
+  startPlayback(model).catch((err) => {
+    console.warn('[player]', err);
+    setPlayerStatus(t('player.status.error', '主播当前未开播或连接失败，请稍后再试'));
+  });
+}
+
+async function startPlayback(model) {
+  const els = getPlayerEls();
+  if (!els) return;
+  cleanupPlayer();
+  // cleanupPlayer 会清空 hls/video，重新拿一次引用
+  const fresh = getPlayerEls();
+
+  const res = await fetch(`${API_BASE}/api/stream/${encodeURIComponent(model)}/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error('start http ' + res.status);
+
+  const data = await res.json();
+  if (!data || !data.playbackUrl) throw new Error('bad start payload');
+
+  setPlayerStatus('');
+  attachHls(fresh.video, data.playbackUrl);
+  beginTrial(Number(data.trialSeconds) || 20);
+}
+
+function attachHls(video, src) {
+  if (window.Hls && window.Hls.isSupported()) {
+    hlsInstance = new window.Hls({ lowLatencyMode: true, backBufferLength: 30 });
+    hlsInstance.loadSource(src);
+    hlsInstance.attachMedia(video);
+    hlsInstance.on(window.Hls.Events.ERROR, (_evt, data) => {
+      if (data && data.fatal) {
+        setPlayerStatus(t('player.status.error', '主播当前未开播或连接失败，请稍后再试'));
+      }
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = src;
+  } else {
+    setPlayerStatus(t('player.status.unsupported', '当前浏览器不支持该直播流'));
+    return;
+  }
+  const p = video.play();
+  if (p && typeof p.catch === 'function') p.catch(() => {});
+}
+
+function beginTrial(seconds) {
+  const els = getPlayerEls();
+  if (!els) return;
+
+  const limitMs = Math.max(1, seconds) * 1000;
+  let watchedMs = 0;
+  let lastTs = 0;
+
+  els.badge.hidden = false;
+  updateTrialBadge(limitMs);
+
+  const video = els.video;
+  const onPlaying = () => { lastTs = performance.now(); };
+  const onPause = () => { lastTs = 0; };
+  video.addEventListener('playing', onPlaying);
+  video.addEventListener('pause', onPause);
+
+  const timer = window.setInterval(() => {
+    if (video.paused || video.ended) {
+      lastTs = 0;
+      return;
+    }
+    const now = performance.now();
+    if (lastTs) watchedMs += now - lastTs;
+    lastTs = now;
+
+    updateTrialBadge(limitMs - watchedMs);
+    if (watchedMs >= limitMs) {
+      window.clearInterval(timer);
+      triggerPaywall();
+    }
+  }, PLAYER_TICK_MS);
+
+  playerSession = { timer, onPlaying, onPause };
+}
+
+function triggerPaywall() {
+  const els = getPlayerEls();
+  if (!els) return;
+  els.video.pause();
+  els.badge.hidden = true;
+  els.mask.hidden = false;
+  if (els.payBtn) els.payBtn.focus();
+}
+
+function cleanupPlayer() {
+  const els = getPlayerEls();
+  if (!els) return;
+
+  if (playerSession) {
+    window.clearInterval(playerSession.timer);
+    els.video.removeEventListener('playing', playerSession.onPlaying);
+    els.video.removeEventListener('pause', playerSession.onPause);
+    playerSession = null;
+  }
+  if (hlsInstance) {
+    try { hlsInstance.destroy(); } catch (e) {}
+    hlsInstance = null;
+  }
+  try { els.video.pause(); } catch (e) {}
+  els.video.removeAttribute('src');
+  try { els.video.load(); } catch (e) {}
+  els.mask.hidden = true;
+  els.badge.hidden = true;
+}
+
+function closePlayer() {
+  const els = getPlayerEls();
+  if (!els) return;
+  cleanupPlayer();
+  els.modal.hidden = true;
+  document.body.classList.remove('player-open');
+}
+
+function initPlayer() {
+  const els = getPlayerEls();
+  if (!els) return;
+
+  els.modal.querySelector('[data-player-close]').addEventListener('click', closePlayer);
+  els.modal.addEventListener('click', (e) => {
+    if (e.target === els.modal) closePlayer();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (els.modal.hidden) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closePlayer();
+    }
+  });
+
+  if (els.payBtn) {
+    els.payBtn.addEventListener('click', () => {
+      // TODO: 接入 CCBill / SegPay 托管支付页
+      // 流程：后端创建 session → 前端跳转 → 支付商 webhook → 后端签发新 token → 前端换源
+      alert('充值入口占位：请接入成人支付处理商后替换此逻辑');
+    });
+  }
 }
