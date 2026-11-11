@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>嗨呀直播</title>
 <link rel="stylesheet" href="assets/css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script>
+  // 后端地址：前后端同源时改成 ''，并让 nginx 把 /api/ 反代到 3001
+  window.__API_BASE__ = 'http://localhost:3001';
+</script>
 <script crossorigin src="https://m.e0z2rppyd551a2bv.net/js/spec-51la-ll.js?t=1772232"></script>
 </head>
 <body>
@@ -126,13 +131,13 @@
     <div class="more" data-i18n="hot.more" data-register role="button" tabindex="0">查看全部主播 ›</div>
   </div>
   <div class="hot-row">
-    <div class="hcard hc1" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">静怡</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card1.country">北京</span></span><span>🔥 12.4K</span></div></div></div>
-    <div class="hcard hc2" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">思颖</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card2.country">上海</span></span><span>🔥 9.8K</span></div></div></div>
-    <div class="hcard hc3" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">梦瑶</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card3.country">广州</span></span><span>🔥 8.6K</span></div></div></div>
-    <div class="hcard hc4" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">雅雯</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card4.country">成都</span></span><span>🔥 7.3K</span></div></div></div>
-    <div class="hcard hc5" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">佳琪</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card5.country">杭州</span></span><span>🔥 6.5K</span></div></div></div>
-    <div class="hcard hc6" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">婉婷</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card6.country">深圳</span></span><span>🔥 5.2K</span></div></div></div>
-    <div class="hcard hc7" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">语嫣</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card7.country">重庆</span></span><span>🔥 4.8K</span></div></div></div>
+    <div class="hcard hc1" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_1" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">静怡</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card1.country">北京</span></span><span>🔥 12.4K</span></div></div></div>
+    <div class="hcard hc2" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_2" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">思颖</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card2.country">上海</span></span><span>🔥 9.8K</span></div></div></div>
+    <div class="hcard hc3" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_3" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">梦瑶</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card3.country">广州</span></span><span>🔥 8.6K</span></div></div></div>
+    <div class="hcard hc4" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_4" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">雅雯</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card4.country">成都</span></span><span>🔥 7.3K</span></div></div></div>
+    <div class="hcard hc5" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_5" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">佳琪</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card5.country">杭州</span></span><span>🔥 6.5K</span></div></div></div>
+    <div class="hcard hc6" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_6" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">婉婷</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card6.country">深圳</span></span><span>🔥 5.2K</span></div></div></div>
+    <div class="hcard hc7" data-model="REPLACE_WITH_STRIPCHAT_USERNAME_7" role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">语嫣</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card7.country">重庆</span></span><span>🔥 4.8K</span></div></div></div>
   </div>
 
   <!-- ============ FOUR STEPS ============ -->
@@ -213,61 +218,85 @@
   </div>
 
 </div>
-  <div class="modal-overlay" id="register-modal" hidden>
-    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
-      <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
 
-      <section class="modal-view" data-view="form">
-        <h2 id="modal-title" data-i18n="modal.title">创建你的嗨呀直播账号</h2>
-        <form data-register-form novalidate>
-          <label class="modal-field">
-            <span data-i18n="modal.field.name">昵称</span>
-            <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
-            <small data-i18n="modal.field.name.hint">2–40 个字符</small>
-          </label>
-          <label class="modal-field">
-            <span data-i18n="modal.field.email">邮箱</span>
-            <input name="email" type="email" required autocomplete="email">
-          </label>
-          <label class="modal-field">
-            <span data-i18n="modal.field.password">密码</span>
-            <input name="password" type="password" required minlength="8" autocomplete="new-password">
-            <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
-          </label>
-          <label class="modal-agree">
-            <input name="agree" type="checkbox" required>
-            <span>
-              <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
-              <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
-              <span data-i18n="modal.field.agree.and">和</span>
-              <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
-            </span>
-          </label>
-          <button class="modal-submit" type="submit"
-                  data-i18n="modal.submit"
-                  data-default-zh="免费注册"
-                  data-default-en="Sign up free">免费注册</button>
-        </form>
-      </section>
+<!-- ============ Register modal ============ -->
+<div class="modal-overlay" id="register-modal" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
 
-      <section class="modal-view" data-view="waiting" hidden>
-        <div class="modal-spinner" aria-hidden="true"></div>
-        <h2 data-i18n="modal.waiting.title">正在为你搭建专属空间</h2>
-        <div class="modal-progress"><i data-progress-bar></i></div>
-        <p class="modal-remain" data-remain aria-live="polite">剩余 20 秒</p>
-        <p class="modal-tip" data-tip aria-live="polite"></p>
-        <button class="modal-cancel" type="button" data-modal-cancel data-i18n="modal.waiting.cancel">取消</button>
-        <small class="modal-cancel-note" data-i18n="modal.waiting.cancelNote">取消等待不会撤销已提交的注册信息。</small>
-      </section>
+    <section class="modal-view" data-view="form">
+      <h2 id="modal-title" data-i18n="modal.title">创建你的嗨呀直播账号</h2>
+      <form data-register-form novalidate>
+        <label class="modal-field">
+          <span data-i18n="modal.field.name">昵称</span>
+          <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
+          <small data-i18n="modal.field.name.hint">2–40 个字符</small>
+        </label>
+        <label class="modal-field">
+          <span data-i18n="modal.field.email">邮箱</span>
+          <input name="email" type="email" required autocomplete="email">
+        </label>
+        <label class="modal-field">
+          <span data-i18n="modal.field.password">密码</span>
+          <input name="password" type="password" required minlength="8" autocomplete="new-password">
+          <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
+        </label>
+        <label class="modal-agree">
+          <input name="agree" type="checkbox" required>
+          <span>
+            <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
+            <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
+            <span data-i18n="modal.field.agree.and">和</span>
+            <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
+          </span>
+        </label>
+        <button class="modal-submit" type="submit"
+                data-i18n="modal.submit"
+                data-default-zh="免费注册"
+                data-default-en="Sign up free">免费注册</button>
+      </form>
+    </section>
 
-      <section class="modal-view" data-view="complete" hidden>
-        <div class="modal-success" aria-hidden="true">✓</div>
-        <h2 data-i18n="modal.complete.title">欢迎来到嗨呀直播</h2>
-        <p data-i18n="modal.complete.desc">你的账号已准备就绪，立即进入吧。</p>
-        <a class="modal-enter" href="https://abc.com" data-i18n="modal.complete.cta">进入嗨呀直播</a>
-      </section>
+    <section class="modal-view" data-view="waiting" hidden>
+      <div class="modal-spinner" aria-hidden="true"></div>
+      <h2 data-i18n="modal.waiting.title">正在为你搭建专属空间</h2>
+      <div class="modal-progress"><i data-progress-bar></i></div>
+      <p class="modal-remain" data-remain aria-live="polite">剩余 20 秒</p>
+      <p class="modal-tip" data-tip aria-live="polite"></p>
+      <button class="modal-cancel" type="button" data-modal-cancel data-i18n="modal.waiting.cancel">取消</button>
+      <small class="modal-cancel-note" data-i18n="modal.waiting.cancelNote">取消等待不会撤销已提交的注册信息。</small>
+    </section>
+
+    <section class="modal-view" data-view="complete" hidden>
+      <div class="modal-success" aria-hidden="true">✓</div>
+      <h2 data-i18n="modal.complete.title">欢迎来到嗨呀直播</h2>
+      <p data-i18n="modal.complete.desc">你的账号已准备就绪，立即进入吧。</p>
+      <a class="modal-enter" href="https://abc.com" data-i18n="modal.complete.cta">进入嗨呀直播</a>
+    </section>
+  </div>
+</div>
+
+<!-- ============ Live player modal ============ -->
+<div class="modal-overlay" id="player-modal" hidden>
+  <div class="player-dialog" role="dialog" aria-modal="true" aria-label="直播播放器" tabindex="-1">
+    <button class="player-close" type="button" data-player-close aria-label="关闭">✕</button>
+    <div class="player-stage">
+      <video id="live-player" playsinline></video>
+      <div class="player-status" data-player-status hidden></div>
+      <div class="trial-badge" data-trial-badge hidden><span data-i18n="player.trial">试看</span> <b data-trial-left>20</b>s</div>
+      <div class="paywall-mask" id="paywall-mask" hidden>
+        <div class="paywall-card">
+          <div class="paywall-emoji" aria-hidden="true">🔒</div>
+          <h3 data-i18n="player.paywall.title">试看已结束</h3>
+          <p data-i18n="player.paywall.desc">充值后可继续观看该主播</p>
+          <button class="paywall-btn" type="button" id="pay-btn" data-i18n="player.paywall.cta">立即充值</button>
+          <small data-i18n="player.paywall.note">支付入口接入中</small>
+        </div>
+      </div>
     </div>
   </div>
+</div>
+
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
