@@ -30,7 +30,9 @@
         .bind-table th { background: #f8f9fa; }
         .bind-table input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .result-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
-        .hidden { display: none; }
+        
+        /* 修复：使用 !important 强制隐藏 */
+        .hidden { display: none !important; }
         .flex { display: flex; gap: 10px; align-items: center; }
         
         /* 弹窗样式 */
@@ -179,7 +181,6 @@
         });
     }
 
-    // 🔴 新增：查看绑定逻辑
     function viewBindings(siteId) {
         const site = currentSites.find(s => s.id === siteId);
         if (!site || !site.categories || site.categories.length === 0) {
@@ -251,7 +252,7 @@
             method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ mappings })
         }).then(res => res.json()).then(() => {
-            alert('分类绑定已保存！'); closeBindPanel(); loadSites(); // 刷新列表以更新缓存
+            alert('分类绑定已保存！'); closeBindPanel(); loadSites(); 
         });
     }
 
