@@ -56,8 +56,6 @@ async function applyLang(lang) {
   document.documentElement.dir = RTL.has(lang) ? 'rtl' : 'ltr';
   try { localStorage.setItem(LS_KEY, lang); } catch (e) {}
 
-  if (tickTimer) { lastRemainSec = -1; renderProgress(); renderTip(); }
-
   const sel = document.querySelector('[data-lang-select]');
   if (sel && sel.value !== lang) sel.value = lang;
 
@@ -147,7 +145,6 @@ function openModal(trigger) {
 function closeModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay || overlay.hidden) return;
-  cleanupTimers();
   overlay.hidden = true;
   document.body.classList.remove('modal-open');
   document.body.style.position = '';
@@ -173,11 +170,10 @@ function initModal() {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
   document.addEventListener('keydown', (e) => {
     if (overlay.hidden) return;
-    if (e.key === 'Escape') { e.preventDefault(); onEscape(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
     trapFocus(e);
   });
   overlay.querySelector('[data-register-form]').addEventListener('submit', onSubmit);
-  overlay.querySelector('[data-modal-cancel]').addEventListener('click', cancelWaiting);
   overlay.addEventListener('focusout', () => {
     setTimeout(() => {
       if (overlay.hidden) return;
@@ -189,22 +185,11 @@ function initModal() {
   });
 }
 
-function onEscape() {
-  const waiting = !document.querySelector('#register-modal .modal-view[data-view="waiting"]').hidden;
-  if (waiting) cancelWaiting(); else closeModal();
-}
+/* ================= register flow (Real API) ================= */
+// 配置你的后端 API 地址（生产环境请改为真实域名）
+const API_BASE_URL = 'http://localhost:3000'; 
 
-/* ================= register flow ================= */
-const WAIT_MS = 3000;   // 缩短为 3 秒，表示快速匹配
-const TIP_MS = 1000;    // 提示语 1 秒切换一次
-const DONE_URL = 'https://abc.com';   // TODO: 生产环境请替换为真实的跳转地址
-const DONE_REDIRECT_MS = 1000;
-let tickTimer = null;
-let tipTimer = null;
-let startedAt = 0;
-let tipIndex = 0;
 let submitting = false;
-let lastRemainSec = -1;
 
 function currentDict() {
   const lang = document.documentElement.lang || 'zh';
@@ -230,7 +215,6 @@ function getSubmitText(btn, key) {
 }
 
 function resetToForm() {
-  cleanupTimers();
   submitting = false;
   showView('form');
   const btn = document.querySelector('#register-modal .modal-submit');
@@ -239,77 +223,69 @@ function resetToForm() {
     const text = getSubmitText(btn, 'modal.submit');
     if (text != null) btn.textContent = text;
   }
+  const errorBox = document.querySelector('#register-modal [data-form-error]');
+  if (errorBox) {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
 }
 
 function onSubmit(e) {
   e.preventDefault();
   const form = e.currentTarget;
-  if (tickTimer) return;
   if (submitting) return;
-  if (!form.checkValidity()) { form.reportValidity(); return; }
+  
+  // 浏览器原生格式校验
+  if (!form.checkValidity()) { 
+    form.reportValidity(); 
+    return; 
+  }
 
   const btn = form.querySelector('.modal-submit');
+  const errorBox = form.querySelector('[data-form-error]');
+  
+  // 收集数据
+  const formData = new FormData(form);
+  const data = {
+    name: formData.get('name').trim(),
+    email: formData.get('email').trim(),
+    password: formData.get('password')
+  };
+
+  // UI 状态更新
   btn.disabled = true;
   btn.textContent = t('modal.submitting', '提交中…');
-
-  submitting = true;
-  window.setTimeout(() => {
-    if (document.getElementById('register-modal').hidden) return;
-    startWaiting();
-  }, 300);
-}
-
-function startWaiting() {
-  showView('waiting');
-  startedAt = Date.now();
-  lastRemainSec = -1;
-  submitting = false;
-  tipIndex = 0;
-  renderTip();
-  renderProgress();
-  tickTimer = window.setInterval(renderProgress, 100);
-  tipTimer = window.setInterval(() => { tipIndex = (tipIndex + 1) % 3; renderTip(); }, TIP_MS);
-}
-
-function renderProgress() {
-  const elapsed = Date.now() - startedAt;
-  const remain = Math.max(0, WAIT_MS - elapsed);
-  const bar = document.querySelector('#register-modal [data-progress-bar]');
-  const rem = document.querySelector('#register-modal [data-remain]');
-  if (bar) bar.style.width = Math.min(100, (elapsed / WAIT_MS) * 100) + '%';
-  const sec = Math.ceil(remain / 1000);
-  if (rem && sec !== lastRemainSec) {
-    lastRemainSec = sec;
-    const tpl = t('modal.waiting.remain', '剩余 {n} 秒');
-    rem.textContent = tpl.replace('{n}', String(sec));
+  if (errorBox) {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
   }
-  if (elapsed >= WAIT_MS) completeWaiting();
-}
+  submitting = true;
 
-function renderTip() {
-  const tip = document.querySelector('#register-modal [data-tip]');
-  if (!tip) return;
-  const txt = t('modal.tips.' + (tipIndex + 1), '');
-  tip.textContent = txt || '';
-}
-
-function cancelWaiting() {
-  resetToForm();
-}
-
-function completeWaiting() {
-  cleanupTimers();
-  showView('complete');
-  const enter = document.querySelector('#register-modal .modal-enter');
-  if (enter) enter.focus();
-  window.setTimeout(() => {
-    const view = document.querySelector('#register-modal .modal-view[data-view="complete"]');
-    if (!view || view.hidden) return;
-    window.location.href = DONE_URL;
-  }, DONE_REDIRECT_MS);
-}
-
-function cleanupTimers() {
-  if (tickTimer) { window.clearInterval(tickTimer); tickTimer = null; }
-  if (tipTimer) { window.clearInterval(tipTimer); tipTimer = null; }
+  // 发送真实请求到后端
+  fetch(`${API_BASE_URL}/api/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(async (res) => {
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(result.error || 'Registration failed');
+    }
+    return result;
+  })
+  .then(() => {
+    submitting = false;
+    form.reset(); // 注册成功，清空表单
+    showView('complete'); // 展示成功界面
+  })
+  .catch((err) => {
+    submitting = false;
+    btn.disabled = false;
+    btn.textContent = getSubmitText(btn, 'modal.submit');
+    if (errorBox) {
+      errorBox.textContent = err.message || '网络异常，请稍后重试';
+      errorBox.style.display = 'block';
+    }
+  });
 }
