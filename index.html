@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 🔴 视频试看结束遮罩 - 深度黑化+毛玻璃 */
+  /* 🔴 视频试看结束遮罩 */
   #video-limit-overlay {
     position: absolute; inset: 0;
     background: rgba(0, 0, 0, 0.96);
@@ -29,11 +29,79 @@
     color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
     font-size: 15px; font-weight: bold; cursor: pointer;
   }
+
+  /* 🔴 新增：实时在线动态条 */
+  .live-stats-bar {
+    margin-top: 12px;
+    background: linear-gradient(90deg, #fff5f9 0%, #ffeaf3 100%);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 20px rgba(255, 92, 157, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .live-avatars {
+    display: flex;
+    align-items: center;
+    flex: none;
+  }
+  .live-avatars img {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
+    margin-left: -10px;
+    transition: opacity 0.3s;
+  }
+  .live-avatars img:first-child { margin-left: 0; }
+  
+  .live-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .live-count {
+    font-size: 13px;
+    font-weight: 800;
+    color: #ff3d8b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .live-count span {
+    font-size: 16px;
+    color: #ff1a75;
+  }
+  .live-marquee {
+    font-size: 10px;
+    color: #9a9fb2;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.3s;
+  }
+  
+  .live-pulse-dot {
+    width: 8px; height: 8px;
+    background: #ff3d8b;
+    border-radius: 50%;
+    flex: none;
+    box-shadow: 0 0 0 0 rgba(255, 61, 139, 0.7);
+    animation: pulse-dot 1.5s infinite;
+  }
+  @keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 61, 139, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 61, 139, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 61, 139, 0); }
+  }
 </style>
 </head>
 <body>
 <div class="page">
-  <!-- ============ HERO WRAP ============ -->
+  <!-- ... (前面的 hero-wrap, fbar, dual, 精彩视频 保持原样，省略以节省空间) ... -->
   <div class="hero-wrap">
     <div class="nav">
       <div class="brand" data-register role="button" tabindex="0">
@@ -50,8 +118,6 @@
         <a data-i18n="nav.benefits" data-register role="button" tabindex="0">福利中心</a>
         <a data-i18n="nav.more">更多</a>
       </div>
-      
-      <!-- 自定义多语言下拉菜单 -->
       <div class="lang-wrap" id="lang-wrap">
         <button class="lang-btn" id="lang-btn" type="button" aria-label="Language">🌐</button>
         <div class="lang-dropdown" id="lang-dropdown" style="display: none;">
@@ -63,7 +129,6 @@
           <div class="lang-option" data-lang="id">🇮🇩 Bahasa Indonesia</div>
         </div>
       </div>
-
       <div id="auth-area" style="display:flex;align-items:center;">
          <a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>
       </div>
@@ -76,19 +141,16 @@
       <span class="heart h3p">💗</span>
       <span class="heart h4p">💜</span>
       <span class="heart h5p">💛</span>
-
       <div class="hero-content">
         <span class="badge-top" data-i18n="hero.badge" data-register role="button" tabindex="0">真实同城 ✨</span>
         <div class="h1" data-register role="button" tabindex="0"><span class="g-pink" data-i18n="hero.title1">同城心动</span><span class="navy" data-i18n="hero.title2">1V1交友</span></div>
         <div class="h-sub" data-i18n="hero.subtitle">真实认证 · 同城速配 · 遇见身边的心动</div>
-
         <div class="chips">
           <div class="chip"><span class="ic ic-orange">⚡</span><div><div class="t1" data-i18n="hero.chip1.t1">同城速配</div><div class="t2" data-i18n="hero.chip1.t2">距离优先</div></div></div>
           <div class="chip"><span class="ic ic-purple">🧠</span><div><div class="t1" data-i18n="hero.chip2.t1">1V1视频</div><div class="t2" data-i18n="hero.chip2.t2">独享私聊</div></div></div>
           <div class="chip"><span class="ic ic-blue">🛡️</span><div><div class="t1" data-i18n="hero.chip3.t1">真人认证</div><div class="t2" data-i18n="hero.chip3.t2">真实交友</div></div></div>
           <div class="chip"><span class="ic ic-gold">HD</span><div><div class="t1" data-i18n="hero.chip4.t1">隐私安全</div><div class="t2" data-i18n="hero.chip4.t2">加密保护</div></div></div>
         </div>
-
         <div class="promo">
           <div class="p-title" data-i18n="hero.promo.title">遇见身边的TA</div>
           <div class="p-usdt g-warm" data-i18n="hero.promo.amount">同城1V1</div>
@@ -98,7 +160,6 @@
           <div class="p-gift" data-register role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;font-size:60px;line-height:1">💖</div>
         </div>
       </div>
-
       <div class="live-panel">
         <h4 data-i18n="live.title">正在热播</h4>
         <div class="lp-row"><span class="lp-rank r1">1</span><img class="lp-av" src="assets/img/ava/ava1.webp" alt=""><div class="lp-info"><div class="lp-name">梓涵</div><div class="lp-cnt">🔥 12.8K</div></div></div>
@@ -158,6 +219,21 @@
     <div class="step" data-register role="button" tabindex="0"><span class="si ic-orange">💖<span class="snum">4</span></span><div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div></div>
   </div>
 
+  <!-- 🔴 新增：实时在线动态条 -->
+  <div class="live-stats-bar">
+    <div class="live-pulse-dot"></div>
+    <div class="live-avatars" id="live-avatars">
+      <!-- 用现有的头像占位，JS会定时轮播 -->
+      <img src="assets/img/ava/ava1.webp" alt="">
+      <img src="assets/img/ava/ava2.webp" alt="">
+      <img src="assets/img/ava/ava3.webp" alt="">
+    </div>
+    <div class="live-content">
+      <div class="live-count">🔥 当前 <span id="online-count">0</span> 人在线速配</div>
+      <div class="live-marquee" id="live-marquee">正在获取同城最新匹配动态...</div>
+    </div>
+  </div>
+
   <div class="cta">
     <div class="gift">💖</div>
     <div class="ctext">
@@ -168,6 +244,7 @@
   </div>
 
   <div class="footer">
+    <!-- ... 保持原样 ... -->
     <div class="f-top">
       <div class="f-brand">
         <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
@@ -184,7 +261,7 @@
   </div>
 </div>
 
-<!-- 弹窗区域 -->
+<!-- 弹窗等保持原样 -->
 <div class="modal-overlay" id="register-modal" hidden style="display: none;">
   <div class="modal-dialog" data-modal-dialog tabindex="-1">
     <button class="modal-close" type="button" data-modal-close data-i18n="modal.close">关闭</button>
@@ -237,14 +314,11 @@
   <div style="position: relative; width: 100%; max-width: 420px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
     <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 30; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button>
     <video id="video-player" controls autoplay playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000;"></video>
-    
-    <!-- 试看结束遮罩 -->
     <div id="video-limit-overlay">
       <h3>试看已结束</h3>
       <p>注册登录后可无限畅看完整版视频</p>
       <button onclick="window.closeVideoPlayer(); window.openRegisterModal();">免费注册 / 登录</button>
     </div>
-
     <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none; z-index: 10;">
       <div style="font-size: 18px; font-weight: 700;" id="video-player-name"></div>
       <div style="font-size: 12px; opacity: 0.7;" id="video-player-meta"></div>
