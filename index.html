@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>嗨呀直播</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+<script crossorigin src="https://m.e0z2rppyd551a2bv.net/js/spec-51la-ll.js?t=1772232"></script>
+</head>
+<body>
+<div class="page">
+<script>
+  // LaSDK 可能还没加载完（spec-51la-ll.js 是异步），等 window.load 再调用
+  window.addEventListener('load', function () {
+    if (window.LaSDK && typeof window.LaSDK.init === 'function') {
+      window.LaSDK.init({ report: 5 * 1000 });
+    }
+  });
+</script>
+  <!-- ============ HERO WRAP ============ -->
+  <div class="hero-wrap">
+
+    <!-- nav -->
+    <div class="nav">
+      <div class="brand" data-register role="button" tabindex="0">
+        <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
+        <div class="brand-sub" data-i18n="nav.subtitle">AI互动 心随我动</div>
+      </div>
+      <button class="nav-toggle" type="button" aria-label="菜单" aria-expanded="false" data-nav-toggle>☰</button>
+      <div class="nav-links">
+        <a class="active" data-i18n="nav.home">首页</a>
+        <a data-i18n="nav.live" data-register role="button" tabindex="0">直播</a>
+        <a data-i18n="nav.drama" data-register role="button" tabindex="0">AI剧场</a>
+        <a data-i18n="nav.rank" data-register role="button" tabindex="0">排行榜</a>
+        <a data-i18n="nav.community" data-register role="button" tabindex="0">社区</a>
+        <a data-i18n="nav.benefits" data-register role="button" tabindex="0">福利中心</a>
+        <a data-i18n="nav.more">更多</a>
+      </div>
+      <label class="lang" for="lang-select">
+        <span aria-hidden="true">🌐</span>
+        <select id="lang-select" data-lang-select aria-label="语言">
+          <option value="zh" selected>中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>
+    </div>
+
+    <!-- hero -->
+    <div class="hero">
+      <div class="arc"></div>
+      <span class="heart h1p">💗</span>
+      <span class="heart h2p">💛</span>
+      <span class="heart h3p">💗</span>
+      <span class="heart h4p">💜</span>
+      <span class="heart h5p">💛</span>
+
+      <div class="hero-content">
+        <span class="badge-top" data-i18n="hero.badge" data-register role="button" tabindex="0">全球首创 ✨</span>
+        <div class="h1" data-register role="button" tabindex="0"><span class="g-pink" data-i18n="hero.title1">AI心动</span><span class="navy" data-i18n="hero.title2">互动直播</span></div>
+        <div class="h-sub" data-i18n="hero.subtitle">实时互动·陪伴·个性·只为遇见心动的你</div>
+
+        <div class="chips">
+          <div class="chip"><span class="ic ic-orange">⚡</span><div><div class="t1" data-i18n="hero.chip1.t1">24/7在线</div><div class="t2" data-i18n="hero.chip1.t2">随时陪伴</div></div></div>
+          <div class="chip"><span class="ic ic-purple">🧠</span><div><div class="t1" data-i18n="hero.chip2.t1">智能AI互动</div><div class="t2" data-i18n="hero.chip2.t2">懂你所需</div></div></div>
+          <div class="chip"><span class="ic ic-blue">🛡️</span><div><div class="t1" data-i18n="hero.chip3.t1">隐私安全</div><div class="t2" data-i18n="hero.chip3.t2">多层保护</div></div></div>
+          <div class="chip"><span class="ic ic-gold">HD</span><div><div class="t1" data-i18n="hero.chip4.t1">高清流畅</div><div class="t2" data-i18n="hero.chip4.t2">顶级体验</div></div></div>
+        </div>
+
+        <div class="promo">
+          <div class="p-title" data-i18n="hero.promo.title">新用户专享福利</div>
+          <div class="p-usdt g-warm" data-i18n="hero.promo.amount">50 美元</div>
+          <div class="p-desc" data-i18n="hero.promo.desc">注册即送，无门槛领取</div>
+          <a class="p-btn" data-i18n="hero.promo.btn" data-register role="button" tabindex="0">免费注册领取奖励 ›</a>
+          <div class="p-note" data-i18n="hero.promo.note">注册20秒，奖励立即到账</div>
+          <div class="p-gift" data-register role="button" tabindex="0"><img src="assets/img/gifp.webp" alt=""></div>
+        </div>
+      </div>
+
+      <!-- Live Now -->
+      <div class="live-panel">
+        <h4 data-i18n="live.title">正在热播</h4>
+        <div class="lp-row"><span class="lp-rank r1">1</span><img class="lp-av" src="assets/img/ava/ava1.webp" alt=""><div class="lp-info"><div class="lp-name">梓涵</div><div class="lp-cnt">🔥 12.8K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r2">2</span><img class="lp-av" src="assets/img/ava/ava2.webp" alt=""><div class="lp-info"><div class="lp-name">欣怡</div><div class="lp-cnt">🔥 9.6K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r3">3</span><img class="lp-av" src="assets/img/ava/ava3.webp" alt=""><div class="lp-info"><div class="lp-name">雨桐</div><div class="lp-cnt">🔥 7.4K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r4">4</span><img class="lp-av" src="assets/img/ava/ava4.webp" alt=""><div class="lp-info"><div class="lp-name">诗琪</div><div class="lp-cnt">🔥 6.1K</div></div></div>
+        <div class="lp-more" data-i18n="live.more" data-register role="button" tabindex="0">更多人气主播 ›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FEATURE BAR ============ -->
+  <div class="fbar">
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">💬</span><div><div class="ft1" data-i18n="feat.1.t1">AI互动聊天</div><div class="ft2" data-i18n="feat.1.t2">与主播零距离</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">▶️</span><div><div class="ft1" data-i18n="feat.2.t1">免费高清直播</div><div class="ft2" data-i18n="feat.2.t2">高清流畅随心看</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">🎬</span><div><div class="ft1" data-i18n="feat.3.t1">AI短剧乐园</div><div class="ft2" data-i18n="feat.3.t2">沉浸剧情每日更新</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">🎁</span><div><div class="ft1" data-i18n="feat.4.t1">礼物打赏</div><div class="ft2" data-i18n="feat.4.t2">送礼物传心意</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">🔒</span><div><div class="ft1" data-i18n="feat.5.t1">安全私密</div><div class="ft2" data-i18n="feat.5.t2">加密保护隐私无忧</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
+  </div>
+
+  <!-- ============ TWO BIG CARDS ============ -->
+  <div class="dual">
+    <div class="dcard left" data-register>
+      <span class="tag live" data-i18n="card.live.tag">热门</span>
+      <h3 data-i18n="card.left.title">全球直播大厅</h3>
+      <p data-i18n="card.left.p1">与全球主播实时互动</p>
+      <p class="sub" data-i18n="card.left.p2">真实陪伴·聆听声音·分享生活</p>
+      <div class="avatars">
+        <img src="assets/img/ava/ava1.webp" alt=""><img src="assets/img/ava/ava2.webp" alt=""><img src="assets/img/ava/ava3.webp" alt=""><img src="assets/img/ava/ava4.webp" alt="">
+      </div>
+      <a class="d-btn" data-i18n="card.left.btn" data-register role="button" tabindex="0">进入直播大厅 ›</a>
+    </div>
+    <div class="dcard right" data-register>
+      <span class="tag new" data-i18n="card.new.tag">最新</span>
+      <h3 data-i18n="card.right.title">AI短剧乐园</h3>
+      <p data-i18n="card.right.p1">原创AI短剧精彩不断</p>
+      <p class="sub" data-i18n="card.right.p2">多元题材·沉浸体验·每日更新</p>
+      <a class="d-btn" data-i18n="card.right.btn" data-register role="button" tabindex="0">看AI短剧 ›</a>
+    </div>
+  </div>
+
+  <!-- ============ HOT PICKS ============ -->
+  <div class="sec-head">
+    <div class="st" data-i18n="hot.title">🔥 热门推荐</div>
+    <div class="more" data-i18n="hot.more" data-register role="button" tabindex="0">查看全部主播 ›</div>
+  </div>
+  <div class="hot-row">
+    <div class="hcard hc1" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">静怡</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card1.country">北京</span></span><span>🔥 12.4K</span></div></div></div>
+    <div class="hcard hc2" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">思颖</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card2.country">上海</span></span><span>🔥 9.8K</span></div></div></div>
+    <div class="hcard hc3" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">梦瑶</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card3.country">广州</span></span><span>🔥 8.6K</span></div></div></div>
+    <div class="hcard hc4" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">雅雯</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card4.country">成都</span></span><span>🔥 7.3K</span></div></div></div>
+    <div class="hcard hc5" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">佳琪</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card5.country">杭州</span></span><span>🔥 6.5K</span></div></div></div>
+    <div class="hcard hc6" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">婉婷</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card6.country">深圳</span></span><span>🔥 5.2K</span></div></div></div>
+    <div class="hcard hc7" data-register role="button" tabindex="0"><span class="live">LIVE</span><div class="ov"><div class="nm">语嫣</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card7.country">重庆</span></span><span>🔥 4.8K</span></div></div></div>
+  </div>
+
+  <!-- ============ FOUR STEPS ============ -->
+  <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启心动之旅</div></div>
+  <div class="steps-card">
+    <div class="step">
+      <span class="si ic-pink">🧑‍💻<span class="snum">1</span></span>
+      <div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，新人福利</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-purple">🛡️<span class="snum">2</span></span>
+      <div><div class="st1" data-i18n="steps.2.t1">等待验证</div><div class="st2" data-i18n="steps.2.t2a">安全验证，为您提供最佳体验</div><div class="st2" data-i18n="steps.2.t2b"></div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="timer"><i data-i18n="steps.timer">20秒</i></div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-blue">🎁<span class="snum">3</span></span>
+      <div><div class="st1" data-i18n="steps.3.t1">获得奖励</div><div class="st2" data-i18n="steps.3.t2a">完成注册</div><div class="st2" data-i18n="steps.3.t2b">领取50USDT</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step" data-register role="button" tabindex="0">
+      <span class="si ic-orange">▶️<span class="snum">4</span></span>
+      <div><div class="st1" data-i18n="steps.4.t1">开始体验</div><div class="st2" data-i18n="steps.4.t2a">畅享AI互动直播</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的主播</div></div>
+    </div>
+  </div>
+
+  <!-- ============ CTA ============ -->
+  <div class="cta">
+    <div class="gift">🎁</div>
+    <div class="ctext">
+      <div class="line1" data-i18n-html="cta.text">新用户注册立领 <b>50 USDT</b></div>
+      <div class="line2" data-i18n="cta.note">仅需20秒，奖励即时到账</div>
+    </div>
+    <a class="cbtn" data-i18n="cta.btn" data-register role="button" tabindex="0">注册领取 →</a>
+  </div>
+
+  <!-- ============ Footer ============ -->
+  <div class="footer">
+    <div class="f-top">
+      <div class="f-brand">
+        <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
+        <div class="brand-sub" data-i18n="footer.subtitle">AI互动 心随我动</div>
+        <div class="f-social">
+          <span>🐦</span><span>📷</span><span>🎵</span><span>✈️</span>
+        </div>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col1.title">关于我们</h5>
+        <a data-i18n="footer.col1.a1">关于嗨呀直播</a><a data-i18n="footer.col1.a2">联系我们</a><a data-i18n="footer.col1.a3">合作伙伴</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col2.title">帮助中心</h5>
+        <a data-i18n="footer.col2.a1">常见问题</a><a href="terms.html" data-i18n="footer.col2.a2" data-legal>使用条款</a><a href="privacy.html" data-i18n="footer.col2.a3" data-legal>隐私政策</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col3.title">社区</h5>
+        <a data-i18n="footer.col3.a1">社区准则</a><a data-i18n="footer.col3.a2">主播招募</a><a data-i18n="footer.col3.a3">举报中心</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col4.title">下载App</h5>
+        <div class="appbadge">🍎<span><span class="apptop">Download on the</span><b>App Store</b></span></div>
+        <div class="appbadge">▶<span><span class="apptop">GET IT ON</span><b>Google Play</b></span></div>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col5.title">安全支付</h5>
+        <div class="pay">
+          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="VISA"><rect width="48" height="30" rx="4" fill="#fff"/><text x="24" y="21" font-family="Arial,Helvetica,sans-serif" font-size="14" font-style="italic" font-weight="700" fill="#1a1f71" text-anchor="middle">VISA</text></svg>
+          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="Mastercard"><rect width="48" height="30" rx="4" fill="#fff"/><circle cx="20" cy="15" r="8" fill="#eb001b"/><circle cx="28" cy="15" r="8" fill="#f79e1b" fill-opacity=".9"/></svg>
+          <svg viewBox="0 0 60 30" width="50" height="25" aria-label="PayPal"><rect width="60" height="30" rx="4" fill="#fff"/><text x="30" y="20" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#003087">Pay<tspan fill="#009cde">Pal</tspan></text></svg>
+          <svg viewBox="0 0 30 30" width="25" height="25" aria-label="Crypto"><circle cx="15" cy="15" r="14" fill="#f7931a"/><text x="15" y="21" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">&#8383;</text></svg>
+        </div>
+        <div class="f-note"><span data-i18n="footer.age">🔞 仅限18岁以上用户</span><br><span data-i18n="footer.privacy">🔒 我们致力于保护您的隐私与数据安全</span></div>
+      </div>
+    </div>
+    <div class="copyright" data-i18n="footer.copyright">© 2026 嗨呀直播. 保留所有权利。</div>
+  </div>
+
+</div>
+  <div class="modal-overlay" id="register-modal" hidden>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
+      <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
+
+      <section class="modal-view" data-view="form">
+        <h2 id="modal-title" data-i18n="modal.title">创建你的嗨呀直播账号</h2>
+        <form data-register-form novalidate>
+          <label class="modal-field">
+            <span data-i18n="modal.field.name">昵称</span>
+            <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
+            <small data-i18n="modal.field.name.hint">2–40 个字符</small>
+          </label>
+          <label class="modal-field">
+            <span data-i18n="modal.field.email">邮箱</span>
+            <input name="email" type="email" required autocomplete="email">
+          </label>
+          <label class="modal-field">
+            <span data-i18n="modal.field.password">密码</span>
+            <input name="password" type="password" required minlength="8" autocomplete="new-password">
+            <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
+          </label>
+          <label class="modal-agree">
+            <input name="agree" type="checkbox" required>
+            <span>
+              <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
+              <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
+              <span data-i18n="modal.field.agree.and">和</span>
+              <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
+            </span>
+          </label>
+          <button class="modal-submit" type="submit"
+                  data-i18n="modal.submit"
+                  data-default-zh="免费注册"
+                  data-default-en="Sign up free">免费注册</button>
+        </form>
+      </section>
+
+      <section class="modal-view" data-view="waiting" hidden>
+        <div class="modal-spinner" aria-hidden="true"></div>
+        <h2 data-i18n="modal.waiting.title">正在为你搭建专属空间</h2>
+        <div class="modal-progress"><i data-progress-bar></i></div>
+        <p class="modal-remain" data-remain aria-live="polite">剩余 20 秒</p>
+        <p class="modal-tip" data-tip aria-live="polite"></p>
+        <button class="modal-cancel" type="button" data-modal-cancel data-i18n="modal.waiting.cancel">取消</button>
+        <small class="modal-cancel-note" data-i18n="modal.waiting.cancelNote">取消等待不会撤销已提交的注册信息。</small>
+      </section>
+
+      <section class="modal-view" data-view="complete" hidden>
+        <div class="modal-success" aria-hidden="true">✓</div>
+        <h2 data-i18n="modal.complete.title">欢迎来到嗨呀直播</h2>
+        <p data-i18n="modal.complete.desc">你的账号已准备就绪，立即进入吧。</p>
+        <a class="modal-enter" href="https://abc.com" data-i18n="modal.complete.cta">进入嗨呀直播</a>
+      </section>
+    </div>
+  </div>
+<script src="assets/js/app.js" defer></script>
+</body>
+</html>
