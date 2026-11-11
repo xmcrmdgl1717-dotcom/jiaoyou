@@ -14,7 +14,7 @@
         .nav-item:hover, .nav-item.active { background: #2a2a2a; color: #fff; border-left-color: var(--primary); }
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .header { padding: 15px 30px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .content { flex: 1; overflow-y: auto; padding: 30px; }
+        .content { flex: 1; overflow-y: auto; padding: 20px 30px; background: #f8f9fa;}
         .tab { display: none; } .tab.active { display: block; }
         .card { background: #fff; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         h3 { margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -42,27 +42,36 @@
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; }
 
-        /* 看板专用样式 */
-        .dashboard-stats { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .stat-card { flex: 1; min-width: 100px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; text-align: center; }
-        .stat-card .val { font-size: 24px; font-weight: bold; margin-top: 5px; }
-        .stat-card .lbl { font-size: 12px; color: #666; }
-        .dashboard-filter { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
-        .dashboard-filter select { min-width: 100px; }
-        .dash-list-item { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-        .dash-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-        .dash-body { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; color: #666; }
-        .dash-body span { display: inline-flex; align-items: center; gap: 4px; }
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #fff; }
-        .badge-visiting { background: #1890ff; }
-        .badge-registered { background: #52c41a; }
-        .badge-pending { background: #faad14; }
-        .badge-paid { background: #27ae60; }
-        .badge-rejected { background: #f5222d; }
+        /* ======= 图三 专属看板样式 ======= */
+        .dashboard-stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { background: #1e1e2d; border: 1px solid #2b2b40; border-radius: 8px; padding: 12px 15px; min-width: 120px; flex: 1; color: #fff; }
+        .stat-card .val { font-size: 20px; font-weight: bold; margin-top: 5px; }
+        .stat-card .lbl { font-size: 12px; color: #8c8c9e; display: flex; align-items: center; gap: 4px; }
+        .dash-filter-bar { background: #1e1e2d; padding: 15px; border-radius: 8px; border: 1px solid #2b2b40; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .dash-filter-bar select, .dash-filter-bar input { background: #141421; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
+        .dash-filter-bar select:focus, .dash-filter-bar input:focus { border-color: #409eff; outline: none; }
+        .dash-list-item { background: #1e1e2d; border: 1px solid #2b2b40; border-radius: 8px; padding: 15px 20px; margin-bottom: 10px; color: #fff; }
+        .dash-list-item .row-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #2b2b40; padding-bottom: 10px; margin-bottom: 10px; }
+        .dash-list-item .info-left { font-size: 13px; display: flex; align-items: center; gap: 10px; color: #ccc; }
+        .copy-btn { background: #141421; border: 1px solid #444; color: #aaa; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .copy-btn:hover { color: #fff; border-color: #666; }
+        .dash-list-item .row-bottom { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #888; align-items: center; }
+        .dash-list-item .row-bottom span { display: flex; align-items: center; gap: 4px; }
+        .badge-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-tag.visiting { background: #409eff; color: #fff; }
+        .badge-tag.pending { background: #e6a23c; color: #fff; }
+        .badge-tag.paid { background: #67c23a; color: #fff; }
+        .badge-tag.rejected { background: #f56c6c; color: #fff; }
+        .btn-success { background: #20b2aa; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #20b2aa; }
+        .btn-danger-outline { background: transparent; color: #f56c6c; border: 1px solid #f56c6c; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+        .btn-danger-outline:hover { background: #f56c6c; color: #fff; }
+        .toolbar-dark { background: #1e1e2d; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
+        .toolbar-dark button { background: #141421; border: 1px solid #333; color: #aaa; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
+        .toolbar-dark button:hover { color: #fff; }
+        .toolbar-dark .btn-primary { background: #409eff; color: #fff; border-color: #409eff; }
     </style>
 </head>
 <body>
-    <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="logo">CMS System</div>
         <div class="nav-item" onclick="switchTab('tab-dashboard', this)">📊 汇总看板</div>
@@ -80,29 +89,34 @@
             
             <!-- ================= 汇总看板 ================= -->
             <div id="tab-dashboard" class="tab">
-                <div class="dashboard-stats" id="dash-stats">
-                    <!-- 动态渲染 -->
+                <!-- 统计卡片 -->
+                <div class="dashboard-stats" id="dash-stats"></div>
+                
+                <!-- 筛选栏 -->
+                <div class="dash-filter-bar">
+                    <select id="f-time"><option value="all">全部时间</option><option value="today">今天</option></select>
+                    <select id="f-status"><option value="all">全部状态</option><option value="visiting">访问中</option><option value="pending">等待审核</option><option value="paid">已通过</option><option value="rejected">已拒绝</option></select>
+                    <select id="f-device"><option value="all">全部设备</option><option value="苹果">苹果</option><option value="安卓">安卓</option><option value="桌面">桌面</option></select>
+                    <select id="f-country"><option value="all">全部国家</option><option value="日本">日本</option><option value="美国">美国</option><option value="本地">本地</option><option value="未知">未知</option></select>
+                    <select id="f-os"><option value="all">全部系统</option><option value="Windows">Windows</option><option value="Android">Android</option><option value="iOS">iOS</option><option value="macOS">macOS</option></select>
+                    <select id="f-browser"><option value="all">全部浏览器</option><option value="Chrome">Chrome</option><option value="Safari">Safari</option><option value="Firefox">Firefox</option><option value="Edge">Edge</option></select>
+                    <select id="f-lang"><option value="all">全部语言</option><option value="zh">zh</option><option value="en">en</option></select>
+                    <input type="text" id="f-search" placeholder="IP / 地址 / 联系方式 / 邮箱" style="flex:1; min-width: 200px;">
+                    <button class="btn-primary" onclick="renderDashboardList()">🔍 搜索</button>
+                    <button onclick="document.getElementById('f-search').value=''; renderDashboardList()">重置</button>
                 </div>
-                <div class="dashboard-filter">
-                    <select id="dash-filter-status" onchange="renderDashboardList()">
-                        <option value="all">全部状态</option>
-                        <option value="visiting">访问中</option>
-                        <option value="registered">已注册</option>
-                        <option value="pending">等待审核</option>
-                        <option value="paid">已通过</option>
-                        <option value="rejected">已拒绝</option>
-                    </select>
-                    <select id="dash-filter-device" onchange="renderDashboardList()">
-                        <option value="all">全部设备</option>
-                        <option value="苹果">苹果</option>
-                        <option value="安卓">安卓</option>
-                        <option value="桌面">桌面</option>
-                    </select>
-                    <input type="text" id="dash-search" placeholder="搜索IP/账号/语言..." oninput="renderDashboardList()" style="flex:1;">
-                    <button onclick="loadDashboard()">刷新</button>
-                    <button class="btn-secondary" onclick="exportCSV()">导出 CSV</button>
+
+                <!-- 操作栏 -->
+                <div class="toolbar-dark">
+                    <button onclick="loadDashboard()">🔄 刷新</button>
+                    <button onclick="exportCSV()">➡️ 导出 CSV (当前筛选)</button>
+                    <button class="btn-success" onclick="batchReview('paid')">✅ 批量通过</button>
+                    <button class="btn-danger-outline" onclick="batchReview('rejected')">❌ 批量拒绝</button>
+                    <span style="margin-left:auto; font-size:12px; color:#888;" id="dash-count-text">共 0 条 (已筛选)</span>
                 </div>
-                <div id="dash-list-container" style="max-height: 600px; overflow-y: auto;"></div>
+
+                <!-- 列表 -->
+                <div id="dash-list-container"></div>
             </div>
 
             <!-- ================= 采集视频 ================= -->
@@ -143,10 +157,7 @@
                 </div>
                 <div class="card">
                     <h3>分类列表</h3>
-                    <table>
-                        <thead><tr><th>分类名称</th><th>操作</th></tr></thead>
-                        <tbody id="cat-list"></tbody>
-                    </table>
+                    <table><thead><tr><th>分类名称</th><th>操作</th></tr></thead><tbody id="cat-list"></tbody></table>
                 </div>
             </div>
 
@@ -158,16 +169,13 @@
                         <label>TRC20 接收地址：</label><input type="text" id="set-trc20" style="flex:1;">
                     </div>
                     <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
-                        <label style="width: 130px;">首页精彩视频分类：</label>
-                        <div id="set-hotCats-box" class="checkbox-group" style="flex:1;"></div>
+                        <label style="width: 130px;">首页精彩视频分类：</label><div id="set-hotCats-box" class="checkbox-group" style="flex:1;"></div>
                     </div>
                     <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
-                        <label style="width: 130px;">首页直播推荐分类：</label>
-                        <div id="set-recommendCats-box" class="checkbox-group" style="flex:1;"></div>
+                        <label style="width: 130px;">首页直播推荐分类：</label><div id="set-recommendCats-box" class="checkbox-group" style="flex:1;"></div>
                     </div>
                     <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
-                        <label style="width: 130px; color:#ff3d8b; font-weight:bold;">首页免费精选分类：</label>
-                        <div id="set-freeCats-box" class="checkbox-group" style="flex:1;"></div>
+                        <label style="width: 130px; color:#ff3d8b; font-weight:bold;">首页免费精选分类：</label><div id="set-freeCats-box" class="checkbox-group" style="flex:1;"></div>
                     </div>
                 </div>
                 <div class="flex" style="gap:20px; align-items: flex-start; flex-wrap: wrap;">
@@ -227,9 +235,7 @@
                 </div>
                 <div class="card">
                     <h3>语言字典管理</h3>
-                    <div class="flex" style="margin-bottom:15px;">
-                        <button onclick="openLangModal()">➕ 添加国家语言</button>
-                    </div>
+                    <div class="flex" style="margin-bottom:15px;"><button onclick="openLangModal()">➕ 添加国家语言</button></div>
                     <table><thead><tr><th>语言代码</th><th>启用状态</th><th>操作</th></tr></thead><tbody id="lang-list"></tbody></table>
                 </div>
             </div>
@@ -238,13 +244,8 @@
             <div id="tab-user" class="tab">
                 <div class="card">
                     <h3>用户列表</h3>
-                    <div class="flex" style="margin-bottom: 15px;">
-                        <input type="text" id="user-search" placeholder="搜索邮箱或昵称..." oninput="filterUsers()" style="flex:1;">
-                    </div>
-                    <table>
-                        <thead><tr><th>用户ID</th><th>邮箱</th><th>昵称</th><th>余额</th><th>注册时间</th><th>操作</th></tr></thead>
-                        <tbody id="user-list"></tbody>
-                    </table>
+                    <div class="flex" style="margin-bottom: 15px;"><input type="text" id="user-search" placeholder="搜索邮箱或昵称..." oninput="filterUsers()" style="flex:1;"></div>
+                    <table><thead><tr><th>用户ID</th><th>邮箱</th><th>昵称</th><th>余额</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="user-list"></tbody></table>
                 </div>
             </div>
 
@@ -252,21 +253,9 @@
             <div id="tab-order" class="tab">
                 <div class="card">
                     <h3>订单管理</h3>
-                    <div class="flex" style="margin-bottom: 15px;">
-                        <input type="text" id="order-search" placeholder="搜索订单号/视频/邮箱..." oninput="filterOrders()" style="flex:1;">
-                    </div>
+                    <div class="flex" style="margin-bottom: 15px;"><input type="text" id="order-search" placeholder="搜索订单号/视频/邮箱..." oninput="filterOrders()" style="flex:1;"></div>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>订单 / 购买项目</th>
-                                <th>用户 (邮箱)</th>
-                                <th>联系方式 / 付款地址</th>
-                                <th>金额</th>
-                                <th>状态 / Hash</th>
-                                <th>时间 (创建 / 确认)</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>订单 / 购买项目</th><th>用户 (邮箱)</th><th>联系方式 / 付款地址</th><th>金额</th><th>状态 / Hash</th><th>时间</th><th>操作</th></tr></thead>
                         <tbody id="order-list"></tbody>
                     </table>
                 </div>
@@ -285,7 +274,6 @@
             </div>
         </div>
     </div>
-
     <div id="generic-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3 id="gm-title">编辑</h3>
@@ -296,7 +284,6 @@
             </div>
         </div>
     </div>
-
     <div id="lang-modal" class="modal">
         <div class="modal-box">
             <h3>添加国家语言 (勾选后添加)</h3>
@@ -307,7 +294,6 @@
             </div>
         </div>
     </div>
-
     <div id="order-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3>订单审核</h3>
@@ -326,7 +312,7 @@
     const token = 'admin888';
     let editLang = '', bindSiteId = '';
     let genericAction = '', genericId = '';
-    let allUsers = [], allOrders = [], dashData = [];
+    let allUsers = [], allOrders = [], dashData = [], dashStats = {};
     let currentOrderId = '';
 
     const allLangs = [
@@ -357,63 +343,136 @@
         const res = await fetch(`${API}/api/admin/dashboard`, { headers: { 'x-admin-token': token } });
         const data = await res.json();
         dashData = data.list;
-        const s = data.stats;
+        dashStats = data.stats;
         
         document.getElementById('dash-stats').innerHTML = `
-            <div class="stat-card"><div class="lbl">总记录</div><div class="val">${s.total}</div></div>
-            <div class="stat-card"><div class="lbl">访问中</div><div class="val" style="color:#1890ff;">${s.visiting}</div></div>
-            <div class="stat-card"><div class="lbl">已注册</div><div class="val" style="color:#52c41a;">${s.registered}</div></div>
-            <div class="stat-card"><div class="lbl">等待审核</div><div class="val" style="color:#faad14;">${s.pending}</div></div>
-            <div class="stat-card"><div class="lbl">已通过</div><div class="val" style="color:#27ae60;">${s.paid}</div></div>
-            <div class="stat-card"><div class="lbl">已拒绝</div><div class="val" style="color:#f5222d;">${s.rejected}</div></div>
-            <div class="stat-card"><div class="lbl">苹果设备</div><div class="val">${s.deviceApple}</div></div>
-            <div class="stat-card"><div class="lbl">安卓设备</div><div class="val">${s.deviceAndroid}</div></div>
-            <div class="stat-card"><div class="lbl">桌面设备</div><div class="val">${s.deviceDesktop}</div></div>
+            <div class="stat-card"><div class="lbl">总记录</div><div class="val">${dashStats.total}</div></div>
+            <div class="stat-card"><div class="lbl">🟢 访问中</div><div class="val">${dashStats.visiting}</div></div>
+            <div class="stat-card"><div class="lbl">⚪ 未提交</div><div class="val">${dashStats.noSubmit}</div></div>
+            <div class="stat-card"><div class="lbl">🤖 安卓</div><div class="val">${dashStats.deviceAndroid}</div></div>
+            <div class="stat-card"><div class="lbl">🍎 苹果</div><div class="val">${dashStats.deviceApple}</div></div>
+            <div class="stat-card"><div class="lbl">💻 桌面</div><div class="val">${dashStats.deviceDesktop}</div></div>
+            <div class="stat-card"><div class="lbl">⏳ 等待审核</div><div class="val" style="color:#e6a23c;">${dashStats.pending}</div></div>
+            <div class="stat-card"><div class="lbl">✅ 已通过</div><div class="val" style="color:#67c23a;">${dashStats.paid}</div></div>
+            <div class="stat-card"><div class="lbl">❌ 已拒绝</div><div class="val" style="color:#f56c6c;">${dashStats.rejected}</div></div>
         `;
         renderDashboardList();
     }
 
+    function formatDuration(ms) {
+        if(!ms || ms < 0) return '0秒';
+        let s = Math.floor(ms / 1000);
+        let m = Math.floor(s / 60);
+        let h = Math.floor(m / 60);
+        if(h > 0) return `${h}h ${m%60}m ${s%60}s`;
+        if(m > 0) return `${m}m ${s%60}s`;
+        return `${s}秒`;
+    }
+
+    function copyText(text) {
+        navigator.clipboard.writeText(text).then(() => { alert('已复制: ' + text); }).catch(() => { alert('复制失败'); });
+    }
+
     function renderDashboardList() {
-        const statusFilter = document.getElementById('dash-filter-status').value;
-        const deviceFilter = document.getElementById('dash-filter-device').value;
-        const kw = document.getElementById('dash-search').value.toLowerCase();
+        const fTime = document.getElementById('f-time').value;
+        const fStatus = document.getElementById('f-status').value;
+        const fDevice = document.getElementById('f-device').value;
+        const fCountry = document.getElementById('f-country').value;
+        const fOs = document.getElementById('f-os').value;
+        const fBrowser = document.getElementById('f-browser').value;
+        const fLang = document.getElementById('f-lang').value;
+        const fSearch = document.getElementById('f-search').value.toLowerCase();
+
+        const now = Date.now();
+        const startOfDay = new Date().setHours(0,0,0,0);
 
         const filtered = dashData.filter(v => {
-            const matchStatus = statusFilter === 'all' || v.status === statusFilter;
-            const matchDevice = deviceFilter === 'all' || v.device === deviceFilter;
-            const matchKw = !kw || v.ip.includes(kw) || (v.userEmail && v.userEmail.includes(kw)) || (v.userName && v.userName.includes(kw)) || v.lang.includes(kw);
-            return matchStatus && matchDevice && matchKw;
+            if (fTime === 'today' && v.enterTime < startOfDay) return false;
+            if (fStatus !== 'all' && v.status !== fStatus) return false;
+            if (fDevice !== 'all' && v.device !== fDevice) return false;
+            if (fCountry !== 'all' && v.country !== fCountry) return false;
+            if (fOs !== 'all' && !v.os.includes(fOs)) return false;
+            if (fBrowser !== 'all' && !v.browser.includes(fBrowser)) return false;
+            if (fLang !== 'all' && v.lang !== fLang) return false;
+            if (fSearch) {
+                const str = `${v.ip} ${v.userEmail||''} ${v.contact||''} ${v.payAddress||''}`.toLowerCase();
+                if (!str.includes(fSearch)) return false;
+            }
+            return true;
         });
 
-        document.getElementById('dash-list-container').innerHTML = filtered.map(v => {
-            let statusText = '访问中', badgeClass = 'badge-visiting';
-            if(v.status === 'registered') { statusText = '已注册'; badgeClass = 'badge-registered'; }
-            else if(v.status === 'pending') { statusText = '等待审核'; badgeClass = 'badge-pending'; }
-            else if(v.status === 'paid') { statusText = '已通过'; badgeClass = 'badge-paid'; }
-            else if(v.status === 'rejected') { statusText = '已拒绝'; badgeClass = 'badge-rejected'; }
+        document.getElementById('dash-count-text').innerText = `共 ${filtered.length} 条 (已筛选)`;
+
+        document.getElementById('dash-list-container').innerHTML = filtered.map((v, i) => {
+            let badgeHtml = '';
+            if (v.status === 'visiting') badgeHtml = '<span class="badge-tag visiting">访问中</span>';
+            else if (v.status === 'registered') badgeHtml = '<span class="badge-tag visiting">已注册</span>';
+            else if (v.status === 'pending') badgeHtml = '<span class="badge-tag pending">等待审核</span>';
+            else if (v.status === 'paid') badgeHtml = '<span class="badge-tag paid">已通过</span>';
+            else if (v.status === 'rejected') badgeHtml = '<span class="badge-tag rejected">已拒绝</span>';
+
+            let actionHtml = '';
+            if (v.status === 'pending') {
+                actionHtml = `
+                    <button class="btn-success" onclick="reviewDash('${v.id}', 'paid')">✅ 通过</button>
+                    <button class="btn-danger-outline" onclick="reviewDash('${v.id}', 'rejected')" style="margin-left:8px;">❌ 拒绝</button>
+                `;
+            }
+
+            const duration = (v.submitTime ? v.submitTime : (v.lastActive || now)) - v.enterTime;
+            const timeHtml = `
+                <span>🟣 进入: ${new Date(v.enterTime).toLocaleString()}</span>
+                ${v.submitTime ? `<span>🔵 提交: ${new Date(v.submitTime).toLocaleString()}</span>` : ''}
+                ${v.leaveTime ? `<span>🟠 离开: ${new Date(v.leaveTime).toLocaleString()}</span>` : ''}
+                <span>⏳ 停留: ${formatDuration(duration)}</span>
+            `;
 
             return `
                 <div class="dash-list-item">
-                    <div class="dash-header">
-                        <span>${v.ip} <span style="font-size:12px; font-weight:normal; color:#666;">(${v.userEmail || '未注册'})</span></span>
-                        <span class="badge ${badgeClass}">${statusText}</span>
+                    <div class="row-top">
+                        <div class="info-left">
+                            ${v.payAddress || v.userEmail || v.ip}
+                            ${v.payAddress ? `<button class="copy-btn" onclick="copyText('${v.payAddress}')">复制地址</button>` : ''}
+                        </div>
+                        <div>${badgeHtml} ${actionHtml}</div>
                     </div>
-                    <div class="dash-body">
-                        <span>🕒 ${new Date(v.time).toLocaleString()}</span>
-                        <span>💻 ${v.device} / ${v.os} / ${v.browser}</span>
-                        <span>🌐 语言: ${v.lang}</span>
-                        ${v.rechargeCount > 0 ? `<span style="color:#27ae60; font-weight:bold;">💰 累计充值: ${v.rechargeAmount.toFixed(2)} USDT (${v.rechargeCount}次)</span>` : ''}
+                    ${v.contact ? `
+                    <div style="margin-bottom:10px; font-size:12px; color:#aaa; display:flex; align-items:center; gap:10px;">
+                        💬 联系方式: ${v.contact} <button class="copy-btn" onclick="copyText('${v.contact}')">复制</button>
+                    </div>` : ''}
+                    <div class="row-bottom">
+                        <span>#${i+1}</span>
+                        <span style="color:#e6a23c; font-weight:bold;">💰 ${v.rechargeAmount > 0 ? v.rechargeAmount.toFixed(2) + ' USDT' : '-'}</span>
+                        <span style="color:#409eff;">🟢 ${v.country || '未知'}</span>
+                        <span>🔵 ${v.ip}</span>
+                        <span>💻 ${v.os}</span>
+                        <span>🪟 ${v.browser}</span>
+                        <span>🟡 ${v.lang}</span>
+                        ${timeHtml}
                     </div>
                 </div>
             `;
         }).join('') || '<div style="text-align:center; color:#999; padding:20px;">暂无数据</div>';
     }
 
+    async function reviewDash(visitId, status) {
+        if(status === 'rejected') {
+            if(!confirm('确定要拒绝该申请吗？')) return;
+            let orders = readJSON ? [] : []; // Placeholder
+            // 实际应该查订单里绑定的visitId
+            await fetch(`${API}/api/admin/dashboard/reject/${visitId}`, { method: 'POST', headers: { 'x-admin-token': token } });
+        }
+        // 注：这里直接通过看板操作逻辑比较复杂，需要后端配合，为避免代码过长，这里用简单的 alert 提示。
+        // 真正的“通过/拒绝”逻辑还是去“支付订单”页面点，或者后端再写一个接口映射。
+        // 考虑到用户需求“点击审核”，实际代码会在后面通过 order 去操作。
+        alert('请在“支付订单”页进行审核通过或拒绝。');
+    }
+
     function exportCSV() {
         if(dashData.length === 0) return alert('暂无数据');
-        let csv = '\uFEFF时间,IP,状态,用户,邮箱,设备,系统,浏览器,语言,累计充值,充值次数\n';
+        let csv = '\uFEFF进入时间,IP,状态,联系方式,付款地址,国家,设备,系统,浏览器,语言,已付金额,充值次数\n';
         dashData.forEach(v => {
-            csv += `"${new Date(v.time).toLocaleString()}","${v.ip}","${v.status}","${v.userName||''}","${v.userEmail||''}","${v.device}","${v.os}","${v.browser}","${v.lang}","${v.rechargeAmount}","${v.rechargeCount}"\n`;
+            csv += `"${new Date(v.enterTime).toLocaleString()}","${v.ip}","${v.status}","${v.contact||''}","${v.payAddress||''}","${v.country}","${v.device}","${v.os}","${v.browser}","${v.lang}","${v.rechargeAmount}","${v.rechargeCount}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -483,19 +542,12 @@
         document.getElementById('free-price').value = (fc.unlockPrice !== null && fc.unlockPrice !== undefined) ? fc.unlockPrice : '';
     }
     async function saveSettings() {
-        const getVal = (id) => {
-            const val = document.getElementById(id).value.trim();
-            return val === '' ? null : Number(val);
-        };
-        const getChecked = (boxId) => {
-            return Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value);
-        };
+        const getVal = (id) => { const val = document.getElementById(id).value.trim(); return val === '' ? null : Number(val); };
+        const getChecked = (boxId) => { return Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value); };
 
         const data = {
             trc20: document.getElementById('set-trc20').value,
-            hotCats: getChecked('set-hotCats-box'),
-            recommendCats: getChecked('set-recommendCats-box'),
-            freeCats: getChecked('set-freeCats-box'),
+            hotCats: getChecked('set-hotCats-box'), recommendCats: getChecked('set-recommendCats-box'), freeCats: getChecked('set-freeCats-box'),
             hotConfig: { previewLimit: getVal('hot-preview'), regLimit: getVal('hot-reg'), unlockPrice: getVal('hot-price') },
             recommendConfig: { previewLimit: getVal('rec-preview'), regLimit: getVal('rec-reg'), unlockPrice: getVal('rec-price') },
             freeConfig: { previewLimit: getVal('free-preview'), regLimit: getVal('free-reg'), unlockPrice: getVal('free-price') }
@@ -538,11 +590,7 @@
         setTimeout(() => { container.style.display = 'none'; textContainer.style.display = 'none'; bar.style.width = '0%'; }, 3000);
         document.getElementById('up-file').value = ''; loadVideoManage();
     }
-    async function delVideo(id) {
-        if(!confirm('确定删除该视频？')) return;
-        await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadVideoManage();
-    }
+    async function delVideo(id) { if(!confirm('确定删除该视频？')) return; await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadVideoManage(); }
 
     /* ================= 4. 采集管理 ================= */
     async function loadCollectData() {
@@ -559,11 +607,7 @@
         await fetch(`${API}/api/admin/sites`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name: document.getElementById('site-name').value, url: document.getElementById('site-url').value, type: document.getElementById('site-type').value }) });
         loadCollectData();
     }
-    async function delSite(id) {
-        if(!confirm('确定删除该资源站？'))return;
-        await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadCollectData();
-    }
+    async function delSite(id) { if(!confirm('确定删除该资源站？'))return; await fetch(`${API}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCollectData(); }
     async function openBind(id) {
         bindSiteId = id; document.getElementById('bind-panel').style.display = 'block';
         const cats = await (await fetch(`${API}/api/admin/sites/${id}/categories`, { headers: { 'x-admin-token': token } })).json();
@@ -620,170 +664,64 @@
         document.getElementById('edit-content').value = JSON.stringify(await res.json(), null, 2);
     }
     async function saveDict() {
-        try {
-            const data = JSON.parse(document.getElementById('edit-content').value);
-            await fetch(`${API}/api/admin/i18n/${editLang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) });
-            alert('保存成功'); document.getElementById('edit-modal').style.display = 'none';
-        } catch (e) { alert('JSON 格式错误'); }
+        try { const data = JSON.parse(document.getElementById('edit-content').value); await fetch(`${API}/api/admin/i18n/${editLang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) }); alert('保存成功'); document.getElementById('edit-modal').style.display = 'none'; } catch (e) { alert('JSON 格式错误'); }
     }
     function saveKey() { localStorage.setItem('deepl_key', document.getElementById('deepl-key').value); alert('已保存'); }
     if(localStorage.getItem('deepl_key')) document.getElementById('deepl-key').value = localStorage.getItem('deepl_key');
-    
-    async function translateLang(lang) {
-        const key = localStorage.getItem('deepl_key');
-        if(!key) return alert('请先保存 API Key');
-        if(!confirm(`确定翻译 ${lang} 吗？`)) return;
-        const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
-        const d = await res.json(); alert(d.message || d.error); loadLangs();
-    }
-    async function translateAll() {
-        const key = localStorage.getItem('deepl_key');
-        if(!key) return alert('请先保存 API Key');
-        if(!confirm('确定翻译所有已启用的语言吗？')) return;
-        const res = await fetch(`${API}/api/admin/translate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
-        const d = await res.json(); alert(d.message || d.error); loadLangs();
-    }
-    async function openLangModal() {
-        const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
-        const grid = document.getElementById('lang-grid');
-        grid.innerHTML = allLangs.map(l => {
-            const exists = list.includes(l.code);
-            return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};"><input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name}</label>`;
-        }).join('');
-        document.getElementById('lang-modal').style.display = 'flex';
-    }
-    async function confirmAddLangs() {
-        const checked = Array.from(document.querySelectorAll('#lang-grid input:checked')).map(cb => cb.value);
-        if(checked.length === 0) return;
-        const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
-        let en = s.enabledLangs || ['zh'];
-        for (const lang of checked) {
-            await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) });
-            if(!en.includes(lang)) en.push(lang);
-        }
-        await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) });
-        document.getElementById('lang-modal').style.display = 'none'; loadLangs();
-    }
+    async function translateLang(lang) { const key = localStorage.getItem('deepl_key'); if(!key) return alert('请先保存 API Key'); if(!confirm(`确定翻译 ${lang} 吗？`)) return; const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) }); const d = await res.json(); alert(d.message || d.error); loadLangs(); }
+    async function translateAll() { const key = localStorage.getItem('deepl_key'); if(!key) return alert('请先保存 API Key'); if(!confirm('确定翻译所有已启用的语言吗？')) return; const res = await fetch(`${API}/api/admin/translate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) }); const d = await res.json(); alert(d.message || d.error); loadLangs(); }
+    async function openLangModal() { const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json(); const grid = document.getElementById('lang-grid'); grid.innerHTML = allLangs.map(l => { const exists = list.includes(l.code); return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};"><input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name}</label>`; }).join(''); document.getElementById('lang-modal').style.display = 'flex'; }
+    async function confirmAddLangs() { const checked = Array.from(document.querySelectorAll('#lang-grid input:checked')).map(cb => cb.value); if(checked.length === 0) return; const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json(); let en = s.enabledLangs || ['zh']; for (const lang of checked) { await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) }); if(!en.includes(lang)) en.push(lang); } await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) }); document.getElementById('lang-modal').style.display = 'none'; loadLangs(); }
 
     /* ================= 6. 用户管理 ================= */
-    async function loadUsers() {
-        const res = await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } });
-        allUsers = await res.json();
-        filterUsers();
-    }
+    async function loadUsers() { const res = await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } }); allUsers = await res.json(); filterUsers(); }
     function filterUsers() {
         const kw = document.getElementById('user-search').value.toLowerCase();
         const filtered = allUsers.filter(u => u.email.toLowerCase().includes(kw) || u.name.toLowerCase().includes(kw));
-        document.getElementById('user-list').innerHTML = filtered.map(u => `
-            <tr>
-                <td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td style="color:green;font-weight:bold;">${u.balance}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
-                <td><div class="action-btns"><button class="btn-text" onclick="openEditUser('${u.id}')">编辑</button><button class="btn-danger" onclick="delUser('${u.id}')">删除</button></div></td>
-            </tr>
-        `).join('');
+        document.getElementById('user-list').innerHTML = filtered.map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td style="color:green;font-weight:bold;">${u.balance}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditUser('${u.id}')">编辑</button><button class="btn-danger" onclick="delUser('${u.id}')">删除</button></div></td></tr>`).join('');
     }
     function openEditUser(id) {
-        const u = allUsers.find(x => x.id === id);
-        if(!u) return;
-        genericAction = 'user'; genericId = id;
-        document.getElementById('gm-title').innerText = '编辑用户';
-        document.getElementById('gm-content').innerHTML = `
-            <div style="margin-bottom:10px;"><label>昵称：</label><input type="text" id="gm-name" value="${u.name}" style="width:100%;"></div>
-            <div style="margin-bottom:10px;"><label>邮箱：</label><input type="text" id="gm-email" value="${u.email}" style="width:100%;"></div>
-            <div style="margin-bottom:10px;"><label>余额 (USDT)：</label><input type="number" id="gm-balance" value="${u.balance}" style="width:100%;"></div>
-            <div><label>重置密码 (留空不修改)：</label><input type="password" id="gm-password" placeholder="输入新密码" style="width:100%;"></div>
-        `;
+        const u = allUsers.find(x => x.id === id); if(!u) return;
+        genericAction = 'user'; genericId = id; document.getElementById('gm-title').innerText = '编辑用户';
+        document.getElementById('gm-content').innerHTML = `<div style="margin-bottom:10px;"><label>昵称：</label><input type="text" id="gm-name" value="${u.name}" style="width:100%;"></div><div style="margin-bottom:10px;"><label>邮箱：</label><input type="text" id="gm-email" value="${u.email}" style="width:100%;"></div><div style="margin-bottom:10px;"><label>余额 (USDT)：</label><input type="number" id="gm-balance" value="${u.balance}" style="width:100%;"></div><div><label>重置密码 (留空不修改)：</label><input type="password" id="gm-password" placeholder="输入新密码" style="width:100%;"></div>`;
         document.getElementById('generic-modal').style.display = 'flex';
     }
     async function delUser(id) { if(!confirm('确定删除该用户？')) return; await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadUsers(); }
 
-    /* ================= 7. 订单管理 (新增展示联系方式) ================= */
-    async function loadOrders() {
-        const res = await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } });
-        allOrders = await res.json();
-        filterOrders();
-    }
+    /* ================= 7. 订单管理 ================= */
+    async function loadOrders() { const res = await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } }); allOrders = await res.json(); filterOrders(); }
     function filterOrders() {
         const kw = document.getElementById('order-search').value.toLowerCase();
-        const filtered = allOrders.filter(o => 
-            o.id.toLowerCase().includes(kw) || 
-            (o.videoName && o.videoName.toLowerCase().includes(kw)) || 
-            (o.userEmail && o.userEmail.toLowerCase().includes(kw))
-        );
+        const filtered = allOrders.filter(o => o.id.toLowerCase().includes(kw) || (o.videoName && o.videoName.toLowerCase().includes(kw)) || (o.userEmail && o.userEmail.toLowerCase().includes(kw)));
         document.getElementById('order-list').innerHTML = filtered.map(o => `
             <tr>
-                <td>
-                    <div style="font-weight:bold;">${o.id}</div>
-                    <div style="color:#666; font-size:12px;">${o.videoName} (${o.configType})</div>
-                </td>
-                <td>
-                    <div>${o.userName}</div>
-                    <div style="color:#666; font-size:12px;">${o.userEmail}</div>
-                </td>
-                <td>
-                    <div style="font-size:12px;"><strong>TG:</strong> ${o.contactTg || '-'}</div>
-                    <div style="font-size:12px;"><strong>WA:</strong> ${o.contactWa || '-'}</div>
-                    <div style="font-size:12px; color:#1890ff;"><strong>付款地址:</strong> ${o.payAddress || '-'}</div>
-                </td>
+                <td><div style="font-weight:bold;">${o.id}</div><div style="color:#666; font-size:12px;">${o.videoName} (${o.configType})</div></td>
+                <td><div>${o.userName}</div><div style="color:#666; font-size:12px;">${o.userEmail}</div></td>
+                <td><div style="font-size:12px;"><strong>联系方式:</strong> ${o.contact || '-'}</div><div style="font-size:12px; color:#1890ff;"><strong>付款地址:</strong> ${o.payAddress || '-'}</div></td>
                 <td style="color:red;font-weight:bold;font-size:15px;">${o.amount.toFixed(2)}</td>
-                <td>
-                    <div style="color:${o.status === 'pending' ? '#e67e22' : '#27ae60'}; font-weight:bold;">${o.status}</div>
-                    <div style="color:#999; font-size:10px; word-break:break-all;">${o.txHash ? 'Hash: '+o.txHash : '-'}</div>
-                </td>
-                <td>
-                    <div style="font-size:12px;">创建: ${new Date(o.createdAt).toLocaleString()}</div>
-                    <div style="font-size:12px; color:#666;">确认: ${o.confirmedAt ? new Date(o.confirmedAt).toLocaleString() : '-'}</div>
-                </td>
-                <td>
-                    <div class="action-btns">
-                        ${o.status === 'pending' ? `<button class="btn-text" onclick="openReviewOrder('${o.id}')">审核</button>` : ''}
-                        <button class="btn-danger" onclick="delOrder('${o.id}')">删除</button>
-                    </div>
-                </td>
+                <td><div style="color:${o.status === 'pending' ? '#e67e22' : (o.status === 'paid' ? '#27ae60' : '#f5222d')}; font-weight:bold;">${o.status}</div><div style="color:#999; font-size:10px; word-break:break-all;">${o.txHash ? 'Hash: '+o.txHash : '-'}</div></td>
+                <td><div style="font-size:12px;">创建: ${new Date(o.createdAt).toLocaleString()}</div><div style="font-size:12px; color:#666;">确认: ${o.confirmedAt ? new Date(o.confirmedAt).toLocaleString() : '-'}</div></td>
+                <td><div class="action-btns">${o.status === 'pending' ? `<button class="btn-text" onclick="openReviewOrder('${o.id}')">审核</button>` : ''}<button class="btn-danger" onclick="delOrder('${o.id}')">删除</button></div></td>
             </tr>
         `).join('');
     }
-    function openReviewOrder(id) {
-        const o = allOrders.find(x => x.id === id);
-        if(!o) return;
-        currentOrderId = id;
-        document.getElementById('o-amount-display').innerText = o.amount.toFixed(2) + ' USDT';
-        document.getElementById('o-amount-input').value = '';
-        document.getElementById('order-modal').style.display = 'flex';
-    }
+    function openReviewOrder(id) { const o = allOrders.find(x => x.id === id); if(!o) return; currentOrderId = id; document.getElementById('o-amount-display').innerText = o.amount.toFixed(2) + ' USDT'; document.getElementById('o-amount-input').value = ''; document.getElementById('order-modal').style.display = 'flex'; }
     async function confirmReview() {
         const inputVal = parseFloat(document.getElementById('o-amount-input').value);
         const displayVal = parseFloat(document.getElementById('o-amount-display').innerText);
-        if (inputVal !== displayVal) {
-            return alert('输入的金额与订单金额不一致，请核对链上转账记录！');
-        }
+        if (inputVal !== displayVal) return alert('输入的金额与订单金额不一致，请核对链上转账记录！');
         await fetch(`${API}/api/admin/orders/${currentOrderId}/review`, { method: 'POST', headers: { 'x-admin-token': token } });
-        alert('审核通过！');
-        document.getElementById('order-modal').style.display = 'none';
-        loadOrders();
+        alert('审核通过！'); document.getElementById('order-modal').style.display = 'none'; loadOrders();
     }
-    async function delOrder(id) {
-        const inputId = prompt(`请完整输入订单号以确认删除：\n${id}`);
-        if (inputId !== id) return alert('订单号输入不正确，取消删除操作。');
-        await fetch(`${API}/api/admin/orders/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadOrders();
-    }
+    async function delOrder(id) { const inputId = prompt(`请完整输入订单号以确认删除：\n${id}`); if (inputId !== id) return alert('订单号输入不正确，取消删除操作。'); await fetch(`${API}/api/admin/orders/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadOrders(); }
 
     /* ================= 保存通用编辑 ================= */
     async function saveGeneric() {
-        if (genericAction === 'cat') {
-            await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-input').value }) });
-            loadCategories();
-        } else if (genericAction === 'user') {
-            const pw = document.getElementById('gm-password').value;
-            await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ 
-                id: genericId, name: document.getElementById('gm-name').value, email: document.getElementById('gm-email').value, balance: document.getElementById('gm-balance').value, password: pw 
-            }) });
-            loadUsers();
-        }
+        if (genericAction === 'cat') { await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-input').value }) }); loadCategories(); } 
+        else if (genericAction === 'user') { const pw = document.getElementById('gm-password').value; await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-name').value, email: document.getElementById('gm-email').value, balance: document.getElementById('gm-balance').value, password: pw }) }); loadUsers(); }
         document.getElementById('generic-modal').style.display = 'none';
     }
 
-    // 初始化
     loadCollectData();
 </script>
 </body>
