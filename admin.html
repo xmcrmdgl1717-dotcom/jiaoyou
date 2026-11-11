@@ -40,8 +40,6 @@
 
         .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
         .lang-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
-        
-        /* 🔴 修复语言列表按钮拥挤的问题 */
         .action-btns { display: flex; gap: 8px; align-items: center; }
     </style>
 </head>
@@ -123,17 +121,17 @@
                     <div class="card" style="flex:1;">
                         <h3>🔥 精彩视频 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
-                            <label>未登录试看秒数：</label><input type="number" id="hot-preview" value="15">
-                            <label>注册后试看秒数：</label><input type="number" id="hot-reg" value="120">
-                            <label>解锁金额 (USDT)：</label><input type="number" id="hot-price" value="9.99">
+                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="hot-preview" placeholder="不填则无限制">
+                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="hot-reg" placeholder="不填则无限制">
+                            <label>解锁金额 USDT (为空不显示支付)：</label><input type="number" id="hot-price" placeholder="不填则联系客服">
                         </div>
                     </div>
                     <div class="card" style="flex:1;">
                         <h3>🔥 直播推荐 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
-                            <label>未登录试看秒数：</label><input type="number" id="rec-preview" value="15">
-                            <label>注册后试看秒数：</label><input type="number" id="rec-reg" value="120">
-                            <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" value="9.99">
+                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="rec-preview" placeholder="不填则无限制">
+                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="rec-reg" placeholder="不填则无限制">
+                            <label>解锁金额 USDT (为空不显示支付)：</label><input type="number" id="rec-price" placeholder="不填则联系客服">
                         </div>
                     </div>
                 </div>
@@ -230,20 +228,11 @@
     let genericAction = '', genericId = '';
 
     const allLangs = [
-        { code: 'en', name: '🇺🇸 English' },
-        { code: 'vn', name: '🇻🇳 Tiếng Việt' },
-        { code: 'es', name: '🇪🇸 Español' },
-        { code: 'tr', name: '🇹🇷 Türkçe' },
-        { code: 'id', name: '🇮🇩 Bahasa Indonesia' },
-        { code: 'ja', name: '🇯🇵 日本語' },
-        { code: 'ko', name: '🇰🇷 한국어' },
-        { code: 'fr', name: '🇫🇷 Français' },
-        { code: 'de', name: '🇩🇪 Deutsch' },
-        { code: 'ru', name: '🇷🇺 Русский' },
-        { code: 'pt', name: '🇵🇹 Português' },
-        { code: 'it', name: '🇮🇹 Italiano' },
-        { code: 'ar', name: '🇸🇦 العربية' },
-        { code: 'th', name: '🇹🇭 ไทย' }
+        { code: 'en', name: '🇺🇸 English' }, { code: 'vn', name: '🇻🇳 Tiếng Việt' }, { code: 'es', name: '🇪🇸 Español' },
+        { code: 'tr', name: '🇹🇷 Türkçe' }, { code: 'id', name: '🇮🇩 Bahasa Indonesia' }, { code: 'ja', name: '🇯🇵 日本語' },
+        { code: 'ko', name: '🇰🇷 한국어' }, { code: 'fr', name: '🇫🇷 Français' }, { code: 'de', name: '🇩🇪 Deutsch' },
+        { code: 'ru', name: '🇷🇺 Русский' }, { code: 'pt', name: '🇵🇹 Português' }, { code: 'it', name: '🇮🇹 Italiano' },
+        { code: 'ar', name: '🇸🇦 العربية' }, { code: 'th', name: '🇹🇭 ไทย' }
     ];
 
     function switchTab(id, el) {
@@ -356,20 +345,37 @@
         let opts = '<option value="all">全部加载</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         document.getElementById('set-hotCat').innerHTML = opts; document.getElementById('set-hotCat').value = s.hotCat || 'all';
         document.getElementById('set-recommendCat').innerHTML = opts; document.getElementById('set-recommendCat').value = s.recommendCat || 'all';
-        document.getElementById('hot-preview').value = s.hotConfig.previewLimit;
-        document.getElementById('hot-reg').value = s.hotConfig.regLimit;
-        document.getElementById('hot-price').value = s.hotConfig.unlockPrice;
-        document.getElementById('rec-preview').value = s.recommendConfig.previewLimit;
-        document.getElementById('rec-reg').value = s.recommendConfig.regLimit;
-        document.getElementById('rec-price').value = s.recommendConfig.unlockPrice;
+        
+        const hc = s.hotConfig || {};
+        document.getElementById('hot-preview').value = (hc.previewLimit !== null && hc.previewLimit !== undefined) ? hc.previewLimit : '';
+        document.getElementById('hot-reg').value = (hc.regLimit !== null && hc.regLimit !== undefined) ? hc.regLimit : '';
+        document.getElementById('hot-price').value = (hc.unlockPrice !== null && hc.unlockPrice !== undefined) ? hc.unlockPrice : '';
+
+        const rc = s.recommendConfig || {};
+        document.getElementById('rec-preview').value = (rc.previewLimit !== null && rc.previewLimit !== undefined) ? rc.previewLimit : '';
+        document.getElementById('rec-reg').value = (rc.regLimit !== null && rc.regLimit !== undefined) ? rc.regLimit : '';
+        document.getElementById('rec-price').value = (rc.unlockPrice !== null && rc.unlockPrice !== undefined) ? rc.unlockPrice : '';
     }
+
     async function saveSettings() {
+        const getVal = (id) => {
+            const val = document.getElementById(id).value.trim();
+            return val === '' ? null : Number(val);
+        };
         const data = {
             trc20: document.getElementById('set-trc20').value,
             hotCat: document.getElementById('set-hotCat').value,
             recommendCat: document.getElementById('set-recommendCat').value,
-            hotConfig: { previewLimit: Number(document.getElementById('hot-preview').value), regLimit: Number(document.getElementById('hot-reg').value), unlockPrice: Number(document.getElementById('hot-price').value) },
-            recommendConfig: { previewLimit: Number(document.getElementById('rec-preview').value), regLimit: Number(document.getElementById('rec-reg').value), unlockPrice: Number(document.getElementById('rec-price').value) }
+            hotConfig: { 
+                previewLimit: getVal('hot-preview'), 
+                regLimit: getVal('hot-reg'), 
+                unlockPrice: getVal('hot-price') 
+            },
+            recommendConfig: { 
+                previewLimit: getVal('rec-preview'), 
+                regLimit: getVal('rec-reg'), 
+                unlockPrice: getVal('rec-price') 
+            }
         };
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) });
         alert('保存成功');
