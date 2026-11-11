@@ -22,7 +22,6 @@
   .live-tag { position: absolute; top: 4px; left: 4px; background: #ff3b5c; color: #fff; font-size: 8px; padding: 2px 4px; border-radius: 4px; }
   #sentinel { text-align: center; padding: 20px; font-size: 12px; color: #999; }
 
-  /* 播放器与遮罩 */
   #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
   #player-modal.active { display: flex; }
   .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; }
@@ -60,17 +59,18 @@
   let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
   let hls = null, videoLimitHandler = null, seekingHandler = null;
 
-  // 🔴 修复：读取 recommendConfig 专属配置
+  // 🔴 严格读取 recommendConfig
   async function fetchConfig() {
     try {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
       currentConfig = {
-        previewLimit: data.recommendConfig?.previewLimit ?? 15,
-        regLimit: data.recommendConfig?.regLimit ?? 120,
-        price: data.recommendConfig?.unlockPrice ?? 9.99,
+        previewLimit: data.recommendConfig.previewLimit,
+        regLimit: data.recommendConfig.regLimit,
+        price: data.recommendConfig.unlockPrice,
         trc20: data.trc20 || ''
       };
+      console.log('直播推荐当前配置:', currentConfig); // 打印到控制台
     } catch(e) { console.warn('配置拉取失败'); }
   }
 
@@ -126,7 +126,6 @@
     if(document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 300) loadBatch();
   });
 
-  // ================= 播放逻辑与限制 =================
   const playerModal = document.getElementById('player-modal');
   const videoEl = document.getElementById('video-el');
   const limitMask = document.getElementById('limit-mask');
@@ -187,7 +186,6 @@
     limitMask.style.display = 'flex';
   }
 
-  // 🔴 改进：传递当前专属价格给后端生成唯一金额
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
     btn.disabled = true; btn.innerText = '生成中...';
