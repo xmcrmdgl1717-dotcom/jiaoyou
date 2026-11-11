@@ -2,17 +2,26 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '' };
+let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '' };
 let currentVisitId = '';
 
-// 立即拉取配置并初始化 LiveChat
+// 🔴 提前获取配置并加载 LiveChat
 (async function initEarlyConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
         console.log('全局配置已加载:', globalConfig);
-        initLiveChat(); // 拿到配置立刻注入客服
-    } catch(e) { console.warn('配置拉取失败'); }
+        if (globalConfig.livechat_license) {
+            const licenseId = String(globalConfig.livechat_license).trim();
+            if (licenseId && !isNaN(Number(licenseId))) {
+                window.__lc = window.__lc || {};
+                window.__lc.license = Number(licenseId);
+                window.__lc.integration_name = "manual_channels";
+                window.__lc.product_name = "livechat";
+                (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
+            }
+        }
+    } catch(e) { console.warn('配置拉取失败:', e); }
 })();
 
 async function trackVisit() {
@@ -28,23 +37,6 @@ async function trackVisit() {
             sessionStorage.setItem('hiya_visit_id', data.visitId);
         }
     } catch(e) { console.warn('访客记录失败', e); }
-}
-
-// 动态加载 LiveChat 客服
-function initLiveChat() {
-    if (!globalConfig || !globalConfig.livechat_license) return;
-    
-    const licenseId = String(globalConfig.livechat_license).trim();
-    if (!licenseId || isNaN(Number(licenseId))) {
-        console.warn('LiveChat License ID 格式错误:', licenseId);
-        return;
-    }
-    
-    window.__lc = window.__lc || {};
-    window.__lc.license = Number(licenseId);
-    window.__lc.integration_name = "manual_channels";
-    window.__lc.product_name = "livechat";
-    (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
 }
 
 /* ================= i18n 多语言逻辑 ================= */
@@ -406,31 +398,63 @@ function onSubmitLogin(e) {
   });
 }
 
+// 🔴 联系客服弹窗重构
 let customerTimer = null;
 function openCustomerModal() {
-  const overlay = document.getElementById('customer-modal');
-  if (!overlay) return;
-  overlay.hidden = false; overlay.style.display = 'flex';
-  document.getElementById('customer-countdown-area').style.display = 'block';
-  document.getElementById('customer-result-area').style.display = 'none';
-  document.getElementById('customer-timer').textContent = '15';
-  if (customerTimer) clearInterval(customerTimer);
-  let count = 15;
-  customerTimer = setInterval(() => {
-    count--; document.getElementById('customer-timer').textContent = count;
-    if (count <= 0) {
-      clearInterval(customerTimer); customerTimer = null;
-      document.getElementById('customer-countdown-area').style.display = 'none';
-      document.getElementById('customer-result-area').style.display = 'block';
+    const hasLivechat = !!globalConfig.livechat_license;
+    const hasTg = !!globalConfig.contact_tg;
+    const hasWa = !!globalConfig.contact_wa;
+
+    // 如果都没配置，提示且不显示
+    if (!hasLivechat && !hasTg && !hasWa) {
+        alert('客服暂未上线');
+        return;
     }
-  }, 1000);
+
+    // 如果只有 LiveChat 配置了，且没有TG和WA，直接唤起 LiveChat
+    if (hasLivechat && !hasTg && !hasWa) {
+        if (window.LiveChatWidget) {
+            LiveChatWidget('maximize');
+        } else {
+            alert('客服系统正在加载中，请稍后再试');
+        }
+        return;
+    }
+
+    // 如果有 TG 或 WA 配置，显示弹窗
+    const overlay = document.getElementById('customer-modal');
+    if (!overlay) return;
+    overlay.hidden = false; overlay.style.display = 'flex';
+    
+    document.getElementById('customer-countdown-area').style.display = 'none';
+    const resultArea = document.getElementById('customer-result-area');
+    resultArea.style.display = 'block';
+
+    // 动态生成按钮
+    let btnHtml = '';
+    if (hasLivechat) {
+        btnHtml += `<button onclick="window.LiveChatWidget('maximize'); window.closeCustomerModal();" style="display: block; width: 100%; margin-bottom: 10px; background: linear-gradient(90deg, #ff6b9d, #ff3d8b); color: #fff; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 30px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(255,107,157,0.3);">💬 在线客服</button>`;
+    }
+    if (hasTg) {
+        btnHtml += `<a href="${globalConfig.contact_tg}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-bottom: 10px; background: #0088cc; color: #fff; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 30px; text-decoration: none; box-sizing: border-box; box-shadow: 0 4px 12px rgba(0,136,204,0.3);">✈️ Telegram 客服</a>`;
+    }
+    if (hasWa) {
+        btnHtml += `<a href="${globalConfig.contact_wa}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-bottom: 10px; background: #25D366; color: #fff; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 30px; text-decoration: none; box-sizing: border-box; box-shadow: 0 4px 12px rgba(37,211,102,0.3);">📱 WhatsApp 客服</a>`;
+    }
+
+    resultArea.innerHTML = `
+        <p style="font-size: 16px; font-weight: 700; color: #fff; margin: 0 0 20px;">请选择联系客服的方式</p>
+        ${btnHtml}
+    `;
 }
+
 function closeCustomerModal() {
   const overlay = document.getElementById('customer-modal');
   if (!overlay) return;
   if (customerTimer) { clearInterval(customerTimer); customerTimer = null; }
   overlay.hidden = true; overlay.style.display = 'none';
 }
+window.closeCustomerModal = closeCustomerModal;
 
 /* ================= 首页视频播放与限制逻辑 ================= */
 let hls = null;
