@@ -2,7 +2,7 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '' };
+let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '' };
 let currentVisitId = '';
 
 async function fetchGlobalConfig() {
@@ -13,7 +13,6 @@ async function fetchGlobalConfig() {
     } catch(e) { console.warn('配置拉取失败'); }
 }
 
-// 记录访客信息
 async function trackVisit() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/visit`, {
@@ -27,6 +26,17 @@ async function trackVisit() {
             sessionStorage.setItem('hiya_visit_id', data.visitId);
         }
     } catch(e) { console.warn('访客记录失败', e); }
+}
+
+// 动态加载 LiveChat 客服
+async function initLiveChat() {
+    if (!globalConfig.livechat_license) return; // 如果没配置则不加载
+    
+    window.__lc = window.__lc || {};
+    window.__lc.license = Number(globalConfig.livechat_license);
+    window.__lc.integration_name = "manual_channels";
+    window.__lc.product_name = "livechat";
+    (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
 }
 
 /* ================= i18n 多语言逻辑 ================= */
@@ -190,7 +200,6 @@ function parsePlayUrl(urlStr) {
   return urlStr; 
 }
 
-// 加载免费精选
 async function loadFreeVideos() {
   const freeRow = document.getElementById('index-free-list');
   if (!freeRow) return;
@@ -215,7 +224,6 @@ async function loadFreeVideos() {
   } catch (error) {}
 }
 
-// 加载精彩视频
 async function loadHomeVideos() {
   const hotRow = document.getElementById('index-video-list');
   if (!hotRow) return;
@@ -240,7 +248,6 @@ async function loadHomeVideos() {
   } catch (error) {}
 }
 
-// 加载直播推荐
 async function loadRecommendVideos() {
   const recommendRow = document.getElementById('index-recommend-list');
   if (!recommendRow) return;
@@ -350,7 +357,6 @@ function initModalEvents() {
   overlay.querySelector('[data-login-form]').onsubmit = onSubmitLogin;
 }
 
-// 注册时携带 visitId
 function onSubmitRegister(e) {
   e.preventDefault(); if (submitting) return;
   const form = e.currentTarget; if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -418,7 +424,7 @@ function closeCustomerModal() {
   overlay.hidden = true; overlay.style.display = 'none';
 }
 
-/* ================= 首页视频播放与限制逻辑 (两步式) ================= */
+/* ================= 首页视频播放与限制逻辑 ================= */
 let hls = null;
 let videoLimitHandler = null;
 let currentVideoId = null;
@@ -516,7 +522,6 @@ function openVideoPlayer(card) {
   videoEl.addEventListener('timeupdate', videoLimitHandler);
 }
 
-// 第一步：展示地址与金额，点击“我已转账”去填写
 function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
   if (!isLogin) {
     overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
@@ -539,7 +544,6 @@ function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
   overlay.style.display = 'flex';
 }
 
-// 第二步：下拉框+输入框
 window.showPayForm = function(vid, price, configType) {
   const overlay = document.getElementById('video-limit-overlay');
   overlay.innerHTML = `
@@ -645,6 +649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadHomeVideos();
   loadRecommendVideos(); 
   initLiveStats(); 
+  initLiveChat(); // 加载客服
 
   const cModal = document.getElementById('customer-modal');
   if (cModal) {
