@@ -3,33 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>嗨呀直播 · 全部主播</title>
+<title>嗨呀直播 · 全部视频</title>
 <link rel="stylesheet" href="assets/css/styles.css">
+<!-- 引入 HLS.js 用于支持 m3u8 视频流播放 -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 短视频内页专属样式 */
-  .shorts-page { max-width: 1200px; margin: 0 auto; padding: 20px; }
-  .shorts-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #f0f0f5; margin-bottom: 24px; }
-  .shorts-header h1 { font-size: 22px; font-weight: 800; color: #1f2551; }
-  .back-btn { font-size: 14px; color: #ff3d8b; font-weight: 600; text-decoration: none; padding: 8px 16px; border-radius: 20px; background: #fff; border: 1px solid #ffd1e3; transition: all 0.2s; }
-  .back-btn:hover { background: #fdf2f7; }
-  
-  /* 瀑布流布局 */
-  .shorts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-    grid-auto-flow: dense;
+  /* ===== 短视频内页专属样式 ===== */
+  body {
+    background: #fdf7fa; /* 保持与首页一致的柔和背景 */
   }
   
+  .shorts-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* 顶部导航 */
+  .shorts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 24px;
+    border-bottom: 1px solid #f0f0f5;
+    margin-bottom: 24px;
+  }
+  .shorts-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1f2551;
+    margin: 0;
+  }
+  .back-btn {
+    font-size: 14px;
+    color: #ff3d8b;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #ffd1e3;
+    transition: all 0.2s;
+  }
+  .back-btn:hover {
+    background: #fdf2f7;
+  }
+
+  /* 3列网格布局 */
+  .shorts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 默认一行3个 */
+    gap: 16px;
+    align-items: start;
+  }
+
   /* 视频卡片 */
   .short-card {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
-    aspect-ratio: 9 / 16;
+    aspect-ratio: 9 / 16; /* 竖屏短视频比例 */
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+  }
+  .short-card:hover {
+    transform: translateY(-4px);
   }
   .short-card video {
     width: 100%; height: 100%;
@@ -38,94 +78,263 @@
     z-index: 0;
     pointer-events: none;
   }
+  
+  /* 视频信息遮罩 */
   .short-card .card-overlay {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 40px 12px 12px;
     background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
     color: #fff;
     z-index: 2;
+    pointer-events: none;
   }
-  .short-card .card-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-  .short-card .card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; opacity: 0.9; }
-  .short-card .live-badge { position: absolute; top: 12px; left: 12px; background: #ff3b5c; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; z-index: 2; letter-spacing: 0.5px; }
+  .short-card .card-name {
+    font-size: 15px; font-weight: 700; margin-bottom: 4px;
+  }
+  .short-card .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; opacity: 0.9;
+  }
+  
+  /* LIVE 角标 */
+  .short-card .live-badge {
+    position: absolute; top: 12px; left: 12px;
+    background: #ff3b5c; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px;
+    z-index: 2; letter-spacing: 0.5px;
+  }
+
+  /* 加载提示 */
+  .loading-indicator {
+    text-align: center;
+    padding: 30px 0;
+    font-size: 13px;
+    color: #9a9fb2;
+    display: none; /* 默认隐藏 */
+  }
+  .loading-indicator.active {
+    display: block;
+  }
 
   /* 响应式调整 */
-  @media (max-width: 600px) {
+  @media (max-width: 850px) {
+    .shorts-grid {
+      grid-template-columns: repeat(2, 1fr); /* 平板/小屏 2列 */
+      gap: 12px;
+    }
+  }
+  @media (max-width: 560px) {
     .shorts-page { padding: 12px; }
-    .shorts-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-    .short-card { aspect-ratio: 9 / 16; border-radius: 12px; }
-    .short-card .card-name { font-size: 13px; }
+    .shorts-grid {
+      grid-template-columns: 1fr; /* 手机屏幕 1列，体验更好，或者保留2列 */
+      gap: 16px;
+    }
+    .short-card { aspect-ratio: 3 / 4; } /* 手机端略微调整比例 */
     .shorts-header h1 { font-size: 18px; }
   }
 </style>
 </head>
-<body style="background: #fdf7fa;">
+<body>
 
 <div class="shorts-page">
   <header class="shorts-header">
-    <h1>🔥 全部主播</h1>
+    <h1>🔥 全部精彩视频</h1>
     <a href="index.html" class="back-btn">← 返回首页</a>
   </header>
 
+  <!-- 视频网格容器 -->
   <div class="shorts-grid" id="shorts-grid">
-    <!-- 卡片将通过 JS 动态生成，也保留静态内容作为兜底 -->
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/1.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">静怡</div><div class="card-meta"><span>📍 北京</span><span>🔥 12.4K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/2.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">思颖</div><div class="card-meta"><span>📍 上海</span><span>🔥 9.8K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/3.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">梦瑶</div><div class="card-meta"><span>📍 广州</span><span>🔥 8.6K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/4.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">雅雯</div><div class="card-meta"><span>📍 成都</span><span>🔥 7.3K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/5.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">佳琪</div><div class="card-meta"><span>📍 杭州</span><span>🔥 6.5K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/6.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">婉婷</div><div class="card-meta"><span>📍 深圳</span><span>🔥 5.2K</span></div></div>
-    </div>
-    <div class="short-card">
-      <video autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80"><source src="assets/img/live/7.mp4" type="video/mp4"></video>
-      <span class="live-badge">LIVE</span>
-      <div class="card-overlay"><div class="card-name">语嫣</div><div class="card-meta"><span>📍 重庆</span><span>🔥 4.8K</span></div></div>
-    </div>
+    <!-- 初始由 JS 加载前 9 个，这里可以留空或放置骨架屏 -->
+  </div>
+
+  <!-- 滚动加载提示 -->
+  <div class="loading-indicator" id="loading-indicator">
+    <span>正在加载更多精彩视频…</span>
   </div>
 </div>
 
 <script>
-  // 使用 IntersectionObserver 优化视频播放性能
-  document.addEventListener('DOMContentLoaded', () => {
-    const videos = document.querySelectorAll('.short-card video');
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const video = entry.target;
-        if (entry.isIntersecting) {
-          // 进入视口，开始播放
-          video.play().catch(e => console.log('Autoplay blocked:', e));
-        } else {
-          // 离开视口，暂停播放以节省资源
-          video.pause();
-        }
-      });
-    }, { threshold: 0.3 }); // 卡片可见 30% 时触发
+  // ================= 数据源配置 =================
+  // 这里模拟数据库返回的视频列表，实际项目中请替换为真实接口请求
+  // 你可以把 swag.live 采集到的真实 m3u8/mp4 链接替换到 videoSrc 中
+  const ALL_VIDEOS_DATA = [
+    { name: '静怡', city: '北京', likes: '12.4K', poster: 'assets/img/live/1.webp', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '思颖', city: '上海', likes: '9.8K', poster: 'assets/img/live/2.webp', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '梦瑶', city: '广州', likes: '8.6K', poster: 'assets/img/live/3.webp', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '雅雯', city: '成都', likes: '7.3K', poster: 'assets/img/live/4.webp', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '佳琪', city: '杭州', likes: '6.5K', poster: 'assets/img/live/5.webp', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '婉婷', city: '深圳', likes: '5.2K', poster: 'assets/img/live/6.webp', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '语嫣', city: '重庆', likes: '4.8K', poster: 'assets/img/live/7.webp', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    // 下面是模拟的更多数据，用于触发懒加载
+    { name: '梦琪', city: '武汉', likes: '4.2K', poster: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '紫萱', city: '西安', likes: '3.9K', poster: 'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '诗涵', city: '南京', likes: '3.5K', poster: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '雨欣', city: '长沙', likes: '3.1K', poster: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '可馨', city: '苏州', likes: '2.8K', poster: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { name: '雅静', city: '天津', likes: '2.5K', poster: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+    { name: '若彤', city: '郑州', likes: '2.1K', poster: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80', videoSrc: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+  ];
 
-    videos.forEach(video => observer.observe(video));
+  // ================= 核心逻辑 =================
+  const grid = document.getElementById('shorts-grid');
+  const loadingIndicator = document.getElementById('loading-indicator');
+  
+  let currentIndex = 0; // 当前加载到了第几个数据
+  const PAGE_SIZE = 9; // 每次加载 9 个
+  let isLoading = false; // 防止重复加载
+  let hasMore = true; // 是否还有更多数据
+
+  // 创建单个卡片的 HTML 结构
+  function createCardHTML(video) {
+    return `
+      <div class="short-card" data-video-src="${video.videoSrc}" data-video-poster="${video.poster}">
+        <video autoplay loop muted playsinline poster="${video.poster}"></video>
+        <span class="live-badge">LIVE</span>
+        <div class="card-overlay">
+          <div class="card-name">${video.name}</div>
+          <div class="card-meta">
+            <span>📍 ${video.city}</span>
+            <span>🔥 ${video.likes}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 加载数据
+  function loadMoreData() {
+    if (isLoading || !hasMore) return;
+    isLoading = true;
+    
+    // 显示加载提示
+    loadingIndicator.classList.add('active');
+    
+    // 模拟网络请求延迟（实际项目中这里换成 fetch 请求）
+    setTimeout(() => {
+      const nextVideos = ALL_VIDEOS_DATA.slice(currentIndex, currentIndex + PAGE_SIZE);
+      
+      if (nextVideos.length === 0) {
+        hasMore = false;
+        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+        isLoading = false;
+        return;
+      }
+
+      // 将新数据渲染到网格中
+      const fragment = document.createDocumentFragment();
+      nextVideos.forEach(video => {
+        const div = document.createElement('div');
+        div.innerHTML = createCardHTML(video).trim();
+        fragment.appendChild(div.firstChild);
+      });
+      
+      grid.appendChild(fragment);
+      
+      currentIndex += nextVideos.length;
+      isLoading = false;
+      loadingIndicator.classList.remove('active');
+      
+      // 如果已经没有更多数据了，更新提示
+      if (currentIndex >= ALL_VIDEOS_DATA.length) {
+        hasMore = false;
+        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+        loadingIndicator.classList.add('active');
+      }
+
+      // 初始化新加载卡片的视频播放控制（仅当进入视口时播放）
+      initVideoIntersectionObserver();
+
+    }, 800); // 模拟 800ms 的加载延迟
+  }
+
+  // ================= 视频自动播放控制（性能优化） =================
+  let observer = null;
+  
+  function initVideoIntersectionObserver() {
+    if (!('IntersectionObserver' in window)) {
+      // 如果不支持 IntersectionObserver，则直接播放所有视频
+      document.querySelectorAll('.short-card video').forEach(v => v.play().catch(()=>{}));
+      return;
+    }
+
+    if (!observer) {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(e => console.log('Autoplay blocked:', e));
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.3 }); // 卡片可见 30% 时触发
+    }
+
+    // 观察所有尚未被观察的 video 元素
+    document.querySelectorAll('.short-card video').forEach(video => {
+      if (!video.dataset.observed) {
+        observer.observe(video);
+        video.dataset.observed = 'true'; // 标记已观察
+      }
+    });
+  }
+
+  // ================= 滚动触底检测 =================
+  function handleScroll() {
+    // 页面总高度
+    const scrollHeight = document.documentElement.scrollHeight;
+    // 当前视口高度 + 滚动距离
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const clientHeight = document.documentElement.clientHeight;
+
+    // 当距离底部还有 300px 时触发加载
+    if (scrollHeight - scrollTop - clientHeight < 300) {
+      loadMoreData();
+    }
+  }
+
+  // ================= 点击卡片播放视频（全屏弹窗） =================
+  // 这里复用了你在 app.js 中定义的视频播放逻辑（如果 app.js 已加载）
+  // 为了独立运行，我们在 shorts.html 内也做一份简单的拦截
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.short-card');
+    if (!card) return;
+    
+    const src = card.getAttribute('data-video-src');
+    const poster = card.getAttribute('data-video-poster');
+    const name = card.querySelector('.card-name')?.textContent || '';
+    const meta = card.querySelector('.card-meta')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+
+    // 如果你在首页有全局的 openVideoPlayer 方法（挂载在 window 上），可以直接调用
+    if (typeof window.openVideoPlayer === 'function') {
+      // 构造一个临时的假元素来模拟参数
+      const fakeCard = document.createElement('div');
+      fakeCard.setAttribute('data-video-src', src);
+      fakeCard.setAttribute('data-video-poster', poster);
+      fakeCard.innerHTML = `<div class="nm">${name}</div><div class="meta">${meta}</div>`;
+      window.openVideoPlayer(fakeCard);
+    } else {
+      // 如果没找到全局方法，回退到直接弹窗或打开新标签页
+      alert('播放视频：' + src);
+    }
+  });
+
+  // ================= 初始化 =================
+  window.addEventListener('DOMContentLoaded', () => {
+    // 首屏加载 9 个
+    loadMoreData();
+    
+    // 监听滚动事件
+    window.addEventListener('scroll', handleScroll);
+  });
+
+  // 页面卸载时清理监听器
+  window.addEventListener('beforeunload', () => {
+    window.removeEventListener('scroll', handleScroll);
+    if (observer) {
+      observer.disconnect();
+    }
   });
 </script>
 
