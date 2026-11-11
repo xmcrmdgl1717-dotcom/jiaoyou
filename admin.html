@@ -50,13 +50,13 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; background: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
         
-        .sidebar { width: 220px; background: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 220px; background: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100;}
         .logo { padding: 20px; font-size: 20px; font-weight: bold; text-align: center; color: var(--primary); border-bottom: 1px solid #333; }
         .nav-item { padding: 15px 20px; cursor: pointer; color: var(--sidebar-text); border-left: 4px solid transparent; transition: 0.2s; }
         .nav-item:hover, .nav-item.active { background: var(--sidebar-hover); color: #fff; border-left-color: var(--primary); }
         
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 15px 30px; background: var(--card-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s, border-color 0.3s; }
+        .header { padding: 15px 30px; background: var(--card-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s, border-color 0.3s; z-index: 90;}
         .content { flex: 1; overflow-y: auto; padding: 20px 30px; background: var(--bg-color); }
         
         .tab { display: none; } .tab.active { display: block; }
@@ -93,14 +93,16 @@
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: var(--bg-color); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; }
 
-        /* ======= 看板专属样式 (变量已适配亮暗) ======= */
+        /* ======= 看板专属样式 ======= */
         .dashboard-stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .stat-card { background: var(--dash-card-bg); border: 1px solid var(--dash-card-border); border-radius: 8px; padding: 12px 15px; min-width: 120px; flex: 1; color: var(--dash-text); transition: background 0.3s, border-color 0.3s; }
         .stat-card .val { font-size: 20px; font-weight: bold; margin-top: 5px; }
         .stat-card .lbl { font-size: 12px; color: var(--dash-text-muted); display: flex; align-items: center; gap: 4px; }
-        .dash-filter-bar { background: var(--dash-toolbar-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--dash-card-border); margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; transition: background 0.3s; }
+        
+        .dash-filter-bar { background: var(--dash-toolbar-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--dash-card-border); margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; transition: background 0.3s; position: relative; z-index: 10; }
         .dash-filter-bar select, .dash-filter-bar input { background: var(--dash-input-bg); border: 1px solid var(--dash-card-border); color: var(--dash-input-text); padding: 6px 10px; border-radius: 4px; font-size: 12px; }
-        .dash-filter-bar select:focus, .dash-filter-bar input:focus { border-color: #409eff; outline: none; }
+        .dash-filter-bar select:focus, .dash-filter-bar input:focus { border-color: #409eff; outline: none; z-index: 20;}
+        
         .dash-list-item { background: var(--dash-card-bg); border: 1px solid var(--dash-card-border); border-radius: 8px; padding: 15px 20px; margin-bottom: 10px; color: var(--dash-text); transition: background 0.3s, border-color 0.3s; }
         .dash-list-item .row-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--dash-card-border); padding-bottom: 10px; margin-bottom: 10px; }
         .dash-list-item .info-left { font-size: 13px; display: flex; align-items: center; gap: 10px; color: var(--dash-text-muted); }
@@ -118,13 +120,13 @@
         .btn-success { background: #20b2aa; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #20b2aa; }
         .btn-danger-outline { background: transparent; color: #f56c6c; border: 1px solid #f56c6c; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
         .btn-danger-outline:hover { background: #f56c6c; color: #fff; }
-        .toolbar-dark { background: var(--dash-toolbar-bg); padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 1px solid var(--dash-card-border); transition: background 0.3s; }
+        .toolbar-dark { background: var(--dash-toolbar-bg); padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 1px solid var(--dash-card-border); transition: background 0.3s; position: relative; z-index: 5;}
         .toolbar-dark button { background: var(--dash-input-bg); border: 1px solid var(--dash-card-border); color: var(--dash-text-muted); padding: 6px 12px; font-size: 12px; border-radius: 4px; }
         .toolbar-dark button:hover { color: var(--dash-text); border-color: #409eff; }
         .toolbar-dark .btn-primary { background: #409eff; color: #fff; border-color: #409eff; }
     </style>
 </head>
-<body class="dark-theme"> <!-- 默认暗色 -->
+<body class="dark-theme">
     <div class="sidebar">
         <div class="logo">CMS System</div>
         <div class="nav-item" onclick="switchTab('tab-dashboard', this)">📊 汇总看板</div>
@@ -152,16 +154,19 @@
                 <div class="dashboard-stats" id="dash-stats"></div>
                 
                 <div class="dash-filter-bar">
-                    <select id="f-time"><option value="all">全部时间</option><option value="today">今天</option></select>
+                    <input type="date" id="f-start-date" title="开始日期">
+                    <span style="color:var(--dash-text-muted)">-</span>
+                    <input type="date" id="f-end-date" title="结束日期">
+                    
                     <select id="f-status"><option value="all">全部状态</option><option value="visiting">访问中</option><option value="pending">等待审核</option><option value="paid">已通过</option><option value="rejected">已拒绝</option></select>
                     <select id="f-device"><option value="all">全部设备</option><option value="苹果">苹果</option><option value="安卓">安卓</option><option value="桌面">桌面</option></select>
-                    <select id="f-country"><option value="all">全部国家</option><option value="日本">日本</option><option value="美国">美国</option><option value="本地">本地</option><option value="未知">未知</option></select>
-                    <select id="f-os"><option value="all">全部系统</option><option value="Windows">Windows</option><option value="Android">Android</option><option value="iOS">iOS</option><option value="macOS">macOS</option></select>
-                    <select id="f-browser"><option value="all">全部浏览器</option><option value="Chrome">Chrome</option><option value="Safari">Safari</option><option value="Firefox">Firefox</option><option value="Edge">Edge</option></select>
+                    <select id="f-country"><option value="all">全部国家</option><option value="日本">日本</option><option value="美国">美国</option><option value="香港">香港</option><option value="台湾">台湾</option><option value="本地">本地</option><option value="未知">未知</option></select>
+                    <select id="f-os"><option value="all">全部系统</option><option value="Windows">Windows</option><option value="Android">Android</option><option value="iOS">iOS</option><option value="macOS">macOS</option><option value="iOS 18.5">iOS 18.5</option></select>
+                    <select id="f-browser"><option value="all">全部浏览器</option><option value="Chrome">Chrome</option><option value="Safari">Safari</option><option value="Safari 604.1">Safari 604.1</option><option value="Firefox">Firefox</option><option value="Edge">Edge</option></select>
                     <select id="f-lang"><option value="all">全部语言</option><option value="zh">zh</option><option value="en">en</option></select>
                     <input type="text" id="f-search" placeholder="IP / 地址 / 联系方式 / 邮箱" style="flex:1; min-width: 200px;">
                     <button class="btn-primary" onclick="renderDashboardList()">🔍 搜索</button>
-                    <button onclick="document.getElementById('f-search').value=''; renderDashboardList()">重置</button>
+                    <button onclick="resetDashFilters()">重置</button>
                 </div>
 
                 <div class="toolbar-dark">
@@ -379,7 +384,7 @@
 
 <script>
     const API = 'https://jiaoyouweb.onrender.com';
-    let token = localStorage.getItem('admin_password') || 'admin888'; // 动态 Token
+    let token = localStorage.getItem('admin_password') || 'admin888';
     let editLang = '', bindSiteId = '';
     let genericAction = '', genericId = '';
     let allUsers = [], allOrders = [], dashData = [], dashStats = {};
@@ -402,7 +407,6 @@
         document.getElementById('theme-toggle').innerText = isDark ? '☀️ 切换主题' : '🌙 切换主题';
     }
 
-    // 初始化主题
     const savedTheme = localStorage.getItem('admin_theme') || 'dark';
     if (savedTheme === 'light') {
         document.body.classList.remove('dark-theme');
@@ -420,7 +424,6 @@
         el.classList.add('active');
         document.getElementById('page-title').innerText = el.innerText.substring(2).trim();
         
-        // 记住当前标签页，防止刷新跳动
         localStorage.setItem('admin_current_tab', id);
 
         if(id === 'tab-dashboard') loadDashboard();
@@ -483,6 +486,19 @@
         renderDashboardList();
     }
 
+    function resetDashFilters() {
+        document.getElementById('f-start-date').value = '';
+        document.getElementById('f-end-date').value = '';
+        document.getElementById('f-status').value = 'all';
+        document.getElementById('f-device').value = 'all';
+        document.getElementById('f-country').value = 'all';
+        document.getElementById('f-os').value = 'all';
+        document.getElementById('f-browser').value = 'all';
+        document.getElementById('f-lang').value = 'all';
+        document.getElementById('f-search').value = '';
+        renderDashboardList();
+    }
+
     function formatDuration(ms) {
         if(!ms || ms < 0) return '0秒';
         let s = Math.floor(ms / 1000);
@@ -499,7 +515,8 @@
     }
 
     function renderDashboardList() {
-        const fTime = document.getElementById('f-time').value;
+        const startDate = document.getElementById('f-start-date').value;
+        const endDate = document.getElementById('f-end-date').value;
         const fStatus = document.getElementById('f-status').value;
         const fDevice = document.getElementById('f-device').value;
         const fCountry = document.getElementById('f-country').value;
@@ -509,10 +526,13 @@
         const fSearch = document.getElementById('f-search').value.toLowerCase();
 
         const now = Date.now();
-        const startOfDay = new Date().setHours(0,0,0,0);
+        let startTimestamp = 0;
+        let endTimestamp = Infinity;
+        if (startDate) startTimestamp = new Date(startDate).setHours(0,0,0,0);
+        if (endDate) endTimestamp = new Date(endDate).setHours(23,59,59,999);
 
         const filtered = dashData.filter(v => {
-            if (fTime === 'today' && v.enterTime < startOfDay) return false;
+            if (v.enterTime < startTimestamp || v.enterTime > endTimestamp) return false;
             if (fStatus !== 'all' && v.status !== fStatus) return false;
             if (fDevice !== 'all' && v.device !== fDevice) return false;
             if (fCountry !== 'all' && v.country !== fCountry) return false;
@@ -536,12 +556,22 @@
             else if (v.status === 'paid') badgeHtml = '<span class="badge-tag paid">已通过</span>';
             else if (v.status === 'rejected') badgeHtml = '<span class="badge-tag rejected">已拒绝</span>';
 
+            // 审核按钮逻辑：如果是 pending 且有订单关联，显示通过/拒绝
             let actionHtml = '';
-            if (v.status === 'pending') {
+            if (v.status === 'pending' && v.orderId) {
                 actionHtml = `
-                    <button class="btn-success" onclick="reviewDash('${v.id}', 'paid')">✅ 通过</button>
-                    <button class="btn-danger-outline" onclick="reviewDash('${v.id}', 'rejected')" style="margin-left:8px;">❌ 拒绝</button>
+                    <button class="btn-success" onclick="reviewDash('${v.orderId}', 'paid')">✅ 通过</button>
+                    <button class="btn-danger-outline" onclick="reviewDash('${v.orderId}', 'rejected')" style="margin-left:8px;">❌ 拒绝</button>
                 `;
+            } else if (v.status === 'pending') {
+                actionHtml = `<span style="color:#f56c6c; font-size:12px;">无关联订单</span>`;
+            }
+
+            // 订单信息展示
+            let orderInfoHtml = '';
+            if (v.orderId) {
+                orderInfoHtml = `<span style="color:#1890ff; font-size:12px; margin-left:10px;">[订单号: ${v.orderId}]</span>`;
+                if(v.orderAmount) orderInfoHtml += `<span style="color:#e6a23c; font-size:12px; margin-left:5px;">(金额: ${v.orderAmount.toFixed(2)} USDT)</span>`;
             }
 
             const duration = (v.submitTime ? v.submitTime : (v.lastActive || now)) - v.enterTime;
@@ -558,8 +588,13 @@
                         <div class="info-left">
                             ${v.payAddress || v.userEmail || v.ip}
                             ${v.payAddress ? `<button class="copy-btn" onclick="copyText('${v.payAddress}')">复制地址</button>` : ''}
+                            ${orderInfoHtml}
                         </div>
-                        <div>${badgeHtml} ${actionHtml}</div>
+                        <div>
+                            ${badgeHtml} 
+                            ${actionHtml}
+                            <button class="btn-text" onclick="delVisit('${v.id}')" style="margin-left:10px; color:#f56c6c;">删除</button>
+                        </div>
                     </div>
                     ${v.contact ? `
                     <div style="margin-bottom:10px; font-size:12px; color:var(--dash-text-muted); display:flex; align-items:center; gap:10px;">
@@ -580,31 +615,36 @@
         }).join('') || '<div style="text-align:center; color:#999; padding:20px;">暂无数据</div>';
     }
 
-    async function reviewDash(visitId, status) {
-        if(!confirm(`确定要将该用户标记为 ${status === 'paid' ? '已通过' : '已拒绝'} 吗？`)) return;
+    async function reviewDash(orderId, status) {
+        if(!confirm(`确定要将该订单标记为 ${status === 'paid' ? '已通过' : '已拒绝'} 吗？`)) return;
         
-        const order = allOrders.find(o => o.visitId === visitId && o.status === 'pending');
-        if(order) {
-            if(status === 'paid') {
-                const inputVal = prompt(`请输入订单的确切金额 ${order.amount.toFixed(2)} 以确认通过：`);
-                if(parseFloat(inputVal) !== order.amount) return alert('金额输入不一致，取消操作。');
-                await fetch(`${API}/api/admin/orders/${order.id}/review`, { method: 'POST', headers: { 'x-admin-token': token } });
-            } else {
-                await fetch(`${API}/api/admin/orders/${order.id}/reject`, { method: 'POST', headers: { 'x-admin-token': token } });
-            }
-            alert('操作成功');
-            loadDashboard();
-            if(document.getElementById('tab-order').classList.contains('active')) loadOrders();
+        const order = allOrders.find(o => o.id === orderId);
+        if(!order) return alert('未找到关联订单信息，请刷新重试。');
+
+        if(status === 'paid') {
+            const inputVal = prompt(`请输入订单的确切金额 ${order.amount.toFixed(2)} 以确认通过：`);
+            if(parseFloat(inputVal) !== order.amount) return alert('金额输入不一致，取消操作。');
+            await fetch(`${API}/api/admin/orders/${order.id}/review`, { method: 'POST', headers: { 'x-admin-token': token } });
         } else {
-            alert('未找到关联的待审核订单记录，请前往订单页检查。');
+            await fetch(`${API}/api/admin/orders/${order.id}/reject`, { method: 'POST', headers: { 'x-admin-token': token } });
         }
+        alert('操作成功');
+        loadDashboard();
+        if(document.getElementById('tab-order').classList.contains('active')) loadOrders();
+    }
+
+    async function delVisit(id) {
+        const inputId = prompt(`请输入要删除的访问记录ID (${id}) 以确认删除：`);
+        if(inputId !== id) return alert('ID输入不正确，取消删除。');
+        await fetch(`${API}/api/admin/visits/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
+        loadDashboard();
     }
 
     function exportCSV() {
         if(dashData.length === 0) return alert('暂无数据');
-        let csv = '\uFEFF进入时间,IP,状态,联系方式,付款地址,国家,设备,系统,浏览器,语言,已付金额,充值次数\n';
+        let csv = '\uFEFF进入时间,IP,状态,联系方式,付款地址,国家,设备,系统,浏览器,语言,已付金额,充值次数,关联订单号\n';
         dashData.forEach(v => {
-            csv += `"${new Date(v.enterTime).toLocaleString()}","${v.ip}","${v.status}","${v.contact||''}","${v.payAddress||''}","${v.country}","${v.device}","${v.os}","${v.browser}","${v.lang}","${v.rechargeAmount}","${v.rechargeCount}"\n`;
+            csv += `"${new Date(v.enterTime).toLocaleString()}","${v.ip}","${v.status}","${v.contact||''}","${v.payAddress||''}","${v.country}","${v.device}","${v.os}","${v.browser}","${v.lang}","${v.rechargeAmount}","${v.rechargeCount}","${v.orderId||''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
