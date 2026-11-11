@@ -4,34 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>嗨呀直播 · 全部视频</title>
-<link rel="stylesheet" href="assets/css/styles.css">
 <!-- 引入 HLS.js 支持 m3u8 视频流播放 -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 基础重置 */
+  /* ================= 彻底重置页面样式，摆脱全局污染 ================= */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #fdf7fa; font-family: sans-serif; padding-bottom: 40px; }
-  
-  .shorts-page {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 16px 12px; /* 手机端左右留一点安全间距 */
+  html, body { 
+    background: #ffffff; /* 纯白背景，更干净 */
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding-bottom: env(safe-area-inset-bottom);
   }
-
-  /* 顶部导航 */
-  .shorts-header {
+  
+  /* 顶部悬浮导航栏 */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f0f0f5;
-    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #f0f0f0;
   }
-  .shorts-header h1 {
-    font-size: 20px;
+  .header h1 {
+    font-size: 18px;
     font-weight: 800;
     color: #1f2551;
-    margin: 0;
   }
   .back-btn {
     font-size: 13px;
@@ -40,126 +40,113 @@
     text-decoration: none;
     padding: 6px 14px;
     border-radius: 20px;
-    background: #fff;
-    border: 1px solid #ffd1e3;
+    background: #fff0f5;
   }
 
-  /* 🔴 核心布局：强制全端一行3个 */
-  .shorts-grid {
+  /* 🔴 核心瀑布流布局 */
+  .grid-container {
     display: grid;
-    /* 强制三列等宽，彻底防止手机端变成单列 */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px; /* 手机端卡片间距稍微缩小，让内容更饱满 */
+    /* 严格保证一行 3 个，平分屏幕宽度 */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px; /* 极小的间距，让内容更饱满 */
     width: 100%;
+    max-width: 800px; /* PC端居中最大宽度 */
+    margin: 0 auto;
   }
 
-  /* 视频卡片结构 */
-  .short-card {
+  /* 卡片 - 严格 9:16 竖屏长图比例 */
+  .card {
     position: relative;
-    border-radius: 10px;
+    width: 100%;
+    aspect-ratio: 9 / 16; 
+    background: #f5f5f5;
     overflow: hidden;
-    background: #000;
-    /* 经典竖屏短影音比例 */
-    aspect-ratio: 3 / 4;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    /* 防止点击时出现高亮或闪烁 */
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
 
-  .short-card video, .short-card img.cover {
+  /* 图片完全覆盖 */
+  .card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    position: absolute;
-    inset: 0;
-    z-index: 1;
+    display: block;
   }
 
-  /* 卡片信息遮罩 */
-  .short-card .card-overlay {
+  /* 卡片底部信息（渐变遮罩） */
+  .card-info {
     position: absolute;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    padding: 24px 6px 6px; /* 顶部大留白让渐变自然 */
+    padding: 30px 6px 6px;
     background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
     color: #fff;
-    z-index: 2;
     pointer-events: none;
   }
-
-  .short-card .card-name {
-    font-size: 11px; /* 适配三列小卡片 */
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
     line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 最多显示两行，防止文字太长撑爆 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+    word-break: break-all;
   }
-
-  .short-card .card-meta {
+  .card-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 9px;
     opacity: 0.9;
-    line-height: 1.2;
   }
 
   /* LIVE 角标 */
-  .short-card .live-badge {
+  .live-tag {
     position: absolute;
-    top: 6px;
-    left: 6px;
+    top: 4px;
+    left: 4px;
     background: #ff3b5c;
     color: #fff;
     font-size: 8px;
     font-weight: 700;
-    padding: 2px 5px;
+    padding: 2px 4px;
     border-radius: 4px;
     z-index: 2;
-    letter-spacing: 0.5px;
   }
 
-  /* 加载动画 */
-  .loading-indicator {
+  /* 底部加载提示 */
+  #sentinel {
     text-align: center;
-    padding: 24px 0;
+    padding: 20px 0;
     font-size: 12px;
-    color: #9a9fb2;
+    color: #999;
   }
 
-  /* 视频播放弹窗 */
-  #video-player-modal {
+  /* ================= 视频播放弹窗 ================= */
+  #player-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.92);
+    background: #000;
     z-index: 9999;
-    display: none; /* 默认隐藏 */
+    display: none;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
   }
-  #video-player-modal.active {
-    display: flex;
-  }
-  .player-container {
+  #player-modal.active { display: flex; }
+  
+  .player-box {
     position: relative;
     width: 100%;
-    max-width: 420px;
-    height: 85vh;
-    max-height: 750px;
-    background: #000;
-    border-radius: 16px;
-    overflow: hidden;
+    height: 100%;
+    max-width: 480px; /* 限制横屏时的宽度 */
   }
-  .player-close-btn {
+  .close-btn {
     position: absolute;
-    top: 16px;
-    left: 16px;
+    top: 20px;
+    left: 20px;
     z-index: 20;
     background: rgba(0,0,0,0.5);
     border: none;
@@ -168,30 +155,16 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  #video-player {
+  #video-el {
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
-  .player-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 60px 20px 20px;
-    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8));
-    color: #fff;
-    pointer-events: none;
-    z-index: 10;
-  }
-
-  /* 试看限制遮罩 */
-  #video-limit-overlay {
+  .limit-mask {
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,0.85);
@@ -202,89 +175,61 @@
     justify-content: center;
     color: #fff;
     text-align: center;
-    padding: 20px;
   }
-  #video-limit-overlay h3 {
-    font-size: 18px;
-    font-weight: 800;
-    margin-bottom: 8px;
-    color: #ff6b9d;
-  }
-  #video-limit-overlay p {
-    font-size: 12px;
-    opacity: 0.8;
-    margin-bottom: 16px;
-  }
-  #video-limit-overlay button {
+  .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
+  .limit-mask button {
     background: linear-gradient(90deg, #ff9a4d, #ff4d94);
     color: #fff;
     border: none;
-    padding: 10px 24px;
+    padding: 10px 30px;
     border-radius: 20px;
-    font-size: 14px;
+    margin-top: 20px;
     font-weight: bold;
-    cursor: pointer;
-  }
-
-  /* 针对更小的手机屏幕进行微调 */
-  @media (max-width: 360px) {
-    .shorts-grid { gap: 6px; }
-    .short-card .card-name { font-size: 10px; }
-    .short-card .card-meta { font-size: 8px; }
   }
 </style>
 </head>
 <body>
 
-<div class="shorts-page">
-  <header class="shorts-header">
-    <h1>🔥 全部精彩视频</h1>
-    <a href="index.html" class="back-btn">← 返回首页</a>
-  </header>
+<!-- 顶部导航 -->
+<header class="header">
+  <h1>🔥 精彩视频</h1>
+  <a href="index.html" class="back-btn">← 返回首页</a>
+</header>
 
-  <!-- 数据容器 -->
-  <div class="shorts-grid" id="shorts-grid"></div>
-  
-  <!-- 加载提示 -->
-  <div class="loading-indicator" id="loading-indicator" style="display:none;">正在加载更多…</div>
-</div>
+<!-- 瀑布流容器 -->
+<div class="grid-container" id="grid"></div>
 
-<!-- ================= 视频播放弹窗 ================= -->
-<div id="video-player-modal">
-  <div class="player-container">
-    <button class="player-close-btn" id="video-close-btn">×</button>
-    <video id="video-player" controls autoplay playsinline></video>
-    
-    <!-- 试看限制层 -->
-    <div id="video-limit-overlay">
+<!-- 触底监听哨兵 -->
+<div id="sentinel">正在加载数据...</div>
+
+<!-- 视频播放弹窗 -->
+<div id="player-modal">
+  <div class="player-box">
+    <button class="close-btn" id="close-btn">×</button>
+    <video id="video-el" controls playsinline></video>
+    <div class="limit-mask" id="limit-mask">
       <h3>试看已结束</h3>
-      <p>注册登录后可无限畅看完整版视频</p>
+      <p style="font-size:13px; opacity:0.8;">注册登录后可无限畅看完整版</p>
       <button onclick="window.location.href='index.html'">去首页注册</button>
-    </div>
-
-    <div class="player-info">
-      <div style="font-size: 18px; font-weight: 700;" id="video-player-name"></div>
-      <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;" id="video-player-meta"></div>
     </div>
   </div>
 </div>
 
 <script>
-  // 🔴 配置你的后端 API 地址
+  // 你的后端地址
   const API_BASE = 'https://jiaoyouweb.onrender.com';
   
-  const grid = document.getElementById('shorts-grid');
-  const loadingIndicator = document.getElementById('loading-indicator');
-  
-  // 分页核心变量
-  let ALL_VIDEOS = [];      // 存放所有拉取到的视频
-  let renderedCount = 0;    // 已经渲染到页面的数量
-  const PAGE_SIZE = 9;      // 每次加载 9 个（正好是3行）
-  let isLoading = false;
-  let hasMoreData = true;
+  const grid = document.getElementById('grid');
+  const sentinel = document.getElementById('sentinel');
 
-  // 1. 解析播放地址（兼容苹果CMS格式）
-  function parsePlayUrl(urlStr) {
+  let allVideos = [];      // 所有拉取下来的数据
+  let renderedIndex = 0;   // 当前已渲染到的索引
+  const BATCH_SIZE = 3;    // 🔴 核心：每次只加载 3 个
+  let isLoading = false;
+  let hasMore = true;
+
+  // 解析苹果CMS播放地址
+  function parseUrl(urlStr) {
     if (!urlStr) return '';
     if (urlStr.includes('$')) {
       const parts = urlStr.split('#');
@@ -293,203 +238,148 @@
     return urlStr;
   }
 
-  // 2. 创建单张卡片的 HTML 结构
-  function createCardHTML(video) {
-    const realUrl = parsePlayUrl(video.playUrl);
-    const poster = video.pic || 'assets/img/live/1.webp';
-    // 生成一个随机的热度，看起来更真实
-    const randomLikes = (Math.random() * 5 + 1).toFixed(1) + 'K';
+  // 创建卡片 HTML
+  function createCard(video) {
+    const src = parseUrl(video.playUrl);
+    const pic = video.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
+    // 截断过长的标题
+    const title = video.name.length > 20 ? video.name.substring(0, 20) + '...' : video.name;
     
-    return `
-      <div class="short-card" 
-           data-video-src="${realUrl}" 
-           data-video-poster="${poster}"
-           data-video-name="${video.name}"
-           data-video-meta="📍 ${video.category || '同城'} · 🔥 ${randomLikes}">
-        <img class="cover" src="${poster}" referrerpolicy="no-referrer" onerror="this.src='assets/img/live/1.webp'">
-        <span class="live-badge">LIVE</span>
-        <div class="card-overlay">
-          <div class="card-name">${video.name}</div>
-          <div class="card-meta">
-            <span>📍 ${video.category || '同城'}</span>
-            <span>🔥 ${randomLikes}</span>
-          </div>
+    // 随机生成一个热度值
+    const hot = (Math.random() * 5 + 1).toFixed(1);
+
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <img src="${pic}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80'">
+      <span class="live-tag">LIVE</span>
+      <div class="card-info">
+        <div class="card-title">${title}</div>
+        <div class="card-meta">
+          <span>📍 ${video.category || '同城'}</span>
+          <span>🔥 ${hot}K</span>
         </div>
       </div>
     `;
+    
+    // 绑定点击播放
+    div.onclick = () => openPlayer(src, title, video.category);
+    return div;
   }
 
-  // 3. 渲染当前页（每次调用追加 9 个）
-  function renderNextPage() {
-    if (isLoading || !hasMoreData) return;
+  // 渲染下一批数据（每次3个）
+  function loadNextBatch() {
+    if (isLoading || !hasMore) return;
+    
     isLoading = true;
-    loadingIndicator.style.display = 'block';
+    sentinel.textContent = '正在加载...';
 
-    // 模拟一点点网络加载延迟，让过渡更自然
+    // 模拟一点点网络延迟，让加载动画更自然
     setTimeout(() => {
-      // 计算需要截取的数据范围
-      const nextVideos = ALL_VIDEOS.slice(renderedCount, renderedCount + PAGE_SIZE);
+      const nextVideos = allVideos.slice(renderedIndex, renderedIndex + BATCH_SIZE);
       
-      // 如果没有更多数据了，停止加载
       if (nextVideos.length === 0) {
-        hasMoreData = false;
-        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+        hasMore = false;
+        sentinel.textContent = '已经到底啦，没有更多视频了~';
         isLoading = false;
         return;
       }
 
-      // 使用 DocumentFragment 批量插入，避免页面重绘卡顿
       const fragment = document.createDocumentFragment();
-      nextVideos.forEach(video => {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = createCardHTML(video).trim();
-        fragment.appendChild(tempDiv.firstChild);
-      });
-
-      grid.appendChild(fragment);
-      renderedCount += nextVideos.length;
-      isLoading = false;
+      nextVideos.forEach(v => fragment.appendChild(createCard(v)));
       
-      // 判断是否已经加载完所有数据
-      if (renderedCount >= ALL_VIDEOS.length) {
-        hasMoreData = false;
-        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+      grid.appendChild(fragment);
+      renderedIndex += nextVideos.length;
+      isLoading = false;
+
+      if (renderedIndex >= allVideos.length) {
+        hasMore = false;
+        sentinel.textContent = '已经到底啦，没有更多视频了~';
       } else {
-        loadingIndicator.style.display = 'none';
+        sentinel.textContent = '上滑加载更多...';
       }
-    }, 300); // 300ms 的轻微延迟
+    }, 200); 
   }
 
-  // 4. 初始化：从后端拉取数据并渲染第一页
-  function initShortsPage() {
+  // 初始化拉取数据
+  function init() {
     fetch(`${API_BASE}/api/videos`)
       .then(res => res.json())
-      .then(videos => {
-        if (!videos || videos.length === 0) {
-          grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:#999; padding: 40px 0;">暂无视频</p>';
+      .then(data => {
+        if (!data || data.length === 0) {
+          sentinel.textContent = '暂无视频，请去后台采集';
           return;
         }
-        ALL_VIDEOS = videos;
-        renderNextPage(); // 先渲染前 9 个
+        allVideos = data;
+        loadNextBatch(); // 先渲染前 3 个
       })
       .catch(err => {
-        console.error('拉取数据失败:', err);
-        grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:red; padding: 40px 0;">加载失败，请刷新重试</p>';
+        sentinel.textContent = '网络错误，加载失败';
       });
   }
 
-  // 5. 触底检测（防抖处理）
-  let scrollTimeout = null;
-  window.addEventListener('scroll', () => {
-    if (scrollTimeout) return;
-    scrollTimeout = setTimeout(() => {
-      scrollTimeout = null;
-      
-      // 获取当前滚动位置
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      // 当距离底部还有 300px 时触发加载
-      if (documentHeight - scrollTop - windowHeight < 300) {
-        if (!isLoading && hasMoreData) {
-          renderNextPage();
-        }
-      }
-    }, 100); // 100ms 的防抖，避免高频触发
-  });
-
-  // ================= 视频播放与试看逻辑 =================
-  let hls = null;
-  let videoLimitHandler = null;
-  const playerModal = document.getElementById('video-player-modal');
-  const videoEl = document.getElementById('video-player');
-  const limitOverlay = document.getElementById('video-limit-overlay');
-
-  // 点击卡片打开视频
-  grid.addEventListener('click', (e) => {
-    const card = e.target.closest('.short-card');
-    if (!card) return;
-
-    const src = card.getAttribute('data-video-src');
-    const poster = card.getAttribute('data-video-poster');
-    const name = card.getAttribute('data-video-name');
-    const meta = card.getAttribute('data-video-meta');
-
-    if (!src) {
-      alert('该视频暂未配置播放源');
-      return;
+  // 🔴 核心缓加载逻辑：使用 IntersectionObserver 监听底部哨兵
+  // 只要底部哨兵出现在视口内，就触发加载
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !isLoading && hasMore) {
+      loadNextBatch();
     }
+  }, { rootMargin: '100px' }); // 提前 100px 触发，体验无缝
 
-    // 填充信息
-    document.getElementById('video-player-name').textContent = name;
-    document.getElementById('video-player-meta').textContent = meta;
+  observer.observe(sentinel);
+
+  // ================= 视频播放逻辑 =================
+  let hls = null;
+  const playerModal = document.getElementById('player-modal');
+  const videoEl = document.getElementById('video-el');
+  const limitMask = document.getElementById('limit-mask');
+  let limitHandler = null;
+
+  function openPlayer(src, title, category) {
+    if (!src) return alert('视频源无效');
     
-    // 隐藏试看遮罩
-    limitOverlay.style.display = 'none';
+    limitMask.style.display = 'none';
+    playerModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // 禁止背景滚动
 
-    // 处理 HLS (m3u8) 和 普通 MP4
-    if (src.includes('.m3u8')) {
-      if (window.Hls && Hls.isSupported()) {
-        if (hls) hls.destroy();
-        hls = new Hls(); 
-        hls.loadSource(src); 
-        hls.attachMedia(videoEl);
-      } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-        videoEl.src = src;
-      }
+    if (src.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+      if (hls) hls.destroy();
+      hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(videoEl);
     } else {
       videoEl.src = src;
     }
     
-    videoEl.poster = poster || '';
-    videoEl.load();
+    videoEl.play().catch(e => console.log('播放失败:', e));
 
-    // 显示弹窗并播放
-    playerModal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // 阻止背景滚动
-    videoEl.play().catch(() => {});
-
-    // 🔴 15秒试看限制逻辑
-    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    const isLoggedIn = !!localStorage.getItem('hiya_user');
-
-    if (!isLoggedIn) {
-      videoLimitHandler = function() {
-        if (videoEl.currentTime >= 15 && limitOverlay.style.display !== 'flex') {
+    // 登录限制检查
+    const isLogin = !!localStorage.getItem('hiya_user');
+    if (!isLogin) {
+      if (limitHandler) videoEl.removeEventListener('timeupdate', limitHandler);
+      limitHandler = () => {
+        // 超过 15 秒停止并显示遮罩
+        if (videoEl.currentTime >= 15 && limitMask.style.display !== 'flex') {
           videoEl.pause();
-          limitOverlay.style.display = 'flex'; // 显示试看结束遮罩
+          limitMask.style.display = 'flex';
         }
       };
-      videoEl.addEventListener('timeupdate', videoLimitHandler);
+      videoEl.addEventListener('timeupdate', limitHandler);
     }
-  });
-
-  // 关闭播放器
-  function closePlayer() {
-    if (hls) { hls.destroy(); hls = null; }
-    if (videoLimitHandler) { 
-      videoEl.removeEventListener('timeupdate', videoLimitHandler); 
-      videoLimitHandler = null; 
-    }
-    videoEl.pause(); 
-    videoEl.removeAttribute('src'); 
-    videoEl.load();
-    
-    playerModal.classList.remove('active');
-    document.body.style.overflow = ''; // 恢复背景滚动
   }
 
-  document.getElementById('video-close-btn').addEventListener('click', closePlayer);
-  
-  // 点击黑色背景关闭
-  playerModal.addEventListener('click', (e) => {
-    if (e.target === playerModal) closePlayer();
-  });
+  document.getElementById('close-btn').onclick = () => {
+    playerModal.classList.remove('active');
+    document.body.style.overflow = '';
+    if (hls) { hls.destroy(); hls = null; }
+    if (limitHandler) { videoEl.removeEventListener('timeupdate', limitHandler); }
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+    videoEl.load();
+  };
 
-  // 页面启动
-  window.addEventListener('DOMContentLoaded', initShortsPage);
-
+  // 启动
+  init();
 </script>
 </body>
 </html>
