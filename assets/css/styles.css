@@ -32,7 +32,7 @@ a{text-decoration:none;color:inherit}
 .lang select{border:0;background:transparent;font:inherit;color:inherit;padding:2px 2px;outline:none}
 .login-btn{margin-left:11px;background:linear-gradient(90deg,#ff9a5c,#ff5c9d);color:#fff;padding:7px 15px;border-radius:16px;font-size:12px;font-weight:700}
 
-/* ---------- Hero (新增左侧白色渐变遮罩) ---------- */
+/* ---------- Hero ---------- */
 .hero{
   position:relative;min-height:452px;
   background:url(../img/bg.webp) center / cover no-repeat;
@@ -64,12 +64,11 @@ a{text-decoration:none;color:inherit}
 
 .promo{position:relative;margin-top:14px;background:#fff;border-radius:18px;padding:15px 19px 14px;box-shadow:0 16px 34px rgba(234,140,185,.20);width:75%}
 .promo .p-title{font-size:13px;font-weight:700;color:#3a3f5f}
-.promo .p-usdt{font-size:41px;font-weight:900;margin:1px 0 2px}
+.promo .p-usdt{font-size:36px;font-weight:900;margin:4px 0 6px}
 .promo .p-desc{font-size:11px;color:#9a9fb2}
 .promo .p-btn{margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(90deg,#ff9a4d,#ff4d94);color:#fff;font-size:13px;font-weight:700;padding:10px 22px;border-radius:22px;box-shadow:0 10px 20px rgba(255,90,150,.35)}
 .promo .p-note{font-size:9.5px;color:#b6bac8;margin-top:9px}
-.promo .p-gift{position:absolute;right:4px;bottom:6px;width:130px;height:112px;line-height:1}
-.promo .p-gift img{width:100%;height:100%;object-fit:contain;display:block}
+.promo .p-gift{position:absolute;right:10px;bottom:15px;width:90px;height:100px;display:flex;align-items:center;justify-content:center;font-size:60px;line-height:1}
 
 .live-panel{position:absolute;top:56px;right:16px;z-index:4;width:118px;background:#fff;border-radius:16px;padding:15px 11px 14px;box-shadow:0 18px 40px rgba(150,110,170,.28)}
 .live-panel h4{font-size:12.5px;font-weight:800;margin-bottom:12px}
@@ -102,7 +101,7 @@ a{text-decoration:none;color:inherit}
 .fbar .ft2{font-size:8px;color:#9a9fb2;line-height:1.25}
 .ic-pink{background:linear-gradient(135deg,#ff7eb3,#ff5c9d)}
 
-/* ---------- Two big cards (新增左侧白色渐变遮罩) ---------- */
+/* ---------- Two big cards ---------- */
 .dual{display:flex;gap:12px;margin-top:12px}
 .dcard{flex:1;height:216px;border-radius:18px;position:relative;overflow:hidden;padding:22px 22px}
 .dcard.left{
@@ -129,11 +128,16 @@ a{text-decoration:none;color:inherit}
 .sec-head .st{font-size:17px;font-weight:800;display:flex;align-items:center;gap:7px}
 .sec-head .more{margin-left:auto;font-size:11px;color:#9a9fb2}
 
-/* ---------- Hot picks ---------- */
+/* ---------- Hot picks (Video Stream) ---------- */
 .hot-row{display:flex;gap:9px}
-.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden}
-.hcard .live{position:absolute;top:7px;left:7px;background:#ff3b5c;color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.5px}
-.hcard .ov{position:absolute;left:0;right:0;bottom:0;padding:16px 7px 7px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6));color:#fff}
+.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden;background:#000}
+.hcard .hvideo{
+  width:100%;height:100%;object-fit:cover;
+  position:absolute;inset:0;z-index:0;
+  pointer-events:none;
+}
+.hcard .live{position:absolute;top:7px;left:7px;background:#ff3b5c;color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.5px;z-index:2}
+.hcard .ov{position:absolute;left:0;right:0;bottom:0;padding:16px 7px 7px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.7));color:#fff;z-index:2}
 .hcard .nm{font-size:11px;font-weight:700}
 .hcard .meta{display:flex;align-items:center;justify-content:space-between;font-size:8.5px;margin-top:3px;opacity:.95}
 .hcard .meta .cty{display:flex;align-items:center;gap:3px}
@@ -175,20 +179,6 @@ a{text-decoration:none;color:inherit}
 .f-note{font-size:8.5px;color:#a7abbd;line-height:1.6}
 .copyright{text-align:center;font-size:9px;color:#b6bac8;margin-top:16px;border-top:1px solid #f0f0f5;padding-top:13px}
 
-/* ---------- Avatar/photo placeholder colors ---------- */
-.av1{background:linear-gradient(135deg,#f6c9b4,#e59a9a)}
-.av2{background:linear-gradient(135deg,#e9c3d6,#c99fc7)}
-.av3{background:linear-gradient(135deg,#d8c9ec,#b3a3da)}
-.av4{background:linear-gradient(135deg,#f3d7bd,#d9b39b)}
-.av5{background:linear-gradient(135deg,#e2cbec,#bfa6d4)}
-.hc1{background:url(../img/live/1.webp) center/cover no-repeat}
-.hc2{background:url(../img/live/2.webp) center/cover no-repeat}
-.hc3{background:url(../img/live/3.webp) center/cover no-repeat}
-.hc4{background:url(../img/live/4.webp) center/cover no-repeat}
-.hc5{background:url(../img/live/5.webp) center/cover no-repeat}
-.hc6{background:url(../img/live/6.webp) center/cover no-repeat}
-.hc7{background:url(../img/live/7.webp) center/cover no-repeat}
-
 /* ===== 模块C Responsive ===== */
 @media (max-width:850px){
   body{padding-bottom:28px}
@@ -199,7 +189,6 @@ a{text-decoration:none;color:inherit}
   .nav{position:relative}
   .arc,.heart{display:none}
 
-  /* 移动端隐藏白色遮罩，避免与深色遮罩冲突 */
   .hero::before{display:none}
   .hero{background:url(../img/bg.webp) center/cover no-repeat;min-height:420px}
   .hero::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(20,10,35,.12) 0%,rgba(20,10,35,.32) 45%,rgba(20,10,35,.74) 100%)}
@@ -233,6 +222,7 @@ a{text-decoration:none;color:inherit}
 
   .hot-row{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
   .hot-row .hcard{flex:0 0 128px;scroll-snap-align:start}
+  
   .steps-card{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"s1 s2" "timer timer" "s3 s4";column-gap:12px;row-gap:18px;align-items:start;padding:20px 16px}
   .steps-card>.dash{display:none}
   .step{flex-direction:column;text-align:center;gap:6px}
@@ -242,6 +232,7 @@ a{text-decoration:none;color:inherit}
   .steps-card>.step:nth-child(9){grid-area:s4}
   .steps-card>.timer{grid-area:timer;justify-self:center;width:52px;height:52px}
   .steps-card>.timer i{width:40px;height:40px;font-size:11px}
+  
   .cta{flex-wrap:wrap}
   .cta .cbtn{margin-left:0;width:100%;justify-content:center}
   .f-top{flex-wrap:wrap;gap:18px}
@@ -259,7 +250,7 @@ a{text-decoration:none;color:inherit}
   .fbar .f{min-width:78px;padding:10px 12px}
   .dcard{flex-basis:88%}
   .promo{grid-template-columns:1fr 78px}
-  .promo .p-gift{height:92px}
+  .promo .p-gift{height:92px;font-size:50px}
   .promo .p-btn{width:100%;justify-content:center}
   .dcard .d-btn{left:20px;right:20px;width:auto;justify-content:center}
   .hot-row .hcard{flex:0 0 46%}
@@ -271,7 +262,7 @@ a{text-decoration:none;color:inherit}
 [dir="rtl"] .login-btn{margin-left:0;margin-right:11px}
 [dir="rtl"] .sec-head .more{margin-left:0;margin-right:auto}
 [dir="rtl"] .live-panel{right:auto;left:16px}
-[dir="rtl"] .promo .p-gift{right:auto;left:4px}
+[dir="rtl"] .promo .p-gift{right:auto;left:10px}
 [dir="rtl"] .hcard .live{left:auto;right:7px}
 [dir="rtl"] .dcard .tag{right:auto;left:14px}
 [dir="rtl"] .dcard .d-btn{left:auto;right:20px}
