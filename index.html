@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>嗨呀直播</title>
 <link rel="stylesheet" href="assets/css/styles.css">
-<!-- 移除旧LaSDK -->
+<!-- 引入 HLS.js 用于支持 m3u8 视频流播放 -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 </head>
 <body>
 <div class="page">
@@ -115,45 +116,46 @@
     </div>
   </div>
 
-  <!-- ============ HOT PICKS (VIDEO STREAM) ============ -->
+  <!-- ============ HOT PICKS (支持视频点击播放) ============ -->
   <div class="sec-head">
     <div class="st" data-i18n="hot.title">🔥 同城推荐</div>
-    <!-- 点击直接跳转到内页 -->
     <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">查看全部主播 ›</a>
   </div>
   <div class="hot-row">
-    <div class="hcard hc1" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/1.webp"><source src="assets/img/live/1.mp4" type="video/mp4"></video>
+    <!-- 注意：下面每个卡片都加了 data-video-src 和 data-video-poster -->
+    <!-- 这里我用的是 m3u8 测试流和 mp4 占位，你可以换成你采集的真实 swag.live 视频链接 -->
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-video-poster="assets/img/live/1.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/1.webp"><source src="" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">静怡</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card1.country">北京</span></span><span>🔥 12.4K</span></div></div>
     </div>
-    <div class="hcard hc2" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/2.webp"><source src="assets/img/live/2.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://www.w3schools.com/html/mov_bbb.mp4" data-video-poster="assets/img/live/2.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/2.webp"><source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">思颖</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card2.country">上海</span></span><span>🔥 9.8K</span></div></div>
     </div>
-    <div class="hcard hc3" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/3.webp"><source src="assets/img/live/3.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-video-poster="assets/img/live/3.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/3.webp"><source src="" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">梦瑶</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card3.country">广州</span></span><span>🔥 8.6K</span></div></div>
     </div>
-    <div class="hcard hc4" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/4.webp"><source src="assets/img/live/4.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://www.w3schools.com/html/mov_bbb.mp4" data-video-poster="assets/img/live/4.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/4.webp"><source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">雅雯</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card4.country">成都</span></span><span>🔥 7.3K</span></div></div>
     </div>
-    <div class="hcard hc5" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/5.webp"><source src="assets/img/live/5.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-video-poster="assets/img/live/5.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/5.webp"><source src="" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">佳琪</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card5.country">杭州</span></span><span>🔥 6.5K</span></div></div>
     </div>
-    <div class="hcard hc6" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/6.webp"><source src="assets/img/live/6.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://www.w3schools.com/html/mov_bbb.mp4" data-video-poster="assets/img/live/6.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/6.webp"><source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">婉婷</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card6.country">深圳</span></span><span>🔥 5.2K</span></div></div>
     </div>
-    <div class="hcard hc7" data-register role="button" tabindex="0">
-      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/7.webp"><source src="assets/img/live/7.mp4" type="video/mp4"></video>
+    <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-video-poster="assets/img/live/7.webp">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/7.webp"><source src="" type="video/mp4"></video>
       <span class="live">LIVE</span>
       <div class="ov"><div class="nm">语嫣</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card7.country">重庆</span></span><span>🔥 4.8K</span></div></div>
     </div>
@@ -239,12 +241,10 @@
 </div>
 
 <!-- ============ 注册/登录 弹窗 ============ -->
-<!-- 强制 style="display: none;" 防止任何 CSS 意外污染导致全屏不可点 -->
 <div class="modal-overlay" id="register-modal" hidden style="display: none;">
   <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
     <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
 
-    <!-- 注册视图 -->
     <section class="modal-view" data-view="form">
       <h2 id="modal-title" data-i18n="modal.title">创建你的交友账号</h2>
       <form data-register-form novalidate>
@@ -279,7 +279,6 @@
       </p>
     </section>
 
-    <!-- 登录视图 -->
     <section class="modal-view" data-view="login" hidden>
       <h2 data-i18n="modal.login.title">登录你的账号</h2>
       <form data-login-form novalidate>
@@ -299,13 +298,64 @@
       </p>
     </section>
     
-    <!-- 欢迎视图 -->
     <section class="modal-view" data-view="welcome" hidden>
       <div class="modal-success" aria-hidden="true">✓</div>
       <h2 data-i18n="modal.welcome.title">欢迎回来！</h2>
       <p data-i18n="modal.welcome.desc">你已成功登录。</p>
       <button class="modal-submit" onclick="if(window.closeModal) window.closeModal()" data-i18n="modal.welcome.cta">开始探索</button>
     </section>
+  </div>
+</div>
+
+<!-- ============ 客服引导弹窗（登录后触发） ============ -->
+<div class="modal-overlay" id="customer-modal" hidden style="display:none;">
+  <div class="modal-dialog" role="dialog" aria-modal="true" style="background: #111; color: #fff; overflow: hidden; padding: 0; max-width: 380px; width: 90%;">
+    <button class="modal-close" type="button" data-customer-close aria-label="关闭" style="position: absolute; top: 12px; right: 14px; z-index: 10; color: #fff; font-size: 20px; background: rgba(0,0,0,0.4); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">×</button>
+
+    <!-- 背景图区域（可换成你本地更暴露/性感的图） -->
+    <div style="position: relative; height: 340px; background: url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;">
+      <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, #111 100%);"></div>
+      <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
+        <h3 style="font-size: 22px; font-weight: 900; margin: 0 0 6px; color: #fff; letter-spacing: 1px;">深夜同城 专属1V1</h3>
+        <p style="font-size: 13px; color: #ff6b9d; margin: 0; font-weight: 700;">发现附近刚刚上线的心动女孩</p>
+      </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div style="padding: 20px 24px 28px; text-align: center;">
+      <div id="customer-countdown-area">
+        <p style="font-size: 14px; color: #ff6b9d; margin: 0 0 8px;">正在为你匹配同城高颜值空姐/学生…</p>
+        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite;"></span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.2s;"></span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.4s;"></span>
+        </div>
+        <div style="font-size: 42px; font-weight: 900; color: #ff6b9d; line-height: 1;" id="customer-timer">15</div>
+        <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 6px 0 0;">秒后为你揭晓神秘联系方式</p>
+      </div>
+
+      <div id="customer-result-area" style="display: none;">
+        <p style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 6px;">匹配成功！🎉</p>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0 0 16px;">添加 Telegram 专属客服，获取同城裸聊/约啪资源</p>
+        <a id="customer-tg-link" href="https://t.me/yourusername" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(90deg, #ff6b9d, #ff3d8b); color: #fff; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 30px; text-decoration: none; box-shadow: 0 8px 24px rgba(255,107,157,0.4);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
+          添加 Telegram 客服
+        </a>
+        <p style="font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 12px;">官方客服：@yourusername</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 全屏视频播放器 ============ -->
+<div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
+  <div style="position: relative; width: 100%; max-width: 420px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
+    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 10; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+    <video id="video-player" controls autoplay playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000;"></video>
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none;">
+      <div style="font-size: 18px; font-weight: 700;" id="video-player-name">静怡</div>
+      <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;" id="video-player-meta">📍 北京 · 🔥 12.4K</div>
+    </div>
   </div>
 </div>
 
