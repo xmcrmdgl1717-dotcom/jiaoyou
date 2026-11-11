@@ -2,7 +2,7 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-let globalConfig = { hotConfig: {}, recommendConfig: {}, trc20: '' };
+let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '' };
 
 async function fetchGlobalConfig() {
     try {
@@ -171,6 +171,31 @@ function parsePlayUrl(urlStr) {
     if (parts.length > 0 && parts[0].includes('$')) return parts[0].split('$')[1];
   }
   return urlStr; 
+}
+
+// 加载免费精选
+async function loadFreeVideos() {
+  const freeRow = document.getElementById('index-free-list');
+  if (!freeRow) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/videos/free`);
+    const videos = await res.json();
+    if (!videos || videos.length === 0) return; 
+
+    freeRow.innerHTML = videos.slice(0, 7).map((v, i) => {
+      const realUrl = parsePlayUrl(v.playUrl);
+      const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
+      return `
+        <div class="hcard" data-register role="button" tabindex="0" 
+             data-config-type="free" data-video-id="${v.id}"
+             data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
+          <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
+          <span class="live">FREE</span>
+          <div class="ov"><div class="nm">${v.name}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {}
 }
 
 // 加载精彩视频
@@ -418,7 +443,8 @@ function openVideoPlayer(card) {
   const isLogin = !!localStorage.getItem('hiya_user');
   const isPurchased = isVideoPurchased(vid);
   
-  let configData = configType === 'recommend' ? globalConfig.recommendConfig : globalConfig.hotConfig;
+  // 读取对应的配置 (支持 free 类型)
+  let configData = configType === 'free' ? globalConfig.freeConfig : (configType === 'recommend' ? globalConfig.recommendConfig : globalConfig.hotConfig);
   let previewLimit = configData?.previewLimit ?? null;
   let regLimit = configData?.regLimit ?? null;
   let price = configData?.unlockPrice ?? null;
@@ -427,7 +453,6 @@ function openVideoPlayer(card) {
 
   if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
-  // 🔴 前端文案与限制逻辑 (区分登录、未登录、金额、秒数)
   if (isPurchased || maxTime === null || maxTime <= 0) {
     timeText.innerText = "已解锁完整版";
     timePrice.innerText = "";
@@ -459,7 +484,7 @@ function openVideoPlayer(card) {
       if (curTime >= maxTime) {
         videoEl.pause(); 
         isBlocked = true; 
-        showVideoPaywall(limitOverlay, vid, isLogin, price, globalConfig.trc20);
+        showVideoPaywall(limitOverlay, vid, isLogin, price, globalConfig.trc20, configType);
       }
     }
     if (isBlocked && curTime < maxTime - 1) {
@@ -469,7 +494,7 @@ function openVideoPlayer(card) {
   videoEl.addEventListener('timeupdate', videoLimitHandler);
 }
 
-function showVideoPaywall(overlay, vid, isLogin, price, trc20) {
+function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
   if (!isLogin) {
     overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
     overlay.style.display = 'flex';
@@ -487,17 +512,16 @@ function showVideoPaywall(overlay, vid, isLogin, price, trc20) {
     <p>开通全集需支付 <strong style="color:#ff1a75;">${price} USDT</strong></p>
     <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
     <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:15px; width:100%;">${trc20}</div>
-    <button onclick="generateHomeOrder('${vid}', ${price})" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">生成专属付款金额</button>
+    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">生成专属付款金额</button>
     <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
   `;
   overlay.style.display = 'flex';
 }
 
-async function generateHomeOrder(vid, price) {
+async function generateHomeOrder(vid, price, configType) {
   const btn = document.getElementById('gen-home-order-btn');
   btn.disabled = true; btn.innerText = '生成中...';
   
-  // 🔴 携带用户和视频信息给后端
   const userStr = localStorage.getItem('hiya_user');
   let user = { id: 'guest', name: '游客', email: '未知' };
   if (userStr) { const parsed = JSON.parse(userStr); user = { id: parsed.id, name: parsed.name, email: parsed.email }; }
@@ -509,7 +533,7 @@ async function generateHomeOrder(vid, price) {
         body: JSON.stringify({ 
             baseAmount: price,
             userId: user.id, userName: user.name, userEmail: user.email,
-            videoId: vid, videoName: currentVideoName, configType: 'hot' // 如果是首页推荐用 recommend
+            videoId: vid, videoName: currentVideoName, configType: configType 
         })
     });
     const data = await res.json();
@@ -560,6 +584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuthEvents(); 
   initModalEvents(); 
   renderAuthArea(); 
+  loadFreeVideos(); // 加载免费精选
   loadHomeVideos();
   loadRecommendVideos(); 
   initLiveStats(); 
