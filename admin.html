@@ -39,10 +39,12 @@
         .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
         .lang-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
         .action-btns { display: flex; gap: 8px; align-items: center; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; }
     </style>
 </head>
 <body>
-    <!-- 侧边栏：包含了你截图里的所有菜单 -->
+    <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="logo">CMS System</div>
         <div class="nav-item active" onclick="switchTab('tab-collect', this)">📥 采集视频</div>
@@ -84,7 +86,7 @@
                 </div>
             </div>
 
-            <!-- ================= 视频分类管理 (已完整恢复) ================= -->
+            <!-- ================= 视频分类管理 ================= -->
             <div id="tab-category" class="tab">
                 <div class="card">
                     <h3>添加分类</h3>
@@ -102,22 +104,28 @@
                 </div>
             </div>
 
-            <!-- ================= 系统配置 (已完整恢复) ================= -->
+            <!-- ================= 系统配置 (已改为多选并新增免费配置) ================= -->
             <div id="tab-config" class="tab">
                 <div class="card">
                     <h3>基础设置</h3>
                     <div class="flex" style="margin-bottom:15px;">
                         <label>TRC20 接收地址：</label><input type="text" id="set-trc20" style="flex:1;">
                     </div>
-                    <div class="flex" style="margin-bottom:15px;">
-                        <label>首页精彩视频分类：</label><select id="set-hotCat"></select>
+                    <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
+                        <label style="width: 130px;">首页精彩视频分类：</label>
+                        <div id="set-hotCats-box" class="checkbox-group" style="flex:1;"></div>
                     </div>
-                    <div class="flex">
-                        <label>首页直播推荐分类：</label><select id="set-recommendCat"></select>
+                    <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
+                        <label style="width: 130px;">首页直播推荐分类：</label>
+                        <div id="set-recommendCats-box" class="checkbox-group" style="flex:1;"></div>
+                    </div>
+                    <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
+                        <label style="width: 130px; color:#ff3d8b; font-weight:bold;">首页免费精选分类：</label>
+                        <div id="set-freeCats-box" class="checkbox-group" style="flex:1;"></div>
                     </div>
                 </div>
-                <div class="flex" style="gap:20px; align-items: flex-start;">
-                    <div class="card" style="flex:1;">
+                <div class="flex" style="gap:20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div class="card" style="flex:1; min-width: 300px;">
                         <h3>🔥 精彩视频 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
                             <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="hot-preview" placeholder="不填则不拦截">
@@ -125,7 +133,7 @@
                             <label>解锁金额 (USDT)：</label><input type="number" id="hot-price" placeholder="不填则提示联系客服">
                         </div>
                     </div>
-                    <div class="card" style="flex:1;">
+                    <div class="card" style="flex:1; min-width: 300px;">
                         <h3>🔥 直播推荐 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
                             <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="rec-preview" placeholder="不填则不拦截">
@@ -133,11 +141,20 @@
                             <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" placeholder="不填则提示联系客服">
                         </div>
                     </div>
+                    <!-- 新增：免费精选配置 -->
+                    <div class="card" style="flex:1; min-width: 300px; border: 2px solid #4ade80;">
+                        <h3 style="border-left-color: #4ade80;">🎁 免费精选 配置</h3>
+                        <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
+                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="free-preview" placeholder="不填则不拦截">
+                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="free-reg" placeholder="不填则不拦截">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="free-price" placeholder="不填则提示联系客服">
+                        </div>
+                    </div>
                 </div>
                 <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px; margin-top:15px;">保存所有配置</button>
             </div>
 
-            <!-- ================= 视频上传管理 (已完整恢复) ================= -->
+            <!-- ================= 视频上传管理 ================= -->
             <div id="tab-upload" class="tab">
                 <div class="card">
                     <h3>批量上传</h3>
@@ -212,7 +229,6 @@
     </div>
 
     <!-- 弹窗集合 -->
-    <!-- 1. 字典编辑 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -224,7 +240,6 @@
         </div>
     </div>
 
-    <!-- 2. 通用编辑 (分类/用户) -->
     <div id="generic-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3 id="gm-title">编辑</h3>
@@ -236,7 +251,6 @@
         </div>
     </div>
 
-    <!-- 3. 语言添加弹窗 -->
     <div id="lang-modal" class="modal">
         <div class="modal-box">
             <h3>添加国家语言 (勾选后添加)</h3>
@@ -248,7 +262,6 @@
         </div>
     </div>
 
-    <!-- 4. 订单审核弹窗 -->
     <div id="order-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3>订单审核</h3>
@@ -317,14 +330,25 @@
         loadCategories();
     }
 
-    /* ================= 2. 系统配置 ================= */
+    /* ================= 2. 系统配置 (多选支持) ================= */
     async function loadConfig() {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
+        
         document.getElementById('set-trc20').value = s.trc20 || '';
-        let opts = '<option value="all">全部加载</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        document.getElementById('set-hotCat').innerHTML = opts; document.getElementById('set-hotCat').value = s.hotCat || 'all';
-        document.getElementById('set-recommendCat').innerHTML = opts; document.getElementById('set-recommendCat').value = s.recommendCat || 'all';
+        
+        const renderCheckboxes = (boxId, selectedArr) => {
+            const box = document.getElementById(boxId);
+            box.innerHTML = cats.map(c => `
+                <label class="checkbox-item">
+                    <input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}
+                </label>
+            `).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
+        };
+
+        renderCheckboxes('set-hotCats-box', s.hotCats || []);
+        renderCheckboxes('set-recommendCats-box', s.recommendCats || []);
+        renderCheckboxes('set-freeCats-box', s.freeCats || []);
         
         const hc = s.hotConfig || {};
         document.getElementById('hot-preview').value = (hc.previewLimit !== null && hc.previewLimit !== undefined) ? hc.previewLimit : '';
@@ -335,18 +359,29 @@
         document.getElementById('rec-preview').value = (rc.previewLimit !== null && rc.previewLimit !== undefined) ? rc.previewLimit : '';
         document.getElementById('rec-reg').value = (rc.regLimit !== null && rc.regLimit !== undefined) ? rc.regLimit : '';
         document.getElementById('rec-price').value = (rc.unlockPrice !== null && rc.unlockPrice !== undefined) ? rc.unlockPrice : '';
+
+        const fc = s.freeConfig || {};
+        document.getElementById('free-preview').value = (fc.previewLimit !== null && fc.previewLimit !== undefined) ? fc.previewLimit : '';
+        document.getElementById('free-reg').value = (fc.regLimit !== null && fc.regLimit !== undefined) ? fc.regLimit : '';
+        document.getElementById('free-price').value = (fc.unlockPrice !== null && fc.unlockPrice !== undefined) ? fc.unlockPrice : '';
     }
     async function saveSettings() {
         const getVal = (id) => {
             const val = document.getElementById(id).value.trim();
             return val === '' ? null : Number(val);
         };
+        const getChecked = (boxId) => {
+            return Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value);
+        };
+
         const data = {
             trc20: document.getElementById('set-trc20').value,
-            hotCat: document.getElementById('set-hotCat').value,
-            recommendCat: document.getElementById('set-recommendCat').value,
+            hotCats: getChecked('set-hotCats-box'),
+            recommendCats: getChecked('set-recommendCats-box'),
+            freeCats: getChecked('set-freeCats-box'),
             hotConfig: { previewLimit: getVal('hot-preview'), regLimit: getVal('hot-reg'), unlockPrice: getVal('hot-price') },
-            recommendConfig: { previewLimit: getVal('rec-preview'), regLimit: getVal('rec-reg'), unlockPrice: getVal('rec-price') }
+            recommendConfig: { previewLimit: getVal('rec-preview'), regLimit: getVal('rec-reg'), unlockPrice: getVal('rec-price') },
+            freeConfig: { previewLimit: getVal('free-preview'), regLimit: getVal('free-reg'), unlockPrice: getVal('free-price') }
         };
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) });
         alert('保存成功');
