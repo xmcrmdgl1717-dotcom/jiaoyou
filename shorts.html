@@ -7,7 +7,7 @@
 <!-- 引入 HLS.js 支持 m3u8 视频流播放 -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 彻底重置，摆脱全局污染 */
+  /* 彻底重置 */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { 
     background: #ffffff;
@@ -30,7 +30,7 @@
     padding: 6px 14px; border-radius: 20px; background: #fff0f5;
   }
 
-  /* 🔴 核心瀑布流布局（一行3个） */
+  /* 瀑布流布局（严格一行3个） */
   .grid-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -40,7 +40,7 @@
     margin: 0 auto;
   }
 
-  /* 卡片 - 严格 9:16 竖屏长图比例 */
+  /* 卡片 - 竖屏长图 9:16 */
   .card {
     position: relative;
     width: 100%;
@@ -56,7 +56,7 @@
     object-fit: cover; display: block;
   }
 
-  /* 卡片底部信息（渐变遮罩） */
+  /* 底部信息 */
   .card-info {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 30px 6px 6px;
@@ -82,7 +82,7 @@
 
   /* 底部加载提示 */
   #sentinel {
-    text-align: center; padding: 20px 0; font-size: 12px; color: #999;
+    text-align: center; padding: 24px 0; font-size: 12px; color: #999;
   }
 
   /* ================= 视频播放弹窗 ================= */
@@ -117,19 +117,14 @@
 </head>
 <body>
 
-<!-- 顶部导航 -->
 <header class="header">
   <h1>🔥 精彩视频</h1>
   <a href="index.html" class="back-btn">← 返回首页</a>
 </header>
 
-<!-- 瀑布流容器 -->
 <div class="grid-container" id="grid"></div>
+<div id="sentinel">正在获取数据...</div>
 
-<!-- 触底监听哨兵 -->
-<div id="sentinel">正在加载数据...</div>
-
-<!-- 视频播放弹窗 -->
 <div id="player-modal">
   <div class="player-box">
     <button class="close-btn" id="close-btn">×</button>
@@ -143,18 +138,20 @@
 </div>
 
 <script>
-  // 你的后端地址
   const API_BASE = 'https://jiaoyouweb.onrender.com';
-  
   const grid = document.getElementById('grid');
   const sentinel = document.getElementById('sentinel');
 
   let allVideos = [];      
   let renderedIndex = 0;   
-  const BATCH_SIZE = 3;    // 每次追加 3 个
+  
+  // 🔴 加载数量配置
+  const INITIAL_SIZE = 12; // 初始加载12个（4行），保证撑满屏幕
+  const LOAD_MORE_SIZE = 9; // 后续每次加载9个（3行）
+  
   let isLoading = false;
-  let hasMore = false;     // 初始设为 false，等数据拉回来后再开启
-  let dataFetched = false; // 标记数据是否已经拉取过
+  let hasMore = false;     
+  let isInitialLoaded = false; // 标记是否完成了首屏加载
 
   // 解析苹果CMS播放地址
   function parseUrl(urlStr) {
@@ -166,7 +163,7 @@
     return urlStr;
   }
 
-  // 创建卡片 HTML
+  // 创建卡片
   function createCard(video) {
     const src = parseUrl(video.playUrl);
     const pic = video.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
@@ -186,20 +183,18 @@
         </div>
       </div>
     `;
-    
     div.onclick = () => openPlayer(src, title, video.category);
     return div;
   }
 
-  // 渲染下一批数据（每次3个）
-  function loadNextBatch() {
+  // 加载数据
+  function loadBatch(count) {
     if (isLoading || !hasMore) return;
-    
     isLoading = true;
     sentinel.textContent = '正在加载...';
 
     setTimeout(() => {
-      const nextVideos = allVideos.slice(renderedIndex, renderedIndex + BATCH_SIZE);
+      const nextVideos = allVideos.slice(renderedIndex, renderedIndex + count);
       
       if (nextVideos.length === 0) {
         hasMore = false;
@@ -224,33 +219,22 @@
     }, 200); 
   }
 
-  // 🔴 修复时序的初始化逻辑
+  // 初始化
   function init() {
-    sentinel.textContent = '正在获取数据...';
-    
     fetch(`${API_BASE}/api/videos`)
       .then(res => res.json())
       .then(data => {
-        dataFetched = true;
-        
-        // 判断是否拿到真实数据
         if (!Array.isArray(data) || data.length === 0) {
           sentinel.textContent = '暂无视频数据，请前往后台采集';
           return;
         }
         
         allVideos = data;
-        hasMore = true; // 拿到数据后，允许加载
+        hasMore = true; 
         
-        // 渲染首页前 3 个
-        loadNextBatch(); 
-        
-        // 🔴 关键修复：等数据来了、渲染了，才开启滚动监听
-        // 使用 setTimeout 让 DOM 渲染一下，防止初始高度不足直接触底
-        setTimeout(() => {
-          observer.observe(sentinel);
-        }, 100);
-
+        // 首次加载 12 个（4行）
+        loadBatch(INITIAL_SIZE); 
+        isInitialLoaded = true;
       })
       .catch(err => {
         console.error('拉取失败:', err);
@@ -258,15 +242,28 @@
       });
   }
 
-  // 触底监听
-  const observer = new IntersectionObserver((entries) => {
-    // 只有在拿到数据后、且底部出现时，才触发加载
-    if (entries[0].isIntersecting && !isLoading && hasMore && dataFetched) {
-      loadNextBatch();
-    }
-  }, { rootMargin: '100px' }); // 提前 100px 触发
+  // 🔴 核心防抖滑动加载：原生计算距离底部高度
+  let scrollTimeout = null;
+  window.addEventListener('scroll', () => {
+    if (!isInitialLoaded || isLoading || !hasMore) return;
+    if (scrollTimeout) return;
 
-  // ================= 视频播放逻辑 =================
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // 距离底部 300px 时触发加载
+      if (documentHeight - scrollTop - windowHeight < 300) {
+        // 后续每次严格加载 9 个（3行）
+        loadBatch(LOAD_MORE_SIZE); 
+      }
+    }, 100); // 100ms 防抖
+  });
+
+  // ================= 播放器逻辑 =================
   let hls = null;
   const playerModal = document.getElementById('player-modal');
   const videoEl = document.getElementById('video-el');
@@ -314,7 +311,6 @@
     videoEl.load();
   };
 
-  // 启动
   init();
 </script>
 </body>
