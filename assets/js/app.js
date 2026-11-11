@@ -89,15 +89,17 @@ function initNavToggle() {
   });
 }
 
-/* ================= bootstrap ================= */
+/* ================= 初始化全局事件（委托） ================= */
 document.addEventListener('DOMContentLoaded', () => {
   initI18n();
   initNavToggle();
-  initModal();
+  initAuthEvents();
+  initModalEvents();
+  initVideoPlayerEvents();
   renderAuthArea();
 });
 
-/* ================= 渲染顶部登录状态 ================= */
+/* ================= 渲染登录状态 ================= */
 function renderAuthArea() {
   const authArea = document.getElementById('auth-area');
   if (!authArea) return;
@@ -123,7 +125,6 @@ function renderAuthArea() {
     } catch(e) { console.error(e); }
   } else {
     authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>`;
-    // 如果当前有语言包，恢复一下翻译
     const lang = document.documentElement.lang || 'zh';
     const dict = dictCache.get(lang) || enDict || {};
     if (dict['nav.login']) {
@@ -153,7 +154,53 @@ function bindUserMenuEvents() {
   }
 }
 
-/* ================= Modal 弹窗逻辑 ================= */
+/* ================= 全局拦截点击事件 ================= */
+function initAuthEvents() {
+  document.addEventListener('click', (e) => {
+    // 排除不需要触发注册/客服的合法链接
+    const noRegister = e.target.closest('[data-legal],[data-lang-select],[data-nav-toggle],.modal-overlay');
+    if (noRegister && !e.target.closest('.modal-dialog')) return;
+    
+    const hit = e.target.closest('[data-register]');
+    if (!hit) return;
+
+    // 如果是视频卡片，拦截并打开播放器，不触发注册/客服
+    if (hit.hasAttribute('data-video-src')) {
+      e.preventDefault();
+      openVideoPlayer(hit);
+      return;
+    }
+
+    // 否则判断是否登录
+    e.preventDefault();
+    const savedUser = localStorage.getItem('hiya_user');
+    if (savedUser) {
+      openCustomerModal(); 
+    } else {
+      openRegisterModal(); 
+    }
+  });
+
+  // 键盘 Enter 键支持
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    const el = e.target;
+    if (!el || !el.hasAttribute || !el.hasAttribute('data-register')) return;
+    
+    if (el.hasAttribute('data-video-src')) {
+      e.preventDefault();
+      openVideoPlayer(el);
+      return;
+    }
+
+    e.preventDefault();
+    const savedUser = localStorage.getItem('hiya_user');
+    if (savedUser) openCustomerModal();
+    else openRegisterModal();
+  });
+}
+
+/* ================= 注册 / 登录 弹窗逻辑 ================= */
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
 let lastFocused = null;
 let scrollY = 0;
@@ -192,12 +239,13 @@ function showView(name) {
   });
 }
 
-function openModal() {
+function openRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay) return;
+  lastFocused = document.activeElement;
   resetToForm();
   overlay.hidden = false;
-  overlay.style.display = 'flex'; // 强制显示
+  overlay.style.display = 'flex';
   scrollY = window.scrollY;
   document.body.style.top = (-scrollY) + 'px';
   document.body.classList.add('modal-open');
@@ -207,11 +255,11 @@ function openModal() {
   if (first) first.focus();
 }
 
-function closeModal() {
+function closeRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay || overlay.hidden) return;
   overlay.hidden = true;
-  overlay.style.display = 'none'; // 强制隐藏
+  overlay.style.display = 'none';
   document.body.classList.remove('modal-open');
   document.body.style.position = '';
   document.body.style.top = '';
@@ -230,35 +278,21 @@ function trapFocus(e) {
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
-function initModal() {
+function initModalEvents() {
   const overlay = document.getElementById('register-modal');
   if (!overlay) return;
 
-  // 全局事件委托（保证动态渲染的按钮也能点）
-  document.addEventListener('click', (e) => {
-    const noRegister = e.target.closest('[data-legal],[data-lang-select],[data-nav-toggle],.modal-overlay');
-    if (noRegister && !e.target.closest('.modal-dialog')) {
-      return; // 如果点在弹窗外的遮罩层，或者法律/语言按钮，不触发弹窗
-    }
-    
-    const hit = e.target.closest('[data-register]');
-    if (hit) {
-      e.preventDefault();
-      openModal();
-    }
-  });
-
-  overlay.querySelector('[data-modal-close]').addEventListener('click', closeModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  overlay.querySelector('[data-modal-close]').addEventListener('click', closeRegisterModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeRegisterModal(); });
   
   document.addEventListener('keydown', (e) => {
     if (overlay.hidden) return;
-    if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeRegisterModal(); }
     trapFocus(e);
   });
 
-  overlay.querySelector('[data-register-form]').addEventListener('submit', onSubmit);
-  overlay.querySelector('[data-login-form]').addEventListener('submit', onLoginSubmit);
+  overlay.querySelector('[data-register-form]').addEventListener('submit', onSubmitRegister);
+  overlay.querySelector('[data-login-form]').addEventListener('submit', onSubmitLogin);
 }
 
 // 暴露给 inline onclick
@@ -270,10 +304,10 @@ window.showRegisterView = function() {
   showView('form');
   document.querySelector('#register-modal [data-form-error]').style.display = 'none';
 };
-window.closeModal = closeModal;
+window.closeModal = closeRegisterModal;
 
 /* ================= 真实网络请求逻辑 ================= */
-function onSubmit(e) {
+function onSubmitRegister(e) {
   e.preventDefault();
   if (submitting) return;
   const form = e.currentTarget;
@@ -322,7 +356,7 @@ function onSubmit(e) {
   });
 }
 
-function onLoginSubmit(e) {
+function onSubmitLogin(e) {
   e.preventDefault();
   if (submitting) return;
   const form = e.currentTarget;
@@ -367,5 +401,139 @@ function onLoginSubmit(e) {
       errorBox.textContent = err.message === 'Failed to fetch' ? '服务器正在启动中，请等待50秒后重试' : err.message;
       errorBox.style.display = 'block';
     }
+  });
+}
+
+/* ================= 客服引导弹窗 ================= */
+let customerTimer = null;
+
+function openCustomerModal() {
+  const overlay = document.getElementById('customer-modal');
+  if (!overlay) return;
+  
+  overlay.hidden = false;
+  overlay.style.display = 'flex';
+  document.body.classList.add('modal-open');
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+
+  document.getElementById('customer-countdown-area').style.display = 'block';
+  document.getElementById('customer-result-area').style.display = 'none';
+  document.getElementById('customer-timer').textContent = '15';
+
+  if (customerTimer) clearInterval(customerTimer);
+
+  let count = 15;
+  customerTimer = setInterval(() => {
+    count--;
+    document.getElementById('customer-timer').textContent = count;
+    if (count <= 0) {
+      clearInterval(customerTimer);
+      customerTimer = null;
+      document.getElementById('customer-countdown-area').style.display = 'none';
+      document.getElementById('customer-result-area').style.display = 'block';
+    }
+  }, 1000);
+}
+
+function closeCustomerModal() {
+  const overlay = document.getElementById('customer-modal');
+  if (!overlay) return;
+  if (customerTimer) { clearInterval(customerTimer); customerTimer = null; }
+  overlay.hidden = true;
+  overlay.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  document.body.style.position = '';
+  document.body.style.width = '';
+}
+
+// 绑定客服弹窗关闭事件
+document.addEventListener('DOMContentLoaded', () => {
+  const cModal = document.getElementById('customer-modal');
+  if (cModal) {
+    document.querySelector('[data-customer-close]').addEventListener('click', closeCustomerModal);
+    cModal.addEventListener('click', (e) => {
+      if (e.target === cModal) closeCustomerModal();
+    });
+  }
+});
+
+/* ================= 视频播放器 ================= */
+let hls = null;
+
+function openVideoPlayer(card) {
+  const playerModal = document.getElementById('video-player-modal');
+  const videoEl = document.getElementById('video-player');
+  
+  const src = card.getAttribute('data-video-src');
+  const poster = card.getAttribute('data-video-poster');
+  const name = card.querySelector('.nm')?.textContent || '';
+  const meta = card.querySelector('.meta')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+
+  if (!src) {
+    alert('该视频暂未配置播放源');
+    return;
+  }
+
+  document.getElementById('video-player-name').textContent = name;
+  document.getElementById('video-player-meta').textContent = meta;
+
+  // 判断是否支持 HLS (m3u8)
+  if (src.endsWith('.m3u8')) {
+    if (Hls.isSupported()) {
+      if (hls) { hls.destroy(); }
+      hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(videoEl);
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari 原生支持
+      videoEl.src = src;
+    }
+  } else {
+    // 普通 MP4
+    videoEl.src = src;
+  }
+  
+  videoEl.poster = poster || '';
+  videoEl.load();
+
+  playerModal.hidden = false;
+  playerModal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+
+  videoEl.play().catch(() => {});
+}
+
+function closeVideoPlayer() {
+  const playerModal = document.getElementById('video-player-modal');
+  const videoEl = document.getElementById('video-player');
+  
+  if (hls) { hls.destroy(); hls = null; }
+  
+  videoEl.pause();
+  videoEl.removeAttribute('src');
+  videoEl.load();
+  
+  playerModal.hidden = true;
+  playerModal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+  document.body.style.position = '';
+  document.body.style.width = '';
+}
+
+function initVideoPlayerEvents() {
+  const playerModal = document.getElementById('video-player-modal');
+  const closeBtn = document.getElementById('video-close-btn');
+  if (!playerModal) return;
+
+  closeBtn.addEventListener('click', closeVideoPlayer);
+  playerModal.addEventListener('click', (e) => {
+    if (e.target === playerModal) closeVideoPlayer();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !playerModal.hidden) closeVideoPlayer();
   });
 }
