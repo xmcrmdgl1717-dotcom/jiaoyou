@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const xml2js = require('xml2js');
 const axios = require('axios');
 const multer = require('multer');
-const geoip = require('geoip-lite'); // 引入真实IP库
+const geoip = require('geoip-lite'); // 真实IP库
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,7 +43,8 @@ if (!fs.existsSync(SETTINGS_FILE)) writeJSON(SETTINGS_FILE, {
     recommendConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
     freeConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
     enabledLangs: ['zh', 'en'],
-    adminPassword: 'admin888' // 新增默认后台密码
+    adminPassword: 'admin888',
+    livechat_license: '' // 新增：LiveChat License ID
 });
 if (!fs.existsSync(USERS_FILE)) writeJSON(USERS_FILE, []);
 if (!fs.existsSync(VIDEOS_FILE)) writeJSON(VIDEOS_FILE, []);
@@ -52,12 +53,11 @@ if (!fs.existsSync(ORDERS_FILE)) writeJSON(ORDERS_FILE, []);
 if (!fs.existsSync(CATEGORIES_FILE)) writeJSON(CATEGORIES_FILE, [{ id: 'c1', name: '默认分类' }]);
 if (!fs.existsSync(VISITS_FILE)) writeJSON(VISITS_FILE, []);
 
-// 确保老数据能自动补上密码字段
+// 确保老数据能自动补上字段
 let currentSettings = readJSON(SETTINGS_FILE);
-if (!currentSettings.adminPassword) {
-    currentSettings.adminPassword = 'admin888';
-    writeJSON(SETTINGS_FILE, currentSettings);
-}
+if (!currentSettings.adminPassword) currentSettings.adminPassword = 'admin888';
+if (currentSettings.livechat_license === undefined) currentSettings.livechat_license = '';
+writeJSON(SETTINGS_FILE, currentSettings);
 
 // ================= 中间件 =================
 app.use(cors());
@@ -102,7 +102,6 @@ function parseUA(ua) {
     return { device, os, browser };
 }
 
-// 使用真实 IP 库查归属地
 function getIpCountry(ip) {
     if (!ip || ip === '127.0.0.1' || ip === '::1') return '本地';
     const geo = geoip.lookup(ip);
@@ -122,7 +121,6 @@ app.post('/api/visit', (req, res) => {
     const visits = readJSON(VISITS_FILE, []);
     const now = Date.now();
     
-    // 取消 30 分钟判断，每次进入都算一条新记录
     const newVisit = {
         id: 'V' + now + Math.floor(Math.random() * 1000),
         enterTime: now,
@@ -155,6 +153,7 @@ app.get('/api/config', (req, res) => {
     const s = readJSON(SETTINGS_FILE);
     res.json({
         trc20: s.trc20 || '', hotCats: s.hotCats || [], recommendCats: s.recommendCats || [], freeCats: s.freeCats || [],
+        livechat_license: s.livechat_license || '', // 返回给前端
         hotConfig: {
             previewLimit: s.hotConfig?.previewLimit ?? null, regLimit: s.hotConfig?.regLimit ?? null, unlockPrice: s.hotConfig?.unlockPrice ?? null
         },
@@ -218,7 +217,6 @@ app.post('/api/admin/settings', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 修改密码接口
 app.post('/api/admin/change-password', authMiddleware, (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const s = readJSON(SETTINGS_FILE);
@@ -563,7 +561,6 @@ app.delete('/api/admin/orders/:id', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 新增：删除访客记录 (由于看板有删除需求)
 app.delete('/api/admin/visits/:id', authMiddleware, (req, res) => {
     let visits = readJSON(VISITS_FILE, []).filter(v => v.id !== req.params.id);
     writeJSON(VISITS_FILE, visits);
@@ -575,7 +572,6 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
     const visits = readJSON(VISITS_FILE, []);
     const orders = readJSON(ORDERS_FILE, []);
     
-    // 数据统计
     let stats = {
         total: visits.length,
         visiting: visits.filter(v => v.status === 'visiting').length,
@@ -588,7 +584,6 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
         rejected: visits.filter(v => v.status === 'rejected').length
     };
 
-    // 给访问记录合并订单信息
     const mergedList = visits.map(v => {
         const relatedOrder = orders.find(o => o.visitId === v.id && o.status === 'pending');
         return {
