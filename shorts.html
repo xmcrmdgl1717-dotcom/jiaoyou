@@ -8,11 +8,9 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #ffffff; font-family: -apple-system, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
-  
   .header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0f0f0; }
   .header h1 { font-size: 18px; font-weight: 800; color: #1f2551; }
   .back-btn { font-size: 13px; color: #ff3d8b; font-weight: 600; text-decoration: none; padding: 6px 14px; border-radius: 20px; background: #fff0f5; }
-
   .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; max-width: 800px; margin: 0 auto; }
   .card { position: relative; width: 100%; aspect-ratio: 9 / 16; background: #f5f5f5; overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -21,28 +19,23 @@
   .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 9px; opacity: 0.9; }
   .live-tag { position: absolute; top: 4px; left: 4px; background: #ff3b5c; color: #fff; font-size: 8px; font-weight: 700; padding: 2px 4px; border-radius: 4px; z-index: 2; }
   #sentinel { text-align: center; padding: 24px 0; font-size: 12px; color: #999; }
-
   #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
   #player-modal.active { display: flex; }
   .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; }
   .close-btn { position: absolute; top: 20px; left: 20px; z-index: 20; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
-  
   .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
   .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
   .limit-mask button { background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
-
 <header class="header">
   <h1>🔥 精彩视频</h1>
   <a href="index.html" class="back-btn">← 返回首页</a>
 </header>
-
 <div class="grid-container" id="grid"></div>
 <div id="sentinel">正在获取数据...</div>
-
 <div id="player-modal">
   <div class="player-box">
     <button class="close-btn" id="close-btn">×</button>
@@ -50,7 +43,6 @@
     <div class="limit-mask" id="limit-mask"></div>
   </div>
 </div>
-
 <script>
   const API_BASE = 'https://jiaoyouweb.onrender.com';
   const grid = document.getElementById('grid');
@@ -59,20 +51,18 @@
   const INITIAL_SIZE = 12, LOAD_MORE_SIZE = 9;
   
   let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
-  let hls = null, videoLimitHandler = null, seekingHandler = null;
+  let hls = null, videoLimitHandler = null;
 
-  // 🔴 严格读取 hotConfig
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
       const data = await res.json();
-      currentConfig = {
-        previewLimit: data.hotConfig.previewLimit,
-        regLimit: data.hotConfig.regLimit,
-        price: data.hotConfig.unlockPrice,
-        trc20: data.trc20 || ''
-      };
-      console.log('精彩视频当前配置:', currentConfig); // 打印到控制台，方便核对
+      // 严格读取数值配置
+      currentConfig.previewLimit = Number(data.hotConfig?.previewLimit) || 15;
+      currentConfig.regLimit = Number(data.hotConfig?.regLimit) || 120;
+      currentConfig.price = Number(data.hotConfig?.unlockPrice) || 9.99;
+      currentConfig.trc20 = data.trc20 || '';
+      console.log("【精彩视频配置已加载】:", currentConfig);
     } catch(e) { console.warn('配置拉取失败，使用默认值'); }
   }
 
@@ -154,25 +144,26 @@
     
     videoEl.play().catch(e => console.log('播放失败'));
 
+    // 每次播放时重新检查登录状态
     const isLogin = !!localStorage.getItem('hiya_user');
     const maxTime = isLogin ? currentConfig.regLimit : currentConfig.previewLimit;
-    
-    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    if (seekingHandler) videoEl.removeEventListener('seeking', seekingHandler);
+    console.log(`当前状态: ${isLogin ? '已登录' : '未登录'}, 允许观看时长: ${maxTime} 秒`);
 
-    let lastTime = 0;
-    seekingHandler = () => {
-      if (videoEl.currentTime > lastTime + 0.5) {
-        videoEl.currentTime = lastTime;
-      }
-    };
-    videoEl.addEventListener('seeking', seekingHandler);
+    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
     let isBlocked = false;
     videoLimitHandler = () => {
-      lastTime = videoEl.currentTime;
+      // 核心逻辑：只要当前时间超过了配置的 maxTime，立刻暂停并弹出遮罩
       if (videoEl.currentTime >= maxTime && !isBlocked) {
-        videoEl.pause(); isBlocked = true; showPaywall();
+        videoEl.pause(); 
+        isBlocked = true; 
+        showPaywall();
+      }
+      // 如果用户往回拖拽进度条，退出了限制区，允许继续看
+      if (videoEl.currentTime < maxTime && isBlocked) {
+        isBlocked = false;
+        limitMask.style.display = 'none';
+        videoEl.play();
       }
     };
     videoEl.addEventListener('timeupdate', videoLimitHandler);
@@ -223,7 +214,6 @@
     document.body.style.overflow = '';
     if (hls) { hls.destroy(); hls = null; }
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    if (seekingHandler) videoEl.removeEventListener('seeking', seekingHandler);
     videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
   };
 
