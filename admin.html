@@ -32,6 +32,11 @@
         .result-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
         .hidden { display: none; }
         .flex { display: flex; gap: 10px; align-items: center; }
+        
+        /* 弹窗样式 */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -55,11 +60,9 @@
             <button class="btn-secondary" onclick="logout()">退出登录</button>
         </div>
 
-        <!-- 资源站列表 -->
         <h2>📡 资源站管理</h2>
         <div id="site-list"></div>
 
-        <!-- 添加资源站 -->
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
             <h3 style="margin-bottom: 15px;">➕ 添加资源站</h3>
             <div class="form-group">
@@ -80,25 +83,17 @@
             <button onclick="addSite()">保存资源站</button>
         </div>
 
-        <!-- 分类绑定面板 (动态显示) -->
         <div id="bind-panel" class="hidden">
             <h2>🔗 分类绑定</h2>
             <p style="font-size: 13px; color: #666; margin-bottom: 10px;">请将资源站分类映射到你的本地分类（如：电影、电视剧、动漫）</p>
             <table class="bind-table">
-                <thead>
-                    <tr>
-                        <th>资源站分类 ID</th>
-                        <th>资源站分类名称</th>
-                        <th>绑定到本地分类</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>资源站分类 ID</th><th>资源站分类名称</th><th>绑定到本地分类</th></tr></thead>
                 <tbody id="bind-tbody"></tbody>
             </table>
             <button style="margin-top: 15px;" onclick="saveBindings()">保存绑定关系</button>
             <button class="btn-secondary" style="margin-top: 15px; margin-left: 10px;" onclick="closeBindPanel()">取消</button>
         </div>
 
-        <!-- 采集控制台 -->
         <h2>🚀 采集控制台</h2>
         <div class="form-group">
             <label>选择要采集的资源站</label>
@@ -108,11 +103,8 @@
             <button onclick="startCollect()" id="collect-btn">开始采集</button>
             <span id="collect-status" style="font-size: 14px; color: #666;"></span>
         </div>
-        <div class="result-box" id="collect-result">
-            等待采集...
-        </div>
+        <div class="result-box" id="collect-result">等待采集...</div>
 
-        <!-- 已采集视频预览 -->
         <h2>🎬 已采集视频</h2>
         <div id="video-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
             <p style="color: #888;">加载中...</p>
@@ -120,60 +112,55 @@
     </div>
 </div>
 
+<!-- 查看绑定弹窗 -->
+<div id="view-bind-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0;">🔍 当前绑定关系</h3>
+            <button class="btn-secondary" onclick="closeViewBindModal()">关闭</button>
+        </div>
+        <table class="bind-table">
+            <thead><tr><th>源分类 ID</th><th>源分类名</th><th>映射到的本地分类</th></tr></thead>
+            <tbody id="view-bind-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
 <script>
-    // 🔴 核心修改：这里填入你的后端 API 地址
     const API_BASE = 'https://jiaoyouweb.onrender.com';
-    
     let token = localStorage.getItem('admin_token') || '';
     let currentBindSiteId = null;
+    let currentSites = [];
 
-    // ================= 登录/登出 =================
     function login() {
         const pwd = document.getElementById('admin-password').value;
         fetch(`${API_BASE}/api/admin/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pwd })
-        })
-        .then(res => res.json())
-        .then(data => {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwd })
+        }).then(res => res.json()).then(data => {
             if (data.success) {
-                token = data.token;
-                localStorage.setItem('admin_token', token);
-                showAdminPanel();
+                token = data.token; localStorage.setItem('admin_token', token); showAdminPanel();
             } else {
                 document.getElementById('login-error').textContent = data.error;
             }
-        })
-        .catch(() => alert('登录请求失败，请检查后端服务是否已启动（冷启动可能需50秒）'));
+        }).catch(() => alert('登录请求失败，请检查后端服务'));
     }
 
-    function logout() {
-        localStorage.removeItem('admin_token');
-        location.reload();
-    }
-
+    function logout() { localStorage.removeItem('admin_token'); location.reload(); }
     function showAdminPanel() {
         document.getElementById('login-panel').classList.add('hidden');
         document.getElementById('admin-panel').classList.remove('hidden');
-        loadSites();
-        loadVideos();
+        loadSites(); loadVideos();
     }
-
-    // 页面加载时自动检查登录状态
     if (token) showAdminPanel();
 
-    // ================= 资源站管理 =================
     function loadSites() {
-        fetch(`${API_BASE}/api/admin/sites`, { headers: { 'x-admin-token': token } })
-        .then(res => res.json())
-        .then(sites => {
+        fetch(`${API_BASE}/api/admin/sites`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(sites => {
+            currentSites = sites;
             const container = document.getElementById('site-list');
             const select = document.getElementById('collect-site-select');
             if (!sites.length) {
                 container.innerHTML = '<p style="color: #888;">暂无资源站，请添加</p>';
-                select.innerHTML = '<option value="">请先添加资源站</option>';
-                return;
+                select.innerHTML = '<option value="">请先添加资源站</option>'; return;
             }
             container.innerHTML = sites.map(site => `
                 <div class="site-card">
@@ -182,6 +169,7 @@
                         <small>${site.url} (${site.type.toUpperCase()})</small>
                     </div>
                     <div class="site-actions">
+                        <button class="btn-secondary" onclick="viewBindings('${site.id}')">查看绑定</button>
                         <button class="btn-secondary" onclick="openBindPanel('${site.id}')">绑定分类</button>
                         <button class="btn-danger" onclick="deleteSite('${site.id}')">删除</button>
                     </div>
@@ -191,54 +179,63 @@
         });
     }
 
+    // 🔴 新增：查看绑定逻辑
+    function viewBindings(siteId) {
+        const site = currentSites.find(s => s.id === siteId);
+        if (!site || !site.categories || site.categories.length === 0) {
+            alert('该资源站尚未绑定任何分类');
+            return;
+        }
+        const tbody = document.getElementById('view-bind-tbody');
+        tbody.innerHTML = site.categories.map(c => `
+            <tr>
+                <td>${c.sourceId}</td>
+                <td>${c.sourceName}</td>
+                <td style="color: #ff3d8b; font-weight: bold;">${c.localCategory}</td>
+            </tr>
+        `).join('');
+        document.getElementById('view-bind-modal').classList.remove('hidden');
+    }
+
+    function closeViewBindModal() {
+        document.getElementById('view-bind-modal').classList.add('hidden');
+    }
+
     function addSite() {
         const name = document.getElementById('site-name').value.trim();
         const url = document.getElementById('site-url').value.trim();
         const type = document.getElementById('site-type').value;
         if (!name || !url) return alert('请填写名称和接口地址');
         fetch(`${API_BASE}/api/admin/sites`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ name, url, type })
-        })
-        .then(res => res.json())
-        .then(() => {
+        }).then(res => res.json()).then(() => {
             loadSites();
-            document.getElementById('site-name').value = '';
-            document.getElementById('site-url').value = '';
+            document.getElementById('site-name').value = ''; document.getElementById('site-url').value = '';
         });
     }
 
     function deleteSite(id) {
         if (!confirm('确定删除该资源站？')) return;
-        fetch(`${API_BASE}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } })
-        .then(() => loadSites());
+        fetch(`${API_BASE}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }).then(() => loadSites());
     }
 
-    // ================= 分类绑定 =================
     function openBindPanel(siteId) {
         currentBindSiteId = siteId;
         document.getElementById('bind-panel').classList.remove('hidden');
         const tbody = document.getElementById('bind-tbody');
         tbody.innerHTML = '<tr><td colspan="3">加载分类中...</td></tr>';
 
-        fetch(`${API_BASE}/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } })
-        .then(res => res.json())
-        .then(categories => {
+        fetch(`${API_BASE}/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(categories => {
             if (!categories.length || categories.error) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #dc3545;">未获取到分类，请检查接口地址是否正确 (${categories.error || ''})</td></tr>`;
-                return;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #dc3545;">未获取到分类 (${categories.error || ''})</td></tr>`; return;
             }
             tbody.innerHTML = categories.map(c => `
                 <tr>
-                    <td>${c.id}</td>
-                    <td>${c.name}</td>
+                    <td>${c.id}</td><td>${c.name}</td>
                     <td><input type="text" class="bind-input" data-source-id="${c.id}" data-source-name="${c.name}" placeholder="例如: 电影"></td>
                 </tr>
             `).join('');
-        })
-        .catch(() => {
-            tbody.innerHTML = '<tr><td colspan="3" style="color: #dc3545;">获取分类失败，请检查资源站接口是否可用</td></tr>';
         });
     }
 
@@ -247,33 +244,21 @@
         const mappings = [];
         inputs.forEach(input => {
             const local = input.value.trim();
-            if (local) {
-                mappings.push({
-                    sourceId: input.dataset.sourceId,
-                    sourceName: input.dataset.sourceName,
-                    localCategory: local
-                });
-            }
+            if (local) mappings.push({ sourceId: input.dataset.sourceId, sourceName: input.dataset.sourceName, localCategory: local });
         });
         if (!mappings.length) return alert('请至少绑定一个分类');
         fetch(`${API_BASE}/api/admin/sites/${currentBindSiteId}/bind`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ mappings })
-        })
-        .then(res => res.json())
-        .then(() => {
-            alert('分类绑定已保存！');
-            closeBindPanel();
+        }).then(res => res.json()).then(() => {
+            alert('分类绑定已保存！'); closeBindPanel(); loadSites(); // 刷新列表以更新缓存
         });
     }
 
     function closeBindPanel() {
-        document.getElementById('bind-panel').classList.add('hidden');
-        currentBindSiteId = null;
+        document.getElementById('bind-panel').classList.add('hidden'); currentBindSiteId = null;
     }
 
-    // ================= 采集 =================
     function startCollect() {
         const siteId = document.getElementById('collect-site-select').value;
         if (!siteId) return alert('请先添加并选择资源站');
@@ -282,48 +267,29 @@
         const status = document.getElementById('collect-status');
         const result = document.getElementById('collect-result');
 
-        btn.disabled = true;
-        status.textContent = '正在采集，请稍候...';
-        result.textContent = '';
+        btn.disabled = true; status.textContent = '正在采集，请稍候...'; result.textContent = '';
 
-        fetch(`${API_BASE}/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                result.textContent = '❌ 采集失败: ' + data.error;
-            } else {
-                result.textContent = `✅ ${data.message}`;
-                loadVideos();
-            }
-        })
-        .catch(err => {
+        fetch(`${API_BASE}/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } }).then(res => res.json()).then(data => {
+            if (data.error) result.textContent = '❌ 采集失败: ' + data.error;
+            else { result.textContent = `✅ ${data.message}`; loadVideos(); }
+        }).catch(err => {
             result.textContent = '❌ 请求失败: ' + err.message;
-        })
-        .finally(() => {
-            btn.disabled = false;
-            status.textContent = '';
+        }).finally(() => {
+            btn.disabled = false; status.textContent = '';
         });
     }
 
-    // ================= 已采集视频 =================
     function loadVideos() {
-        fetch(`${API_BASE}/api/admin/videos`, { headers: { 'x-admin-token': token } })
-        .then(res => res.json())
-        .then(videos => {
+        fetch(`${API_BASE}/api/admin/videos`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(videos => {
             const container = document.getElementById('video-list');
-            if (!videos.length) {
-                container.innerHTML = '<p style="color: #888;">暂无已采集的视频</p>';
-                return;
-            }
+            if (!videos.length) { container.innerHTML = '<p style="color: #888;">暂无已采集的视频</p>'; return; }
             container.innerHTML = videos.slice(-20).reverse().map(v => `
                 <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
-                    <strong>${v.name}</strong>
-                    <span style="color: #888; margin-left: 10px;">分类: ${v.category}</span>
+                    <strong>${v.name}</strong> <span style="color: #888; margin-left: 10px;">分类: ${v.category}</span>
                 </div>
             `).join('');
         });
     }
 </script>
-
 </body>
 </html>
