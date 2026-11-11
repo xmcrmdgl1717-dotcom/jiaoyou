@@ -29,17 +29,16 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 function readJSON(file, defaultVal = {}) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return defaultVal; } }
 function writeJSON(file, data) { fs.writeFileSync(file, JSON.stringify(data, null, 2)); }
 
-// 🔴 初始化全量中文字典 (防止丢失)
+// 初始化全量中文字典
 const zhDefault = {
   "brand.name":"嗨呀直播","nav.subtitle":"同城交友 遇见心动","nav.home":"首页","nav.live":"直播","nav.drama":"AI剧场","nav.rank":"排行榜","nav.community":"社区","nav.benefits":"福利中心","nav.more":"更多","nav.login":"登录 / 注册","hero.badge":"真实同城 ✨","hero.title1":"同城心动","hero.title2":"1V1交友","hero.subtitle":"真实认证 · 同城速配 · 遇见身边的心动","hero.chip1.t1":"同城速配","hero.chip1.t2":"距离优先","hero.chip2.t1":"1V1视频","hero.chip2.t2":"独享私聊","hero.chip3.t1":"真人认证","hero.chip3.t2":"真实交友","hero.chip4.t1":"隐私安全","hero.chip4.t2":"加密保护","hero.promo.title":"遇见身边的TA","hero.promo.amount":"同城1V1","hero.promo.desc":"真实认证，拒绝照骗","hero.promo.btn":"立即免费匹配 ›","hero.promo.note":"注册仅需20秒，即刻开启同城速配","live.title":"正在热播","live.more":"更多人气主播 ›","feat.1.t1":"同城推荐","feat.1.t2":"发现身边的TA","feat.2.t1":"1V1私聊","feat.2.t2":"独享心动时刻","feat.3.t1":"AI短剧乐园","feat.3.t2":"沉浸剧情每日更新","feat.4.t1":"礼物打赏","feat.4.t2":"送礼物传心意","feat.5.t1":"安全私密","feat.5.t2":"加密保护隐私无忧","feat.6.t1":"多端支持","feat.6.t2":"手机·平板·电脑","card.live.tag":"热门","card.left.title":"全球直播大厅","card.left.p1":"与全球主播实时互动","card.left.p2":"真实陪伴·聆听声音·分享生活","card.left.btn":"进入直播大厅 ›","card.new.tag":"最新","card.right.title":"AI短剧乐园","card.right.p1":"原创AI短剧精彩不断","card.right.p2":"多元题材·沉浸体验·每日更新","card.right.btn":"看AI短剧 ›","hot.title":"🔥 精彩视频","hot.more":"全部视频 ›","recommend.title":"🔥 直播推荐","recommend.more":"查看更多 ›","steps.title":"简单四步，开启同城交友","steps.1.t1":"注册账号","steps.1.t2a":"简单注册，完善资料","steps.1.t2b":"大约20秒","steps.2.t1":"真人认证","steps.2.t2a":"真实核验，保障交友安全","steps.2.t2b":"隐私保护","steps.3.t1":"同城匹配","steps.3.t2a":"基于位置","steps.3.t2b":"推荐身边的TA","steps.4.t1":"开始交友","steps.4.t2a":"畅享1V1私密互动","steps.4.t2b":"遇见心动的人","steps.timer":"20秒","stats.online":"🔥 当前 <span id=\"online-count\">0</span> 人在线速配","stats.marquee":"📢 {city}用户 {phone} {action}","stats.action1":"刚刚匹配了同城女生","stats.action2":"成功开启了 1V1 私聊","stats.action3":"给心动主播送出了礼物","stats.action4":"通过了真人认证","cta.text":"遇见同城心动的TA，开启 <b>1V1私聊</b>","cta.note":"注册仅需20秒，即刻开启同城速配","cta.btn":"立即免费注册 →","footer.subtitle":"同城交友 遇见心动","footer.col1.title":"关于我们","footer.col1.a1":"关于嗨呀直播","footer.col1.a2":"联系我们","footer.col1.a3":"合作伙伴","footer.col2.title":"帮助中心","footer.col2.a1":"常见问题","footer.col2.a2":"使用条款","footer.col2.a3":"隐私政策","footer.col3.title":"社区","footer.col3.a1":"社区准则","footer.col3.a2":"主播招募","footer.col3.a3":"举报中心","footer.col4.title":"下载App","footer.col5.title":"安全支付","footer.age":"🔞 仅限18岁以上用户","footer.privacy":"🔒 我们致力于保护您的隐私与数据安全","footer.copyright":"© 2026 嗨呀直播. 保留所有权利。","modal.close":"关闭","modal.title":"创建你的交友账号","modal.field.name":"昵称","modal.field.name.hint":"2–40 个字符","modal.field.email":"邮箱","modal.field.password":"密码","modal.field.password.hint":"至少 8 个字符","modal.field.agree.pre":"我已阅读并同意","modal.field.agree.terms":"使用条款","modal.field.agree.and":"和","modal.field.agree.privacy":"隐私政策","modal.submit":"免费注册","modal.submitting":"提交中…","modal.login.title":"登录你的账号","modal.login.submit":"登录","modal.welcome.title":"欢迎回来！","modal.welcome.desc":"你已成功登录。","modal.welcome.cta":"开始探索","customer.title":"深夜同城 专属1V1","customer.desc":"发现附近刚刚上线的心动女孩","customer.matching":"正在为你匹配同城高颜值空姐/学生…","customer.seconds":"秒后为你揭晓神秘联系方式","customer.success":"匹配成功！🎉","customer.tip":"添加 Telegram 专属客服，获取同城资源","customer.btn":"添加 Telegram 客服","video.limit.title":"试看已结束","video.limit.desc":"注册登录后可无限畅看完整版视频","video.limit.btn":"免费注册 / 登录"
 };
+
 if (!fs.existsSync(path.join(I18N_DIR, 'zh.json'))) writeJSON(path.join(I18N_DIR, 'zh.json'), zhDefault);
 
-// 🔴 初始化双模块独立配置
+// 初始化配置
 if (!fs.existsSync(SETTINGS_FILE)) writeJSON(SETTINGS_FILE, { 
-    trc20: '', 
-    hotCat: 'all', 
-    recommendCat: 'all',
+    trc20: '', hotCat: 'all', recommendCat: 'all',
     hotConfig: { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 },
     recommendConfig: { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 },
     enabledLangs: ['zh', 'en']
@@ -67,17 +66,13 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ================= 前台公共接口 =================
-app.get('/api/config', (req, res) => {
-    res.json(readJSON(SETTINGS_FILE));
-});
-
+app.get('/api/config', (req, res) => res.json(readJSON(SETTINGS_FILE)));
 app.get('/api/i18n/:lang', (req, res) => {
     const filePath = path.join(I18N_DIR, `${req.params.lang}.json`);
     if (fs.existsSync(filePath)) res.sendFile(filePath);
     else res.status(404).json({ error: 'Not found' });
 });
 
-// ================= 前台：用户注册与登录 =================
 app.post('/api/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -91,7 +86,6 @@ app.post('/api/register', async (req, res) => {
         res.status(201).json({ message: '注册成功', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
     } catch (error) { res.status(500).json({ error: '服务器内部错误' }); }
 });
-
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -111,14 +105,12 @@ app.post('/api/admin/settings', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 2. 多语言
+// 2. 多语言管理
 app.get('/api/admin/i18n-list', authMiddleware, (req, res) => {
     const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json')).map(f => f.replace('.json', ''));
     res.json(files);
 });
-app.get('/api/admin/i18n-content/:lang', authMiddleware, (req, res) => {
-    res.json(readJSON(path.join(I18N_DIR, `${req.params.lang}.json`)));
-});
+app.get('/api/admin/i18n-content/:lang', authMiddleware, (req, res) => res.json(readJSON(path.join(I18N_DIR, `${req.params.lang}.json`))));
 app.post('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
     writeJSON(path.join(I18N_DIR, `${req.params.lang}.json`), req.body);
     res.json({ success: true });
@@ -129,7 +121,7 @@ app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 🔴 翻译单个语言
+// 一键翻译单个语言
 app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     const targetLang = req.params.lang;
@@ -142,7 +134,7 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     const keys = Object.keys(zhDict);
     const texts = keys.map(k => zhDict[k]);
 
-    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU' };
+    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU', 'pt':'PT-PT', 'it':'IT', 'ar':'AR', 'th':'TH' };
     
     try {
         let allTexts = [];
@@ -152,7 +144,9 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
             params.append('auth_key', apiKey);
             params.append('target_lang', deeplMap[targetLang] || 'EN-US');
             chunk.forEach(t => params.append('text', t));
-            const response = await axios.post('https://api-free.deepl.com/v2/translate', params);
+            const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
             allTexts = allTexts.concat(response.data.translations.map(t => t.text));
         }
         const newDict = {};
@@ -160,19 +154,71 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
         writeJSON(path.join(I18N_DIR, `${targetLang}.json`), newDict);
         res.json({ success: true, message: `${targetLang} 翻译成功` });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.response?.data?.message || err.message });
     }
 });
 
-// 3. 分类与采集
+// 🔴 一键翻译全部
+app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
+    const { apiKey } = req.body;
+    if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
+
+    const settings = readJSON(SETTINGS_FILE);
+    const enabledLangs = settings.enabledLangs || ['zh'];
+    const zhPath = path.join(I18N_DIR, 'zh.json');
+    const zhDict = readJSON(zhPath);
+    const keys = Object.keys(zhDict);
+    const texts = keys.map(k => zhDict[k]);
+
+    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU', 'pt':'PT-PT', 'it':'IT', 'ar':'AR', 'th':'TH' };
+    let successList = [];
+    let failList = [];
+
+    for (const lang of enabledLangs) {
+        if (lang === 'zh') continue;
+        try {
+            let allTexts = [];
+            for (let i = 0; i < texts.length; i += 45) {
+                const chunk = texts.slice(i, i + 45);
+                const params = new URLSearchParams();
+                params.append('auth_key', apiKey);
+                params.append('target_lang', deeplMap[lang] || 'EN-US');
+                chunk.forEach(t => params.append('text', t));
+                const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                allTexts = allTexts.concat(response.data.translations.map(t => t.text));
+            }
+            const newDict = {};
+            keys.forEach((key, index) => { newDict[key] = allTexts[index]; });
+            writeJSON(path.join(I18N_DIR, `${lang}.json`), newDict);
+            successList.push(lang);
+        } catch (err) {
+            failList.push(lang);
+        }
+    }
+    res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
+});
+
+// 3. 视频分类独立管理
 app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
 app.post('/api/admin/categories', authMiddleware, (req, res) => {
     let cats = readJSON(CATEGORIES_FILE, []);
-    if (req.body.action === 'add') cats.push({ id: Date.now().toString(), name: req.body.name });
-    if (req.body.action === 'delete') cats = cats.filter(c => c.id !== req.body.id);
+    cats.push({ id: Date.now().toString(), name: req.body.name });
+    writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
+});
+app.post('/api/admin/categories/edit', authMiddleware, (req, res) => {
+    let cats = readJSON(CATEGORIES_FILE, []);
+    const cat = cats.find(c => c.id === req.body.id);
+    if (cat) { cat.name = req.body.name; writeJSON(CATEGORIES_FILE, cats); res.json({ success: true }); }
+    else res.status(404).json({ error: '不存在' });
+});
+app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => {
+    let cats = readJSON(CATEGORIES_FILE, []).filter(c => c.id !== req.params.id);
     writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
 });
 
+// 4. 资源站与采集
 app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE); 
@@ -180,12 +226,11 @@ app.post('/api/admin/sites', authMiddleware, (req, res) => {
     writeJSON(SITES_FILE, sites); res.json({ success: true });
 });
 app.delete('/api/admin/sites/:id', authMiddleware, (req, res) => {
-    writeJSON(SITES_FILE, readJSON(SITES_FILE).filter(s => s.id !== req.params.id));
-    res.json({ success: true });
+    writeJSON(SITES_FILE, readJSON(SITES_FILE).filter(s => s.id !== req.params.id)); res.json({ success: true });
 });
 app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => {
     const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
-    if (!site) return res.status(404).json({ error: '资源站不存在' });
+    if (!site) return res.status(404).json({ error: '不存在' });
     try {
         const baseUrl = site.url.split('?')[0].replace(/\/$/, '');
         const response = await fetch(`${baseUrl}?ac=list`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
@@ -204,10 +249,9 @@ app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => {
     const site = sites.find(s => s.id === req.params.id);
     if (site) { site.categories = req.body.mappings || []; writeJSON(SITES_FILE, sites); res.json({ success: true }); }
 });
-
 app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
     const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
-    if (!site) return res.status(404).json({ error: '资源站不存在' });
+    if (!site) return res.status(404).json({ error: '不存在' });
     if (!site.categories || site.categories.length === 0) return res.status(400).json({ error: '请先绑定分类！' });
 
     try {
@@ -243,7 +287,7 @@ app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
     } catch (err) { res.status(500).json({ error: '采集失败' }); }
 });
 
-// 4. 视频上传与管理
+// 5. 视频上传与管理
 app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '请选择视频' });
     const videos = readJSON(VIDEOS_FILE);
@@ -261,19 +305,29 @@ app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => {
     writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true });
 });
 
-// 5. 用户与订单
+// 6. 用户管理 (增加编辑、删除)
 app.get('/api/admin/users', authMiddleware, (req, res) => {
     let users = readJSON(USERS_FILE);
     res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, balance: u.balance || 0, createdAt: u.createdAt })));
 });
-app.post('/api/admin/users/balance', authMiddleware, (req, res) => {
-    const { email, balance } = req.body;
+app.post('/api/admin/users/edit', authMiddleware, (req, res) => {
     let users = readJSON(USERS_FILE);
-    const u = users.find(x => x.email === email);
-    if (u) { u.balance = Number(balance); writeJSON(USERS_FILE, users); res.json({ success: true }); }
+    const u = users.find(x => x.id === req.body.id);
+    if (u) { 
+        u.name = req.body.name; 
+        u.email = req.body.email; 
+        u.balance = Number(req.body.balance); 
+        writeJSON(USERS_FILE, users); 
+        res.json({ success: true }); 
+    }
     else res.status(404).json({ error: '未找到' });
 });
+app.delete('/api/admin/users/:id', authMiddleware, (req, res) => {
+    let users = readJSON(USERS_FILE).filter(x => x.id !== req.params.id);
+    writeJSON(USERS_FILE, users); res.json({ success: true });
+});
 
+// 7. 订单
 app.post('/api/orders/create', async (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     if (!settings.trc20) return res.status(400).json({ error: '未配置TRC20地址' });
@@ -290,7 +344,7 @@ app.post('/api/orders/create', async (req, res) => {
 });
 app.get('/api/admin/orders', authMiddleware, (req, res) => res.json(readJSON(ORDERS_FILE, [])));
 
-// 其他接口
+// 其他
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password === 'admin888') res.json({ success: true, token: 'admin888' });
     else res.status(401).json({ error: '密码错误' });
