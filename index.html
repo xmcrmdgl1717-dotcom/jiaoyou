@@ -272,6 +272,10 @@
               <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
             </span>
           </label>
+          
+          <!-- 新增：服务端错误提示容器 -->
+          <div class="modal-error" data-form-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
+
           <button class="modal-submit" type="submit"
                   data-i18n="modal.submit"
                   data-default-zh="免费注册"
@@ -279,15 +283,7 @@
         </form>
       </section>
 
-      <section class="modal-view" data-view="waiting" hidden>
-        <div class="modal-spinner" aria-hidden="true"></div>
-        <h2 data-i18n="modal.waiting.title">正在为你检索同城用户</h2>
-        <div class="modal-progress"><i data-progress-bar></i></div>
-        <p class="modal-remain" data-remain aria-live="polite">剩余 3 秒</p>
-        <p class="modal-tip" data-tip aria-live="polite"></p>
-        <button class="modal-cancel" type="button" data-modal-cancel data-i18n="modal.waiting.cancel">取消</button>
-        <small class="modal-cancel-note" data-i18n="modal.waiting.cancelNote">取消等待不会撤销已提交的注册信息。</small>
-      </section>
+      <!-- 注：移除了原本的 waiting 等待视图 -->
 
       <section class="modal-view" data-view="complete" hidden>
         <div class="modal-success" aria-hidden="true">✓</div>
