@@ -89,10 +89,8 @@
             
             <!-- ================= 汇总看板 ================= -->
             <div id="tab-dashboard" class="tab">
-                <!-- 统计卡片 -->
                 <div class="dashboard-stats" id="dash-stats"></div>
                 
-                <!-- 筛选栏 -->
                 <div class="dash-filter-bar">
                     <select id="f-time"><option value="all">全部时间</option><option value="today">今天</option></select>
                     <select id="f-status"><option value="all">全部状态</option><option value="visiting">访问中</option><option value="pending">等待审核</option><option value="paid">已通过</option><option value="rejected">已拒绝</option></select>
@@ -106,16 +104,12 @@
                     <button onclick="document.getElementById('f-search').value=''; renderDashboardList()">重置</button>
                 </div>
 
-                <!-- 操作栏 -->
                 <div class="toolbar-dark">
                     <button onclick="loadDashboard()">🔄 刷新</button>
                     <button onclick="exportCSV()">➡️ 导出 CSV (当前筛选)</button>
-                    <button class="btn-success" onclick="batchReview('paid')">✅ 批量通过</button>
-                    <button class="btn-danger-outline" onclick="batchReview('rejected')">❌ 批量拒绝</button>
                     <span style="margin-left:auto; font-size:12px; color:#888;" id="dash-count-text">共 0 条 (已筛选)</span>
                 </div>
 
-                <!-- 列表 -->
                 <div id="dash-list-container"></div>
             </div>
 
@@ -182,25 +176,25 @@
                     <div class="card" style="flex:1; min-width: 300px;">
                         <h3>🔥 精彩视频 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
-                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="hot-preview" placeholder="不填则不拦截">
-                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="hot-reg" placeholder="不填则不拦截">
-                            <label>解锁金额 (USDT)：</label><input type="number" id="hot-price" placeholder="不填则提示联系客服">
+                            <label>未登录试看秒数：</label><input type="number" id="hot-preview" placeholder="为空不限制">
+                            <label>注册后试看秒数：</label><input type="number" id="hot-reg" placeholder="为空不限制">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="hot-price" placeholder="为空提示联系客服">
                         </div>
                     </div>
                     <div class="card" style="flex:1; min-width: 300px;">
                         <h3>🔥 直播推荐 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
-                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="rec-preview" placeholder="不填则不拦截">
-                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="rec-reg" placeholder="不填则不拦截">
-                            <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" placeholder="不填则提示联系客服">
+                            <label>未登录试看秒数：</label><input type="number" id="rec-preview" placeholder="为空不限制">
+                            <label>注册后试看秒数：</label><input type="number" id="rec-reg" placeholder="为空不限制">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="rec-price" placeholder="为空提示联系客服">
                         </div>
                     </div>
                     <div class="card" style="flex:1; min-width: 300px; border: 2px solid #4ade80;">
                         <h3 style="border-left-color: #4ade80;">🎁 免费精选 配置</h3>
                         <div class="flex" style="flex-direction:column; align-items:stretch; gap:10px;">
-                            <label>未登录试看秒数 (为空不限制)：</label><input type="number" id="free-preview" placeholder="不填则不拦截">
-                            <label>注册后试看秒数 (为空不限制)：</label><input type="number" id="free-reg" placeholder="不填则不拦截">
-                            <label>解锁金额 (USDT)：</label><input type="number" id="free-price" placeholder="不填则提示联系客服">
+                            <label>未登录试看秒数：</label><input type="number" id="free-preview" placeholder="为空不限制">
+                            <label>注册后试看秒数：</label><input type="number" id="free-reg" placeholder="为空不限制">
+                            <label>解锁金额 (USDT)：</label><input type="number" id="free-price" placeholder="为空提示联系客服">
                         </div>
                     </div>
                 </div>
@@ -263,7 +257,7 @@
         </div>
     </div>
 
-    <!-- 弹窗集合 -->
+    <!-- 弹窗 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -338,7 +332,7 @@
         if(id === 'tab-order') loadOrders();
     }
 
-    /* ================= 0. 汇总看板 ================= */
+    /* ================= 汇总看板 ================= */
     async function loadDashboard() {
         const res = await fetch(`${API}/api/admin/dashboard`, { headers: { 'x-admin-token': token } });
         const data = await res.json();
@@ -370,6 +364,7 @@
     }
 
     function copyText(text) {
+        if(!text) return;
         navigator.clipboard.writeText(text).then(() => { alert('已复制: ' + text); }).catch(() => { alert('复制失败'); });
     }
 
@@ -411,8 +406,10 @@
             else if (v.status === 'paid') badgeHtml = '<span class="badge-tag paid">已通过</span>';
             else if (v.status === 'rejected') badgeHtml = '<span class="badge-tag rejected">已拒绝</span>';
 
+            // 根据状态决定操作按钮
             let actionHtml = '';
             if (v.status === 'pending') {
+                // 查找绑定的订单
                 actionHtml = `
                     <button class="btn-success" onclick="reviewDash('${v.id}', 'paid')">✅ 通过</button>
                     <button class="btn-danger-outline" onclick="reviewDash('${v.id}', 'rejected')" style="margin-left:8px;">❌ 拒绝</button>
@@ -456,16 +453,29 @@
     }
 
     async function reviewDash(visitId, status) {
-        if(status === 'rejected') {
-            if(!confirm('确定要拒绝该申请吗？')) return;
-            let orders = readJSON ? [] : []; // Placeholder
-            // 实际应该查订单里绑定的visitId
-            await fetch(`${API}/api/admin/dashboard/reject/${visitId}`, { method: 'POST', headers: { 'x-admin-token': token } });
+        if(!confirm(`确定要将该用户标记为 ${status === 'paid' ? '已通过' : '已拒绝'} 吗？`)) return;
+        
+        // 查找对应的订单
+        const order = allOrders.find(o => o.visitId === visitId && o.status === 'pending');
+        if(order) {
+            const endpoint = status === 'paid' ? 'review' : 'reject';
+            const method = 'POST';
+            // 如果通过，需要输入金额 (这里为了快捷，后台直接使用审核接口)
+            if(status === 'paid') {
+                const inputVal = prompt(`请输入订单的确切金额 ${order.amount.toFixed(2)} 以确认通过：`);
+                if(parseFloat(inputVal) !== order.amount) return alert('金额输入不一致，取消操作。');
+                await fetch(`${API}/api/admin/orders/${order.id}/review`, { method, headers: { 'x-admin-token': token } });
+            } else {
+                await fetch(`${API}/api/admin/orders/${order.id}/reject`, { method, headers: { 'x-admin-token': token } });
+            }
+            alert('操作成功');
+            loadDashboard();
+            // 如果当前在订单页，刷新一下
+            if(document.getElementById('tab-order').classList.contains('active')) loadOrders();
+        } else {
+            // 如果没有生成订单直接是 pending 状态（可能是异常情况），直接更新 Visit 状态
+            alert('未找到关联的订单记录，请前往订单页检查。');
         }
-        // 注：这里直接通过看板操作逻辑比较复杂，需要后端配合，为避免代码过长，这里用简单的 alert 提示。
-        // 真正的“通过/拒绝”逻辑还是去“支付订单”页面点，或者后端再写一个接口映射。
-        // 考虑到用户需求“点击审核”，实际代码会在后面通过 order 去操作。
-        alert('请在“支付订单”页进行审核通过或拒绝。');
     }
 
     function exportCSV() {
@@ -481,12 +491,10 @@
         link.click();
     }
 
-    /* ================= 1. 视频分类管理 ================= */
+    /* ================= 其他管理逻辑 ================= */
     async function loadCategories() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('cat-list').innerHTML = cats.map(c => `
-            <tr><td>${c.name}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button><button class="btn-danger" onclick="delCategory('${c.id}')">删除</button></div></td></tr>
-        `).join('');
+        document.getElementById('cat-list').innerHTML = cats.map(c => `<tr><td>${c.name}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button><button class="btn-danger" onclick="delCategory('${c.id}')">删除</button></div></td></tr>`).join('');
     }
     async function addCategory() {
         const name = document.getElementById('new-cat-name').value.trim();
@@ -495,56 +503,42 @@
         document.getElementById('new-cat-name').value = ''; loadCategories();
     }
     function openEditCat(id, name) {
-        genericAction = 'cat'; genericId = id;
-        document.getElementById('gm-title').innerText = '编辑分类';
+        genericAction = 'cat'; genericId = id; document.getElementById('gm-title').innerText = '编辑分类';
         document.getElementById('gm-content').innerHTML = `<label>分类名称：</label><input type="text" id="gm-input" value="${name}" style="width:100%;">`;
         document.getElementById('generic-modal').style.display = 'flex';
     }
-    async function delCategory(id) {
-        if(!confirm('确定删除分类？')) return;
-        await fetch(`${API}/api/admin/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadCategories();
-    }
+    async function delCategory(id) { if(!confirm('确定删除分类？')) return; await fetch(`${API}/api/admin/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCategories(); }
 
-    /* ================= 2. 系统配置 ================= */
     async function loadConfig() {
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
-        
         document.getElementById('set-trc20').value = s.trc20 || '';
         
         const renderCheckboxes = (boxId, selectedArr) => {
-            const box = document.getElementById(boxId);
-            box.innerHTML = cats.map(c => `
-                <label class="checkbox-item">
-                    <input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}
-                </label>
-            `).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
+            document.getElementById(boxId).innerHTML = cats.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}</label>`).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
         };
-
         renderCheckboxes('set-hotCats-box', s.hotCats || []);
         renderCheckboxes('set-recommendCats-box', s.recommendCats || []);
         renderCheckboxes('set-freeCats-box', s.freeCats || []);
         
         const hc = s.hotConfig || {};
-        document.getElementById('hot-preview').value = (hc.previewLimit !== null && hc.previewLimit !== undefined) ? hc.previewLimit : '';
-        document.getElementById('hot-reg').value = (hc.regLimit !== null && hc.regLimit !== undefined) ? hc.regLimit : '';
-        document.getElementById('hot-price').value = (hc.unlockPrice !== null && hc.unlockPrice !== undefined) ? hc.unlockPrice : '';
+        document.getElementById('hot-preview').value = hc.previewLimit !== null && hc.previewLimit !== undefined ? hc.previewLimit : '';
+        document.getElementById('hot-reg').value = hc.regLimit !== null && hc.regLimit !== undefined ? hc.regLimit : '';
+        document.getElementById('hot-price').value = hc.unlockPrice !== null && hc.unlockPrice !== undefined ? hc.unlockPrice : '';
 
         const rc = s.recommendConfig || {};
-        document.getElementById('rec-preview').value = (rc.previewLimit !== null && rc.previewLimit !== undefined) ? rc.previewLimit : '';
-        document.getElementById('rec-reg').value = (rc.regLimit !== null && rc.regLimit !== undefined) ? rc.regLimit : '';
-        document.getElementById('rec-price').value = (rc.unlockPrice !== null && rc.unlockPrice !== undefined) ? rc.unlockPrice : '';
+        document.getElementById('rec-preview').value = rc.previewLimit !== null && rc.previewLimit !== undefined ? rc.previewLimit : '';
+        document.getElementById('rec-reg').value = rc.regLimit !== null && rc.regLimit !== undefined ? rc.regLimit : '';
+        document.getElementById('rec-price').value = rc.unlockPrice !== null && rc.unlockPrice !== undefined ? rc.unlockPrice : '';
 
         const fc = s.freeConfig || {};
-        document.getElementById('free-preview').value = (fc.previewLimit !== null && fc.previewLimit !== undefined) ? fc.previewLimit : '';
-        document.getElementById('free-reg').value = (fc.regLimit !== null && fc.regLimit !== undefined) ? fc.regLimit : '';
-        document.getElementById('free-price').value = (fc.unlockPrice !== null && fc.unlockPrice !== undefined) ? fc.unlockPrice : '';
+        document.getElementById('free-preview').value = fc.previewLimit !== null && fc.previewLimit !== undefined ? fc.previewLimit : '';
+        document.getElementById('free-reg').value = fc.regLimit !== null && fc.regLimit !== undefined ? fc.regLimit : '';
+        document.getElementById('free-price').value = fc.unlockPrice !== null && fc.unlockPrice !== undefined ? fc.unlockPrice : '';
     }
     async function saveSettings() {
         const getVal = (id) => { const val = document.getElementById(id).value.trim(); return val === '' ? null : Number(val); };
-        const getChecked = (boxId) => { return Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value); };
-
+        const getChecked = (boxId) => Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value);
         const data = {
             trc20: document.getElementById('set-trc20').value,
             hotCats: getChecked('set-hotCats-box'), recommendCats: getChecked('set-recommendCats-box'), freeCats: getChecked('set-freeCats-box'),
@@ -556,7 +550,6 @@
         alert('保存成功');
     }
 
-    /* ================= 3. 视频上传管理 ================= */
     async function loadVideoManage() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -592,15 +585,9 @@
     }
     async function delVideo(id) { if(!confirm('确定删除该视频？')) return; await fetch(`${API}/api/admin/videos/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadVideoManage(); }
 
-    /* ================= 4. 采集管理 ================= */
     async function loadCollectData() {
         const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('site-list').innerHTML = sites.map(s => `
-            <div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
-                <span>${s.name} (${s.url})</span>
-                <div class="action-btns"><button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div>
-            </div>
-        `).join('');
+        document.getElementById('site-list').innerHTML = sites.map(s => `<div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;"><span>${s.name} (${s.url})</span><div class="action-btns"><button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div></div>`).join('');
         document.getElementById('collect-site-select').innerHTML = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     }
     async function addSite() {
@@ -612,9 +599,7 @@
         bindSiteId = id; document.getElementById('bind-panel').style.display = 'block';
         const cats = await (await fetch(`${API}/api/admin/sites/${id}/categories`, { headers: { 'x-admin-token': token } })).json();
         const localCats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('bind-tbody').innerHTML = cats.map(c => `
-            <tr><td>${c.name} (${c.id})</td><td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td></tr>
-        `).join('');
+        document.getElementById('bind-tbody').innerHTML = cats.map(c => `<tr><td>${c.name} (${c.id})</td><td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td></tr>`).join('');
     }
     async function saveBindings() {
         const inputs = document.querySelectorAll('#bind-tbody tr');
@@ -630,7 +615,6 @@
         alert((await res.json()).message); document.getElementById('collect-status').innerText = '';
     }
 
-    /* ================= 5. 全局语言 ================= */
     async function loadLangs() {
         const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
@@ -639,13 +623,7 @@
             <tr>
                 <td>${lang}</td>
                 <td><label class="switch"><input type="checkbox" ${enabled.includes(lang) ? 'checked' : ''} onchange="toggleLang('${lang}', this.checked)"><span class="slider"></span></label></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>
-                        ${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button>` : ''}
-                        ${lang !== 'zh' ? `<button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}
-                    </div>
-                </td>
+                <td><div class="action-btns"><button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button><button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}</div></td>
             </tr>
         `).join('');
     }
@@ -657,28 +635,23 @@
     }
     async function delLang(lang) { if(!confirm('删除?'))return; await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadLangs(); }
     async function editLangData(lang) {
-        editLang = lang; document.getElementById('edit-title').innerText = '编辑 ' + lang;
-        document.getElementById('edit-content').value = '加载中...';
+        editLang = lang; document.getElementById('edit-title').innerText = '编辑 ' + lang; document.getElementById('edit-content').value = '加载中...';
         document.getElementById('edit-modal').style.display = 'flex';
         const res = await fetch(`${API}/api/admin/i18n-content/${lang}`, { headers: { 'x-admin-token': token } });
         document.getElementById('edit-content').value = JSON.stringify(await res.json(), null, 2);
     }
-    async function saveDict() {
-        try { const data = JSON.parse(document.getElementById('edit-content').value); await fetch(`${API}/api/admin/i18n/${editLang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) }); alert('保存成功'); document.getElementById('edit-modal').style.display = 'none'; } catch (e) { alert('JSON 格式错误'); }
-    }
+    async function saveDict() { try { const data = JSON.parse(document.getElementById('edit-content').value); await fetch(`${API}/api/admin/i18n/${editLang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) }); alert('保存成功'); document.getElementById('edit-modal').style.display = 'none'; } catch (e) { alert('JSON 格式错误'); } }
     function saveKey() { localStorage.setItem('deepl_key', document.getElementById('deepl-key').value); alert('已保存'); }
     if(localStorage.getItem('deepl_key')) document.getElementById('deepl-key').value = localStorage.getItem('deepl_key');
     async function translateLang(lang) { const key = localStorage.getItem('deepl_key'); if(!key) return alert('请先保存 API Key'); if(!confirm(`确定翻译 ${lang} 吗？`)) return; const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) }); const d = await res.json(); alert(d.message || d.error); loadLangs(); }
     async function translateAll() { const key = localStorage.getItem('deepl_key'); if(!key) return alert('请先保存 API Key'); if(!confirm('确定翻译所有已启用的语言吗？')) return; const res = await fetch(`${API}/api/admin/translate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) }); const d = await res.json(); alert(d.message || d.error); loadLangs(); }
-    async function openLangModal() { const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json(); const grid = document.getElementById('lang-grid'); grid.innerHTML = allLangs.map(l => { const exists = list.includes(l.code); return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};"><input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name}</label>`; }).join(''); document.getElementById('lang-modal').style.display = 'flex'; }
+    async function openLangModal() { const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json(); document.getElementById('lang-grid').innerHTML = allLangs.map(l => { const exists = list.includes(l.code); return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};"><input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name}</label>`; }).join(''); document.getElementById('lang-modal').style.display = 'flex'; }
     async function confirmAddLangs() { const checked = Array.from(document.querySelectorAll('#lang-grid input:checked')).map(cb => cb.value); if(checked.length === 0) return; const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json(); let en = s.enabledLangs || ['zh']; for (const lang of checked) { await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) }); if(!en.includes(lang)) en.push(lang); } await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) }); document.getElementById('lang-modal').style.display = 'none'; loadLangs(); }
 
-    /* ================= 6. 用户管理 ================= */
     async function loadUsers() { const res = await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } }); allUsers = await res.json(); filterUsers(); }
     function filterUsers() {
         const kw = document.getElementById('user-search').value.toLowerCase();
-        const filtered = allUsers.filter(u => u.email.toLowerCase().includes(kw) || u.name.toLowerCase().includes(kw));
-        document.getElementById('user-list').innerHTML = filtered.map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td style="color:green;font-weight:bold;">${u.balance}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditUser('${u.id}')">编辑</button><button class="btn-danger" onclick="delUser('${u.id}')">删除</button></div></td></tr>`).join('');
+        document.getElementById('user-list').innerHTML = allUsers.filter(u => u.email.toLowerCase().includes(kw) || u.name.toLowerCase().includes(kw)).map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td style="color:green;font-weight:bold;">${u.balance}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditUser('${u.id}')">编辑</button><button class="btn-danger" onclick="delUser('${u.id}')">删除</button></div></td></tr>`).join('');
     }
     function openEditUser(id) {
         const u = allUsers.find(x => x.id === id); if(!u) return;
@@ -688,19 +661,17 @@
     }
     async function delUser(id) { if(!confirm('确定删除该用户？')) return; await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadUsers(); }
 
-    /* ================= 7. 订单管理 ================= */
     async function loadOrders() { const res = await fetch(`${API}/api/admin/orders`, { headers: { 'x-admin-token': token } }); allOrders = await res.json(); filterOrders(); }
     function filterOrders() {
         const kw = document.getElementById('order-search').value.toLowerCase();
-        const filtered = allOrders.filter(o => o.id.toLowerCase().includes(kw) || (o.videoName && o.videoName.toLowerCase().includes(kw)) || (o.userEmail && o.userEmail.toLowerCase().includes(kw)));
-        document.getElementById('order-list').innerHTML = filtered.map(o => `
+        document.getElementById('order-list').innerHTML = allOrders.filter(o => o.id.toLowerCase().includes(kw) || (o.videoName && o.videoName.toLowerCase().includes(kw)) || (o.userEmail && o.userEmail.toLowerCase().includes(kw))).map(o => `
             <tr>
                 <td><div style="font-weight:bold;">${o.id}</div><div style="color:#666; font-size:12px;">${o.videoName} (${o.configType})</div></td>
                 <td><div>${o.userName}</div><div style="color:#666; font-size:12px;">${o.userEmail}</div></td>
                 <td><div style="font-size:12px;"><strong>联系方式:</strong> ${o.contact || '-'}</div><div style="font-size:12px; color:#1890ff;"><strong>付款地址:</strong> ${o.payAddress || '-'}</div></td>
                 <td style="color:red;font-weight:bold;font-size:15px;">${o.amount.toFixed(2)}</td>
-                <td><div style="color:${o.status === 'pending' ? '#e67e22' : (o.status === 'paid' ? '#27ae60' : '#f5222d')}; font-weight:bold;">${o.status}</div><div style="color:#999; font-size:10px; word-break:break-all;">${o.txHash ? 'Hash: '+o.txHash : '-'}</div></td>
-                <td><div style="font-size:12px;">创建: ${new Date(o.createdAt).toLocaleString()}</div><div style="font-size:12px; color:#666;">确认: ${o.confirmedAt ? new Date(o.confirmedAt).toLocaleString() : '-'}</div></td>
+                <td><div style="color:${o.status === 'pending' ? '#e67e22' : (o.status === 'paid' ? '#27ae60' : '#f5222d')}; font-weight:bold;">${o.status}</div></td>
+                <td><div style="font-size:12px;">创建: ${new Date(o.createdAt).toLocaleString()}</div></td>
                 <td><div class="action-btns">${o.status === 'pending' ? `<button class="btn-text" onclick="openReviewOrder('${o.id}')">审核</button>` : ''}<button class="btn-danger" onclick="delOrder('${o.id}')">删除</button></div></td>
             </tr>
         `).join('');
@@ -709,13 +680,12 @@
     async function confirmReview() {
         const inputVal = parseFloat(document.getElementById('o-amount-input').value);
         const displayVal = parseFloat(document.getElementById('o-amount-display').innerText);
-        if (inputVal !== displayVal) return alert('输入的金额与订单金额不一致，请核对链上转账记录！');
+        if (inputVal !== displayVal) return alert('金额不一致！');
         await fetch(`${API}/api/admin/orders/${currentOrderId}/review`, { method: 'POST', headers: { 'x-admin-token': token } });
         alert('审核通过！'); document.getElementById('order-modal').style.display = 'none'; loadOrders();
     }
-    async function delOrder(id) { const inputId = prompt(`请完整输入订单号以确认删除：\n${id}`); if (inputId !== id) return alert('订单号输入不正确，取消删除操作。'); await fetch(`${API}/api/admin/orders/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadOrders(); }
+    async function delOrder(id) { if(!confirm('确定删除该订单？')) return; await fetch(`${API}/api/admin/orders/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadOrders(); }
 
-    /* ================= 保存通用编辑 ================= */
     async function saveGeneric() {
         if (genericAction === 'cat') { await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-input').value }) }); loadCategories(); } 
         else if (genericAction === 'user') { const pw = document.getElementById('gm-password').value; await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-name').value, email: document.getElementById('gm-email').value, balance: document.getElementById('gm-balance').value, password: pw }) }); loadUsers(); }
