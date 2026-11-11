@@ -61,17 +61,18 @@
   let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
   let hls = null, videoLimitHandler = null, seekingHandler = null;
 
-  // 🔴 修复：读取 hotConfig 专属配置
+  // 🔴 严格读取 hotConfig
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
       const data = await res.json();
       currentConfig = {
-        previewLimit: data.hotConfig?.previewLimit ?? 15,
-        regLimit: data.hotConfig?.regLimit ?? 120,
-        price: data.hotConfig?.unlockPrice ?? 9.99,
+        previewLimit: data.hotConfig.previewLimit,
+        regLimit: data.hotConfig.regLimit,
+        price: data.hotConfig.unlockPrice,
         trc20: data.trc20 || ''
       };
+      console.log('精彩视频当前配置:', currentConfig); // 打印到控制台，方便核对
     } catch(e) { console.warn('配置拉取失败，使用默认值'); }
   }
 
@@ -196,7 +197,6 @@
     limitMask.style.display = 'flex';
   }
 
-  // 🔴 改进：传递当前专属价格给后端生成唯一金额
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
     btn.disabled = true; btn.innerText = '生成中...';
