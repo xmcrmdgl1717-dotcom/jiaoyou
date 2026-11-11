@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const xml2js = require('xml2js');
 const axios = require('axios');
 const multer = require('multer');
+const geoip = require('geoip-lite'); // 引入真实IP库
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -101,10 +102,14 @@ function parseUA(ua) {
     return { device, os, browser };
 }
 
+// 使用真实 IP 库查归属地
 function getIpCountry(ip) {
     if (!ip || ip === '127.0.0.1' || ip === '::1') return '本地';
-    if (ip.startsWith('43.') || ip.startsWith('203.') || ip.startsWith('160.')) return '日本';
-    if (ip.startsWith('104.') || ip.startsWith('8.')) return '美国';
+    const geo = geoip.lookup(ip);
+    if (geo) {
+        const countryMap = { 'JP': '日本', 'US': '美国', 'HK': '香港', 'TW': '台湾', 'SG': '新加坡', 'KR': '韩国', 'GB': '英国', 'CA': '加拿大', 'AU': '澳大利亚' };
+        return countryMap[geo.country] || geo.country || '未知';
+    }
     return '未知';
 }
 
@@ -116,15 +121,8 @@ app.post('/api/visit', (req, res) => {
     
     const visits = readJSON(VISITS_FILE, []);
     const now = Date.now();
-    let existingVisit = visits.find(v => v.ip === ip && v.ua === ua && (now - v.enterTime) < 30 * 60 * 1000);
     
-    if (existingVisit) {
-        existingVisit.lastActive = now;
-        existingVisit.lang = lang;
-        writeJSON(VISITS_FILE, visits);
-        return res.json({ visitId: existingVisit.id });
-    }
-
+    // 取消 30 分钟判断，每次进入都算一条新记录
     const newVisit = {
         id: 'V' + now + Math.floor(Math.random() * 1000),
         enterTime: now,
@@ -220,7 +218,7 @@ app.post('/api/admin/settings', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 新增：修改密码接口
+// 修改密码接口
 app.post('/api/admin/change-password', authMiddleware, (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const s = readJSON(SETTINGS_FILE);
@@ -565,9 +563,19 @@ app.delete('/api/admin/orders/:id', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
+// 新增：删除访客记录 (由于看板有删除需求)
+app.delete('/api/admin/visits/:id', authMiddleware, (req, res) => {
+    let visits = readJSON(VISITS_FILE, []).filter(v => v.id !== req.params.id);
+    writeJSON(VISITS_FILE, visits);
+    res.json({ success: true });
+});
+
 // ================= 后台：汇总看板数据 =================
 app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
     const visits = readJSON(VISITS_FILE, []);
+    const orders = readJSON(ORDERS_FILE, []);
+    
+    // 数据统计
     let stats = {
         total: visits.length,
         visiting: visits.filter(v => v.status === 'visiting').length,
@@ -579,7 +587,18 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
         paid: visits.filter(v => v.status === 'paid').length,
         rejected: visits.filter(v => v.status === 'rejected').length
     };
-    res.json({ stats, list: visits });
+
+    // 给访问记录合并订单信息
+    const mergedList = visits.map(v => {
+        const relatedOrder = orders.find(o => o.visitId === v.id && o.status === 'pending');
+        return {
+            ...v,
+            orderId: relatedOrder ? relatedOrder.id : null,
+            orderAmount: relatedOrder ? relatedOrder.amount : null
+        };
+    });
+
+    res.json({ stats, list: mergedList });
 });
 
 // ================= 登录与其他路由 =================
