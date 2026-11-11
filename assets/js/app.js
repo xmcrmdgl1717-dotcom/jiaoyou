@@ -2,15 +2,14 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-// 目前支持的语言列表
+
+/* ================= i18n 多语言逻辑 ================= */
 const SUPPORTED = ['zh', 'en', 'vi', 'es', 'tr', 'id'];
-const RTL = new Set(['ar']); // 从右到左的语言
+const RTL = new Set(['ar']); 
 const LS_KEY = 'hiya_lang';
 const dictCache = new Map();      
 let enDict = null;                
 
-/* ================= 1. 语言匹配核心逻辑 ================= */
-// 国家代码映射到语言
 const COUNTRY_TO_LANG = {
   CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh',
   VN: 'vi',
@@ -25,16 +24,15 @@ async function resolveInitialLang() {
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const ipData = await ipRes.json();
-    const countryCode = ipData.country_code; // 例如 "CN", "US"
+    const countryCode = ipData.country_code; 
     if (countryCode && COUNTRY_TO_LANG[countryCode]) {
       const mappedLang = COUNTRY_TO_LANG[countryCode];
       if (SUPPORTED.includes(mappedLang)) {
-        console.log('[i18n] 根据 IP 匹配到语言:', mappedLang);
         return mappedLang;
       }
     }
   } catch (e) {
-    console.warn('[i18n] IP 定位失败或超时，尝试使用手机语言');
+    console.warn('[i18n] IP 定位失败，尝试使用手机语言');
   }
 
   // 🔴 优先级 2: 手机/浏览器语言
@@ -43,7 +41,6 @@ async function resolveInitialLang() {
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
     if (SUPPORTED.includes(base)) {
-      console.log('[i18n] 根据手机/浏览器语言匹配到:', base);
       return base;
     }
   }
@@ -52,12 +49,10 @@ async function resolveInitialLang() {
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
   if (saved && SUPPORTED.includes(saved)) {
-    console.log('[i18n] 根据本地缓存匹配到:', saved);
     return saved;
   }
 
   // 🔴 优先级 4: 默认兜底英文
-  console.log('[i18n] 全部未匹配，使用默认语言: en');
   return 'en';
 }
 
@@ -86,7 +81,7 @@ async function applyLang(lang) {
   if (!enDict) { try { enDict = await loadDict('en'); } catch (e) { enDict = {}; } }
   
   let dict = await loadDict(lang);
-  if (!dict) { dict = enDict; lang = 'en'; } // 如果语言包加载失败，强制回退英文
+  if (!dict) { dict = enDict; lang = 'en'; } 
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n'));
@@ -101,7 +96,6 @@ async function applyLang(lang) {
   document.documentElement.dir = RTL.has(lang) ? 'rtl' : 'ltr';
   try { localStorage.setItem(LS_KEY, lang); } catch (e) {}
 
-  // 更新下拉菜单的选中状态
   document.querySelectorAll('.lang-option').forEach(opt => {
     opt.style.fontWeight = opt.dataset.lang === lang ? 'bold' : 'normal';
     opt.style.color = opt.dataset.lang === lang ? '#ff3d8b' : '#3a3f5f';
@@ -111,24 +105,20 @@ async function applyLang(lang) {
   document.title = titleMap[lang] || titleMap.en;
 }
 
-/* ================= 2. UI 交互逻辑 ================= */
 function initLangSelector() {
   const langBtn = document.getElementById('lang-btn');
   const langDropdown = document.getElementById('lang-dropdown');
   if (!langBtn || !langDropdown) return;
 
-  // 点击地球图标显示/隐藏下拉菜单
   langBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
   });
 
-  // 点击页面其他地方关闭下拉
   document.addEventListener('click', () => {
     if (langDropdown) langDropdown.style.display = 'none';
   });
 
-  // 点击语言选项
   langDropdown.querySelectorAll('.lang-option').forEach(opt => {
     opt.addEventListener('click', () => {
       const selectedLang = opt.dataset.lang;
@@ -140,7 +130,6 @@ function initLangSelector() {
 
 async function initI18n() {
   initLangSelector();
-  // 异步解析初始语言
   const initialLang = await resolveInitialLang();
   await applyLang(initialLang);
 }
