@@ -97,13 +97,16 @@
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 61, 139, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 61, 139, 0); }
   }
+  
+  /* 调整 Hero 区的边距，因为移到下面了 */
+  .hero-wrap { margin-top: 12px; }
 </style>
 </head>
 <body>
 <div class="page">
-  <!-- ============ HERO WRAP ============ -->
-  <div class="hero-wrap">
-    <div class="nav">
+  <!-- ============ 1. 导航菜单 (图1) ============ -->
+  <div class="hero-wrap" style="border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+    <div class="nav" style="border-bottom: none;">
       <div class="brand" data-register role="button" tabindex="0">
         <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
         <div class="brand-sub" data-i18n="nav.subtitle">同城交友 遇见心动</div>
@@ -135,7 +138,95 @@
          <a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>
       </div>
     </div>
+  </div>
 
+  <!-- ============ 2. 精彩视频 (调整到菜单底下) ============ -->
+  <div class="sec-head">
+    <div class="st" data-i18n="hot.title">🔥 精彩视频</div>
+    <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">全部视频 ›</a>
+  </div>
+  <div class="hot-row" id="index-video-list"></div>
+
+  <!-- ============ 3. 直播推荐 (调整到精彩视频下面) ============ -->
+  <div class="sec-head">
+    <div class="st" data-i18n="recommend.title">🔥 直播推荐</div>
+    <a class="more" href="live.html" data-i18n="recommend.more" style="text-decoration:none; cursor:pointer;">查看更多 ›</a>
+  </div>
+  <div class="hot-row" id="index-recommend-list"></div>
+
+  <!-- ============ 4. 功能栏 ============ -->
+  <div class="fbar">
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">📍</span><div><div class="ft1" data-i18n="feat.1.t1">同城推荐</div><div class="ft2" data-i18n="feat.1.t2">发现身边的TA</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">💬</span><div><div class="ft1" data-i18n="feat.2.t1">1V1私聊</div><div class="ft2" data-i18n="feat.2.t2">独享心动时刻</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">🎬</span><div><div class="ft1" data-i18n="feat.3.t1">AI短剧乐园</div><div class="ft2" data-i18n="feat.3.t2">沉浸剧情每日更新</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">🎁</span><div><div class="ft1" data-i18n="feat.4.t1">礼物打赏</div><div class="ft2" data-i18n="feat.4.t2">送礼物传心意</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">🔒</span><div><div class="ft1" data-i18n="feat.5.t1">安全私密</div><div class="ft2" data-i18n="feat.5.t2">加密保护隐私无忧</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
+  </div>
+
+  <!-- ============ 5. 大卡片 ============ -->
+  <div class="dual">
+    <div class="dcard left" data-register>
+      <span class="tag live" data-i18n="card.live.tag">热门</span>
+      <h3 data-i18n="card.left.title">全球直播大厅</h3>
+      <p data-i18n="card.left.p1">与全球主播实时互动</p>
+      <p class="sub" data-i18n="card.left.p2">真实陪伴·聆听声音·分享生活</p>
+      <div class="avatars">
+        <img src="assets/img/ava/ava1.webp" alt=""><img src="assets/img/ava/ava2.webp" alt=""><img src="assets/img/ava/ava3.webp" alt=""><img src="assets/img/ava/ava4.webp" alt="">
+      </div>
+      <a class="d-btn" data-i18n="card.left.btn" data-register role="button" tabindex="0">进入直播大厅 ›</a>
+    </div>
+    <div class="dcard right" style="cursor:pointer;" onclick="window.location.href='shorts.html'">
+      <span class="tag new" data-i18n="card.new.tag">最新</span>
+      <h3 data-i18n="card.right.title">AI短剧乐园</h3>
+      <p data-i18n="card.right.p1">原创AI短剧精彩不断</p>
+      <p class="sub" data-i18n="card.right.p2">多元题材·沉浸体验·每日更新</p>
+      <a class="d-btn" href="shorts.html" data-i18n="card.right.btn" style="text-decoration:none;" onclick="event.stopPropagation();">看AI短剧 ›</a>
+    </div>
+  </div>
+
+  <!-- ============ 6. 简单四步 ============ -->
+  <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
+  <div class="steps-card">
+    <div class="step">
+      <span class="si ic-pink">🧑‍💻<span class="snum">1</span></span>
+      <div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-purple">🛡️<span class="snum">2</span></span>
+      <div><div class="st1" data-i18n="steps.2.t1">真人认证</div><div class="st2" data-i18n="steps.2.t2a">真实核验，保障交友安全</div><div class="st2" data-i18n="steps.2.t2b">隐私保护</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="timer"><i data-i18n="steps.timer">20秒</i></div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-blue">📍<span class="snum">3</span></span>
+      <div><div class="st1" data-i18n="steps.3.t1">同城匹配</div><div class="st2" data-i18n="steps.3.t2a">基于位置</div><div class="st2" data-i18n="steps.3.t2b">推荐身边的TA</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step" data-register role="button" tabindex="0">
+      <span class="si ic-orange">💖<span class="snum">4</span></span>
+      <div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div>
+    </div>
+  </div>
+
+  <!-- ============ 7. 实时在线动态条 ============ -->
+  <div class="live-stats-bar">
+    <div class="live-pulse-dot"></div>
+    <div class="live-avatars" id="live-avatars">
+      <img src="assets/img/ava/ava1.webp" alt="">
+      <img src="assets/img/ava/ava2.webp" alt="">
+      <img src="assets/img/ava/ava3.webp" alt="">
+    </div>
+    <div class="live-content">
+      <div class="live-count" data-i18n-html="stats.online">🔥 当前 <span id="online-count">0</span> 人在线速配</div>
+      <div class="live-marquee" id="live-marquee" data-i18n="stats.marquee">正在获取同城最新匹配动态...</div>
+    </div>
+  </div>
+
+  <!-- ============ 8. 原图2：Hero主视觉 (调整到图3动态条下方) ============ -->
+  <div class="hero-wrap" style="margin-top: 16px;">
     <div class="hero">
       <div class="arc"></div>
       <span class="heart h1p">💗</span>
@@ -177,102 +268,7 @@
     </div>
   </div>
 
-  <!-- ============ FEATURE BAR ============ -->
-  <div class="fbar">
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">📍</span><div><div class="ft1" data-i18n="feat.1.t1">同城推荐</div><div class="ft2" data-i18n="feat.1.t2">发现身边的TA</div></div></div>
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">💬</span><div><div class="ft1" data-i18n="feat.2.t1">1V1私聊</div><div class="ft2" data-i18n="feat.2.t2">独享心动时刻</div></div></div>
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">🎬</span><div><div class="ft1" data-i18n="feat.3.t1">AI短剧乐园</div><div class="ft2" data-i18n="feat.3.t2">沉浸剧情每日更新</div></div></div>
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">🎁</span><div><div class="ft1" data-i18n="feat.4.t1">礼物打赏</div><div class="ft2" data-i18n="feat.4.t2">送礼物传心意</div></div></div>
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">🔒</span><div><div class="ft1" data-i18n="feat.5.t1">安全私密</div><div class="ft2" data-i18n="feat.5.t2">加密保护隐私无忧</div></div></div>
-    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
-  </div>
-
-  <!-- ============ TWO BIG CARDS ============ -->
-  <div class="dual">
-    <div class="dcard left" data-register>
-      <span class="tag live" data-i18n="card.live.tag">热门</span>
-      <h3 data-i18n="card.left.title">全球直播大厅</h3>
-      <p data-i18n="card.left.p1">与全球主播实时互动</p>
-      <p class="sub" data-i18n="card.left.p2">真实陪伴·聆听声音·分享生活</p>
-      <div class="avatars">
-        <img src="assets/img/ava/ava1.webp" alt=""><img src="assets/img/ava/ava2.webp" alt=""><img src="assets/img/ava/ava3.webp" alt=""><img src="assets/img/ava/ava4.webp" alt="">
-      </div>
-      <a class="d-btn" data-i18n="card.left.btn" data-register role="button" tabindex="0">进入直播大厅 ›</a>
-    </div>
-    <div class="dcard right" style="cursor:pointer;" onclick="window.location.href='shorts.html'">
-      <span class="tag new" data-i18n="card.new.tag">最新</span>
-      <h3 data-i18n="card.right.title">AI短剧乐园</h3>
-      <p data-i18n="card.right.p1">原创AI短剧精彩不断</p>
-      <p class="sub" data-i18n="card.right.p2">多元题材·沉浸体验·每日更新</p>
-      <a class="d-btn" href="shorts.html" data-i18n="card.right.btn" style="text-decoration:none;" onclick="event.stopPropagation();">看AI短剧 ›</a>
-    </div>
-  </div>
-
-  <!-- ============ HOT PICKS (动态加载) ============ -->
-  <div class="sec-head">
-    <div class="st" data-i18n="hot.title">🔥 精彩视频</div>
-    <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">全部视频 ›</a>
-  </div>
-  <div class="hot-row" id="index-video-list"></div>
-
-  <!-- ============ 🔴 新增：直播推荐 (动态加载) ============ -->
-  <div class="sec-head">
-    <div class="st" data-i18n="recommend.title">🔥 直播推荐</div>
-    <a class="more" href="live.html" data-i18n="recommend.more" style="text-decoration:none; cursor:pointer;">查看更多 ›</a>
-  </div>
-  <div class="hot-row" id="index-recommend-list"></div>
-
-  <!-- ============ FOUR STEPS ============ -->
-  <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
-  <div class="steps-card">
-    <div class="step">
-      <span class="si ic-pink">🧑‍💻<span class="snum">1</span></span>
-      <div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div>
-    </div>
-    <div class="dash"></div>
-    <div class="step">
-      <span class="si ic-purple">🛡️<span class="snum">2</span></span>
-      <div><div class="st1" data-i18n="steps.2.t1">真人认证</div><div class="st2" data-i18n="steps.2.t2a">真实核验，保障交友安全</div><div class="st2" data-i18n="steps.2.t2b">隐私保护</div></div>
-    </div>
-    <div class="dash"></div>
-    <div class="timer"><i data-i18n="steps.timer">20秒</i></div>
-    <div class="dash"></div>
-    <div class="step">
-      <span class="si ic-blue">📍<span class="snum">3</span></span>
-      <div><div class="st1" data-i18n="steps.3.t1">同城匹配</div><div class="st2" data-i18n="steps.3.t2a">基于位置</div><div class="st2" data-i18n="steps.3.t2b">推荐身边的TA</div></div>
-    </div>
-    <div class="dash"></div>
-    <div class="step" data-register role="button" tabindex="0">
-      <span class="si ic-orange">💖<span class="snum">4</span></span>
-      <div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div>
-    </div>
-  </div>
-
-  <!-- ============ 🔴 实时在线动态条 ============ -->
-  <div class="live-stats-bar">
-    <div class="live-pulse-dot"></div>
-    <div class="live-avatars" id="live-avatars">
-      <img src="assets/img/ava/ava1.webp" alt="">
-      <img src="assets/img/ava/ava2.webp" alt="">
-      <img src="assets/img/ava/ava3.webp" alt="">
-    </div>
-    <div class="live-content">
-      <div class="live-count" data-i18n-html="stats.online">🔥 当前 <span id="online-count">0</span> 人在线速配</div>
-      <div class="live-marquee" id="live-marquee" data-i18n="stats.marquee">正在获取同城最新匹配动态...</div>
-    </div>
-  </div>
-
-  <!-- ============ CTA ============ -->
-  <div class="cta">
-    <div class="gift">💖</div>
-    <div class="ctext">
-      <div class="line1" data-i18n-html="cta.text">遇见同城心动的TA，开启 <b>1V1私聊</b></div>
-      <div class="line2" data-i18n="cta.note">注册仅需20秒，即刻开启同城速配</div>
-    </div>
-    <a class="cbtn" data-i18n="cta.btn" data-register role="button" tabindex="0">立即免费注册 →</a>
-  </div>
-
-  <!-- ============ Footer ============ -->
+  <!-- ============ 9. Footer ============ -->
   <div class="footer">
     <div class="f-top">
       <div class="f-brand">
