@@ -28,10 +28,10 @@
   .time-info { display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
   .time-left { color: #ff6b9d; font-weight: bold; }
   .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
-  .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); transition: width 0.1s; }
+  .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff9a4d, #ff4d94); transition: width 0.1s; }
   .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
   .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
-  .limit-mask button { background: linear-gradient(90deg, #4ade80, #22c55e); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+  .limit-mask button { background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 10px; font-weight: bold; cursor: pointer; }
   .unlock-btn { background: #4ade80 !important; margin-top: 10px !important; }
 </style>
 </head>
@@ -79,7 +79,6 @@
     try {
       const res = await fetch(`${API_BASE}/api/config`);
       const data = await res.json();
-      // 读取 freeConfig 配置
       currentConfig.previewLimit = data.freeConfig?.previewLimit ?? null;
       currentConfig.regLimit = data.freeConfig?.regLimit ?? null;
       currentConfig.price = data.freeConfig?.unlockPrice ?? null;
@@ -128,7 +127,6 @@
   async function init() {
     await fetchConfig(); 
     try {
-      // 请求免费视频接口
       const res = await fetch(`${API_BASE}/api/videos/free`);
       allVideos = await res.json();
       if (!Array.isArray(allVideos) || allVideos.length === 0) { sentinel.textContent = '暂无免费视频数据'; return; }
@@ -221,8 +219,18 @@
       <h3>试看已结束</h3>
       <p>开通全集需支付 <strong style="color:#ff1a75;">${currentConfig.price} USDT</strong></p>
       <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
-      <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:15px;">${currentConfig.trc20}</div>
-      <button onclick="generateOrder()" id="gen-order-btn">生成专属付款金额</button>
+      <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:10px;">${currentConfig.trc20}</div>
+      
+      <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%;">
+        <label style="display:block; margin-bottom:5px;">Telegram 账号：</label>
+        <input type="text" id="pay-tg" placeholder="请输入TG账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
+        <label style="display:block; margin-bottom:5px;">WhatsApp 账号：</label>
+        <input type="text" id="pay-wa" placeholder="请输入WhatsApp账号" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; margin-bottom:10px; color:#000;">
+        <label style="display:block; margin-bottom:5px;">你的付款TRC20地址：</label>
+        <input type="text" id="pay-address" placeholder="请输入你付款的TRC20地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+      </div>
+      
+      <button onclick="generateOrder()" id="gen-order-btn">提交付款信息</button>
       <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
     `;
     limitMask.style.display = 'flex';
@@ -230,7 +238,15 @@
 
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
-    btn.disabled = true; btn.innerText = '生成中...';
+    
+    const tg = document.getElementById('pay-tg').value.trim();
+    const wa = document.getElementById('pay-wa').value.trim();
+    const payAddress = document.getElementById('pay-address').value.trim();
+
+    if(!tg && !wa) return alert('请至少填写一种联系方式 (Telegram 或 WhatsApp)');
+    if(!payAddress) return alert('请填写您的付款 TRC20 地址');
+
+    btn.disabled = true; btn.innerText = '提交中...';
     
     const userStr = localStorage.getItem('hiya_user');
     let user = { id: 'guest', name: '游客', email: '未知' };
@@ -242,19 +258,21 @@
           body: JSON.stringify({ 
               baseAmount: currentConfig.price, 
               userId: user.id, userName: user.name, userEmail: user.email, 
-              videoId: currentVideoId, videoName: currentVideoName, configType: 'free' // 标记为 free
+              videoId: currentVideoId, videoName: currentVideoName, configType: 'free',
+              visitId: sessionStorage.getItem('hiya_visit_id'),
+              contactTg: tg, contactWa: wa, payAddress: payAddress
           })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       document.getElementById('pay-detail').innerHTML = `
         <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后请联系客服或在后台审核</p>
+        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账完成后请联系客服，等待审核</p>
         <button class="unlock-btn" onclick="mockPaySuccess()">【测试】我已支付，立即解锁</button>
       `;
     } catch(e) {
       alert('生成订单失败: ' + e.message);
-      btn.disabled = false; btn.innerText = '生成专属付款金额';
+      btn.disabled = false; btn.innerText = '提交付款信息';
     }
   }
 
