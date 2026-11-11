@@ -66,7 +66,29 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ================= 前台公共接口 =================
-app.get('/api/config', (req, res) => res.json(readJSON(SETTINGS_FILE)));
+app.get('/api/config', (req, res) => {
+    const s = readJSON(SETTINGS_FILE);
+    // 🔴 强制保证数值类型，防止前端比较出错
+    const hotCfg = s.hotConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
+    const recCfg = s.recommendConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
+    
+    res.json({
+        trc20: s.trc20 || '',
+        hotCat: s.hotCat || 'all',
+        recommendCat: s.recommendCat || 'all',
+        hotConfig: {
+            previewLimit: Number(hotCfg.previewLimit) || 15,
+            regLimit: Number(hotCfg.regLimit) || 120,
+            unlockPrice: Number(hotCfg.unlockPrice) || 9.99
+        },
+        recommendConfig: {
+            previewLimit: Number(recCfg.previewLimit) || 15,
+            regLimit: Number(recCfg.regLimit) || 120,
+            unlockPrice: Number(recCfg.unlockPrice) || 9.99
+        }
+    });
+});
+
 app.get('/api/i18n/:lang', (req, res) => {
     const filePath = path.join(I18N_DIR, `${req.params.lang}.json`);
     if (fs.existsSync(filePath)) res.sendFile(filePath);
@@ -98,14 +120,12 @@ app.post('/api/login', async (req, res) => {
 
 // ================= 后台接口 =================
 
-// 1. 系统配置
 app.get('/api/admin/settings', authMiddleware, (req, res) => res.json(readJSON(SETTINGS_FILE)));
 app.post('/api/admin/settings', authMiddleware, (req, res) => {
     writeJSON(SETTINGS_FILE, { ...readJSON(SETTINGS_FILE), ...req.body });
     res.json({ success: true });
 });
 
-// 2. 多语言管理
 app.get('/api/admin/i18n-list', authMiddleware, (req, res) => {
     const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json')).map(f => f.replace('.json', ''));
     res.json(files);
@@ -121,7 +141,6 @@ app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 一键翻译单个语言
 app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     const targetLang = req.params.lang;
@@ -158,7 +177,6 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     }
 });
 
-// 🔴 一键翻译全部
 app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
@@ -200,7 +218,7 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
 });
 
-// 3. 视频分类独立管理
+// 分类
 app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
 app.post('/api/admin/categories', authMiddleware, (req, res) => {
     let cats = readJSON(CATEGORIES_FILE, []);
@@ -218,7 +236,7 @@ app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => {
     writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
 });
 
-// 4. 资源站与采集
+// 采集
 app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE); 
@@ -287,7 +305,6 @@ app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
     } catch (err) { res.status(500).json({ error: '采集失败' }); }
 });
 
-// 5. 视频上传与管理
 app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '请选择视频' });
     const videos = readJSON(VIDEOS_FILE);
@@ -305,7 +322,6 @@ app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => {
     writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true });
 });
 
-// 6. 用户管理 (增加编辑、删除)
 app.get('/api/admin/users', authMiddleware, (req, res) => {
     let users = readJSON(USERS_FILE);
     res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, balance: u.balance || 0, createdAt: u.createdAt })));
@@ -327,7 +343,6 @@ app.delete('/api/admin/users/:id', authMiddleware, (req, res) => {
     writeJSON(USERS_FILE, users); res.json({ success: true });
 });
 
-// 7. 订单
 app.post('/api/orders/create', async (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     if (!settings.trc20) return res.status(400).json({ error: '未配置TRC20地址' });
@@ -344,7 +359,6 @@ app.post('/api/orders/create', async (req, res) => {
 });
 app.get('/api/admin/orders', authMiddleware, (req, res) => res.json(readJSON(ORDERS_FILE, [])));
 
-// 其他
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password === 'admin888') res.json({ success: true, token: 'admin888' });
     else res.status(401).json({ error: '密码错误' });
