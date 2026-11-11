@@ -21,7 +21,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
         input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline:none; }
-        button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; }
         button:hover { opacity: 0.9; }
         .btn-secondary { background: #6c757d; } .btn-danger { background: #dc3545; } .btn-text { background: none; color: #1890ff; padding: 0; font-size: 13px; margin-right: 10px;}
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index:999; }
@@ -38,9 +38,11 @@
         .progress-bar { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
         .progress-text { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 5px; }
 
-        /* 语言勾选网格 */
         .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
         .lang-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
+        
+        /* 🔴 修复语言列表按钮拥挤的问题 */
+        .action-btns { display: flex; gap: 8px; align-items: center; }
     </style>
 </head>
 <body>
@@ -85,7 +87,7 @@
                 </div>
             </div>
 
-            <!-- 视频分类管理 (独立) -->
+            <!-- 视频分类管理 -->
             <div id="tab-category" class="tab">
                 <div class="card">
                     <h3>添加分类</h3>
@@ -187,7 +189,7 @@
         </div>
     </div>
 
-    <!-- 编辑字典弹窗 -->
+    <!-- 弹窗 -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <h3 id="edit-title">编辑字典</h3>
@@ -199,7 +201,6 @@
         </div>
     </div>
 
-    <!-- 编辑用户/分类弹窗 -->
     <div id="generic-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <h3 id="gm-title">编辑</h3>
@@ -211,7 +212,6 @@
         </div>
     </div>
 
-    <!-- 选择语言弹窗 -->
     <div id="lang-modal" class="modal">
         <div class="modal-box">
             <h3>添加国家语言 (勾选后添加)</h3>
@@ -229,22 +229,21 @@
     let editLang = '', bindSiteId = '';
     let genericAction = '', genericId = '';
 
-    // 全部可选语言
     const allLangs = [
-        { code: 'en', name: '🇺🇸 English (英语)' },
-        { code: 'vn', name: '🇻🇳 Tiếng Việt (越南语)' },
-        { code: 'es', name: '🇪🇸 Español (西班牙语)' },
-        { code: 'tr', name: '🇹🇷 Türkçe (土耳其语)' },
-        { code: 'id', name: '🇮🇩 Bahasa Indonesia (印尼语)' },
-        { code: 'ja', name: '🇯🇵 日本語 (日语)' },
-        { code: 'ko', name: '🇰🇷 한국어 (韩语)' },
-        { code: 'fr', name: '🇫🇷 Français (法语)' },
-        { code: 'de', name: '🇩🇪 Deutsch (德语)' },
-        { code: 'ru', name: '🇷🇺 Русский (俄语)' },
-        { code: 'pt', name: '🇵🇹 Português (葡萄牙语)' },
-        { code: 'it', name: '🇮🇹 Italiano (意大利语)' },
-        { code: 'ar', name: '🇸🇦 العربية (阿拉伯语)' },
-        { code: 'th', name: '🇹🇭 ไทย (泰语)' }
+        { code: 'en', name: '🇺🇸 English' },
+        { code: 'vn', name: '🇻🇳 Tiếng Việt' },
+        { code: 'es', name: '🇪🇸 Español' },
+        { code: 'tr', name: '🇹🇷 Türkçe' },
+        { code: 'id', name: '🇮🇩 Bahasa Indonesia' },
+        { code: 'ja', name: '🇯🇵 日本語' },
+        { code: 'ko', name: '🇰🇷 한국어' },
+        { code: 'fr', name: '🇫🇷 Français' },
+        { code: 'de', name: '🇩🇪 Deutsch' },
+        { code: 'ru', name: '🇷🇺 Русский' },
+        { code: 'pt', name: '🇵🇹 Português' },
+        { code: 'it', name: '🇮🇹 Italiano' },
+        { code: 'ar', name: '🇸🇦 العربية' },
+        { code: 'th', name: '🇹🇭 ไทย' }
     ];
 
     function switchTab(id, el) {
@@ -261,25 +260,16 @@
         if(id === 'tab-order') loadOrders();
     }
 
-    // ========== 分类管理 (独立) ==========
+    // 分类与用户
     async function loadCategories() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('cat-list').innerHTML = cats.map(c => `
-            <tr>
-                <td>${c.name}</td>
-                <td>
-                    <button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button>
-                    <button class="btn-danger" onclick="delCategory('${c.id}')">删除</button>
-                </td>
-            </tr>
+            <tr><td>${c.name}</td><td><div class="action-btns"><button class="btn-text" onclick="openEditCat('${c.id}', '${c.name}')">编辑</button><button class="btn-danger" onclick="delCategory('${c.id}')">删除</button></div></td></tr>
         `).join('');
     }
     async function addCategory() {
-        const name = document.getElementById('new-cat-name').value.trim();
-        if(!name) return;
-        await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name }) });
-        document.getElementById('new-cat-name').value = '';
-        loadCategories();
+        await fetch(`${API}/api/admin/categories`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name: document.getElementById('new-cat-name').value }) });
+        document.getElementById('new-cat-name').value = ''; loadCategories();
     }
     function openEditCat(id, name) {
         genericAction = 'cat'; genericId = id;
@@ -287,26 +277,14 @@
         document.getElementById('gm-content').innerHTML = `<label>分类名称：</label><input type="text" id="gm-input" value="${name}" style="width:100%;">`;
         document.getElementById('generic-modal').style.display = 'flex';
     }
-    async function delCategory(id) {
-        if(!confirm('确定删除分类？')) return;
-        await fetch(`${API}/api/admin/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadCategories();
-    }
+    async function delCategory(id) { if(!confirm('确定删除分类？')) return; await fetch(`${API}/api/admin/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadCategories(); }
 
-    // ========== 用户管理 ==========
     async function loadUsers() {
         const users = await (await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('user-list').innerHTML = users.map(u => `
             <tr>
-                <td>${u.id}</td>
-                <td>${u.email}</td>
-                <td>${u.name}</td>
-                <td style="color:green;font-weight:bold;">${u.balance}</td>
-                <td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
-                <td>
-                    <button class="btn-text" onclick="openEditUser('${u.id}', '${u.email}', '${u.name}', ${u.balance})">编辑</button>
-                    <button class="btn-danger" onclick="delUser('${u.id}')">删除</button>
-                </td>
+                <td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td style="color:green;font-weight:bold;">${u.balance}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
+                <td><div class="action-btns"><button class="btn-text" onclick="openEditUser('${u.id}', '${u.email}', '${u.name}', ${u.balance})">编辑</button><button class="btn-danger" onclick="delUser('${u.id}')">删除</button></div></td>
             </tr>
         `).join('');
     }
@@ -320,36 +298,26 @@
         `;
         document.getElementById('generic-modal').style.display = 'flex';
     }
-    async function delUser(id) {
-        if(!confirm('确定删除该用户？')) return;
-        await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
-        loadUsers();
-    }
+    async function delUser(id) { if(!confirm('确定删除该用户？')) return; await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }); loadUsers(); }
+    
     async function saveGeneric() {
         if (genericAction === 'cat') {
-            const name = document.getElementById('gm-input').value;
-            await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name }) });
+            await fetch(`${API}/api/admin/categories/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-input').value }) });
             loadCategories();
         } else if (genericAction === 'user') {
-            const name = document.getElementById('gm-name').value;
-            const email = document.getElementById('gm-email').value;
-            const balance = document.getElementById('gm-balance').value;
-            await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name, email, balance }) });
+            await fetch(`${API}/api/admin/users/edit`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ id: genericId, name: document.getElementById('gm-name').value, email: document.getElementById('gm-email').value, balance: document.getElementById('gm-balance').value }) });
             loadUsers();
         }
         document.getElementById('generic-modal').style.display = 'none';
     }
 
-    // ========== 采集与配置 ==========
+    // 采集与配置
     async function loadCollectData() {
         const sites = await (await fetch(`${API}/api/admin/sites`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('site-list').innerHTML = sites.map(s => `
             <div style="border:1px solid #eee; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
                 <span>${s.name} (${s.url})</span>
-                <div>
-                    <button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button>
-                    <button class="btn-danger" onclick="delSite('${s.id}')">删除</button>
-                </div>
+                <div class="action-btns"><button class="btn-secondary" onclick="openBind('${s.id}')">查看/绑定分类</button><button class="btn-danger" onclick="delSite('${s.id}')">删除</button></div>
             </div>
         `).join('');
         document.getElementById('collect-site-select').innerHTML = sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -364,10 +332,7 @@
         const cats = await (await fetch(`${API}/api/admin/sites/${id}/categories`, { headers: { 'x-admin-token': token } })).json();
         const localCats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('bind-tbody').innerHTML = cats.map(c => `
-            <tr>
-                <td>${c.name} (${c.id})</td>
-                <td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td>
-            </tr>
+            <tr><td>${c.name} (${c.id})</td><td><input type="hidden" class="bind-sid" value="${c.id}" data-name="${c.name}"><select class="bind-local">${localCats.map(lc => `<option value="${lc.name}">${lc.name}</option>`).join('')}</select></td></tr>
         `).join('');
     }
     async function saveBindings() {
@@ -391,36 +356,26 @@
         let opts = '<option value="all">全部加载</option>' + cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         document.getElementById('set-hotCat').innerHTML = opts; document.getElementById('set-hotCat').value = s.hotCat || 'all';
         document.getElementById('set-recommendCat').innerHTML = opts; document.getElementById('set-recommendCat').value = s.recommendCat || 'all';
-
-        document.getElementById('hot-preview').value = s.hotConfig?.previewLimit || 15;
-        document.getElementById('hot-reg').value = s.hotConfig?.regLimit || 120;
-        document.getElementById('hot-price').value = s.hotConfig?.unlockPrice || 9.99;
-
-        document.getElementById('rec-preview').value = s.recommendConfig?.previewLimit || 15;
-        document.getElementById('rec-reg').value = s.recommendConfig?.regLimit || 120;
-        document.getElementById('rec-price').value = s.recommendConfig?.unlockPrice || 9.99;
+        document.getElementById('hot-preview').value = s.hotConfig.previewLimit;
+        document.getElementById('hot-reg').value = s.hotConfig.regLimit;
+        document.getElementById('hot-price').value = s.hotConfig.unlockPrice;
+        document.getElementById('rec-preview').value = s.recommendConfig.previewLimit;
+        document.getElementById('rec-reg').value = s.recommendConfig.regLimit;
+        document.getElementById('rec-price').value = s.recommendConfig.unlockPrice;
     }
     async function saveSettings() {
         const data = {
             trc20: document.getElementById('set-trc20').value,
             hotCat: document.getElementById('set-hotCat').value,
             recommendCat: document.getElementById('set-recommendCat').value,
-            hotConfig: {
-                previewLimit: Number(document.getElementById('hot-preview').value),
-                regLimit: Number(document.getElementById('hot-reg').value),
-                unlockPrice: Number(document.getElementById('hot-price').value)
-            },
-            recommendConfig: {
-                previewLimit: Number(document.getElementById('rec-preview').value),
-                regLimit: Number(document.getElementById('rec-reg').value),
-                unlockPrice: Number(document.getElementById('rec-price').value)
-            }
+            hotConfig: { previewLimit: Number(document.getElementById('hot-preview').value), regLimit: Number(document.getElementById('hot-reg').value), unlockPrice: Number(document.getElementById('hot-price').value) },
+            recommendConfig: { previewLimit: Number(document.getElementById('rec-preview').value), regLimit: Number(document.getElementById('rec-reg').value), unlockPrice: Number(document.getElementById('rec-price').value) }
         };
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(data) });
         alert('保存成功');
     }
 
-    // ========== 多语言 ==========
+    // 多语言
     async function loadLangs() {
         const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
@@ -430,9 +385,11 @@
                 <td>${lang}</td>
                 <td><label class="switch"><input type="checkbox" ${enabled.includes(lang) ? 'checked' : ''} onchange="toggleLang('${lang}', this.checked)"><span class="slider"></span></label></td>
                 <td>
-                    <button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>
-                    ${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button>` : ''}
-                    ${lang !== 'zh' ? `<button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}
+                    <div class="action-btns">
+                        <button class="btn-text" onclick="editLangData('${lang}')">编辑字典</button>
+                        ${lang !== 'zh' ? `<button class="btn-text" onclick="translateLang('${lang}')">一键翻译</button>` : ''}
+                        ${lang !== 'zh' ? `<button class="btn-danger" onclick="delLang('${lang}')">删除</button>` : ''}
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -449,8 +406,7 @@
         document.getElementById('edit-content').value = '加载中...';
         document.getElementById('edit-modal').style.display = 'flex';
         const res = await fetch(`${API}/api/admin/i18n-content/${lang}`, { headers: { 'x-admin-token': token } });
-        const data = await res.json();
-        document.getElementById('edit-content').value = JSON.stringify(data, null, 2);
+        document.getElementById('edit-content').value = JSON.stringify(await res.json(), null, 2);
     }
     async function saveDict() {
         try {
@@ -467,54 +423,44 @@
         if(!key) return alert('请先保存 API Key');
         if(!confirm(`确定翻译 ${lang} 吗？`)) return;
         const res = await fetch(`${API}/api/admin/translate/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
-        const d = await res.json();
-        alert(d.message || d.error); loadLangs();
+        const d = await res.json(); alert(d.message || d.error); loadLangs();
     }
-    
     async function translateAll() {
         const key = localStorage.getItem('deepl_key');
         if(!key) return alert('请先保存 API Key');
         if(!confirm('确定翻译所有已启用的语言吗？')) return;
         const res = await fetch(`${API}/api/admin/translate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ apiKey: key }) });
-        const d = await res.json();
-        alert(d.message || d.error); loadLangs();
+        const d = await res.json(); alert(d.message || d.error); loadLangs();
     }
 
-    // 选择语言弹窗
     async function openLangModal() {
         const list = await (await fetch(`${API}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } })).json();
         const grid = document.getElementById('lang-grid');
         grid.innerHTML = allLangs.map(l => {
             const exists = list.includes(l.code);
-            return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};">
-                <input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name} ${exists ? '(已添加)' : ''}
-            </label>`;
+            return `<label class="lang-checkbox" style="opacity: ${exists ? 0.5 : 1};"><input type="checkbox" value="${l.code}" ${exists ? 'disabled' : ''}> ${l.name}</label>`;
         }).join('');
         document.getElementById('lang-modal').style.display = 'flex';
     }
     async function confirmAddLangs() {
         const checked = Array.from(document.querySelectorAll('#lang-grid input:checked')).map(cb => cb.value);
         if(checked.length === 0) return;
-        
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         let en = s.enabledLangs || ['zh'];
-        
         for (const lang of checked) {
             await fetch(`${API}/api/admin/i18n/${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({}) });
             if(!en.includes(lang)) en.push(lang);
         }
         await fetch(`${API}/api/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ enabledLangs: en }) });
-        
-        document.getElementById('lang-modal').style.display = 'none';
-        loadLangs();
+        document.getElementById('lang-modal').style.display = 'none'; loadLangs();
     }
 
-    // ========== 视频与订单 ==========
+    // 视频与订单
     async function loadVideoManage() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         const vids = await (await fetch(`${API}/api/admin/videos`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('video-manage-list').innerHTML = vids.map(v => `<tr><td>${v.name}</td><td>${v.category}</td><td><button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></td></tr>`).join('');
+        document.getElementById('video-manage-list').innerHTML = vids.map(v => `<tr><td>${v.name}</td><td>${v.category}</td><td><div class="action-btns"><button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></div></td></tr>`).join('');
     }
     async function uploadVideoBatch() {
         const files = document.getElementById('up-file').files;
