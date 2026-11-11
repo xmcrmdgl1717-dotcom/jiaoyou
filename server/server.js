@@ -39,8 +39,8 @@ if (!fs.existsSync(path.join(I18N_DIR, 'zh.json'))) writeJSON(path.join(I18N_DIR
 // 初始化配置
 if (!fs.existsSync(SETTINGS_FILE)) writeJSON(SETTINGS_FILE, { 
     trc20: '', hotCat: 'all', recommendCat: 'all',
-    hotConfig: { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 },
-    recommendConfig: { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 },
+    hotConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
+    recommendConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
     enabledLangs: ['zh', 'en']
 });
 if (!fs.existsSync(USERS_FILE)) writeJSON(USERS_FILE, []);
@@ -66,24 +66,25 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ================= 前台公共接口 =================
+// 🔴 核心修改：直接透传配置，如果是 null，前端接收到的就是 null
 app.get('/api/config', (req, res) => {
     const s = readJSON(SETTINGS_FILE);
-    const hotCfg = s.hotConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
-    const recCfg = s.recommendConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
+    const hotCfg = s.hotConfig || {};
+    const recCfg = s.recommendConfig || {};
     
     res.json({
         trc20: s.trc20 || '',
         hotCat: s.hotCat || 'all',
         recommendCat: s.recommendCat || 'all',
         hotConfig: {
-            previewLimit: Number(hotCfg.previewLimit) || 15,
-            regLimit: Number(hotCfg.regLimit) || 120,
-            unlockPrice: Number(hotCfg.unlockPrice) || 9.99
+            previewLimit: hotCfg.previewLimit !== undefined && hotCfg.previewLimit !== null ? Number(hotCfg.previewLimit) : null,
+            regLimit: hotCfg.regLimit !== undefined && hotCfg.regLimit !== null ? Number(hotCfg.regLimit) : null,
+            unlockPrice: hotCfg.unlockPrice !== undefined && hotCfg.unlockPrice !== null ? Number(hotCfg.unlockPrice) : null
         },
         recommendConfig: {
-            previewLimit: Number(recCfg.previewLimit) || 15,
-            regLimit: Number(recCfg.regLimit) || 120,
-            unlockPrice: Number(recCfg.unlockPrice) || 9.99
+            previewLimit: recCfg.previewLimit !== undefined && recCfg.previewLimit !== null ? Number(recCfg.previewLimit) : null,
+            regLimit: recCfg.regLimit !== undefined && recCfg.regLimit !== null ? Number(recCfg.regLimit) : null,
+            unlockPrice: recCfg.unlockPrice !== undefined && recCfg.unlockPrice !== null ? Number(recCfg.unlockPrice) : null
         }
     });
 });
@@ -140,7 +141,6 @@ app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// 🔴 修复：一键翻译单个语言 (改用 Header 鉴权)
 app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     const targetLang = req.params.lang;
@@ -162,8 +162,6 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
             const params = new URLSearchParams();
             params.append('target_lang', deeplMap[targetLang] || 'EN-US');
             chunk.forEach(t => params.append('text', t));
-            
-            // 🔴 核心修复：使用 Authorization Header
             const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
                 headers: { 
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -181,7 +179,6 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     }
 });
 
-// 🔴 修复：一键翻译全部 (改用 Header 鉴权)
 app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
@@ -206,8 +203,6 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
                 const params = new URLSearchParams();
                 params.append('target_lang', deeplMap[lang] || 'EN-US');
                 chunk.forEach(t => params.append('text', t));
-                
-                // 🔴 核心修复：使用 Authorization Header
                 const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
                     headers: { 
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -227,7 +222,6 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
 });
 
-// 分类
 app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
 app.post('/api/admin/categories', authMiddleware, (req, res) => {
     let cats = readJSON(CATEGORIES_FILE, []);
@@ -245,7 +239,6 @@ app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => {
     writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
 });
 
-// 采集
 app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE); 
