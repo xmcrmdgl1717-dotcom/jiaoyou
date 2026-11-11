@@ -11,6 +11,7 @@
 <div class="page">
   <!-- ============ HERO WRAP ============ -->
   <div class="hero-wrap">
+
     <!-- nav -->
     <div class="nav">
       <div class="brand" data-register role="button" tabindex="0">
@@ -35,136 +36,321 @@
         </select>
       </label>
       
-      <!-- 动态渲染登录/用户菜单的区域 -->
+      <!-- 🔴 动态渲染登录/用户菜单的区域 -->
       <div id="auth-area" style="display:flex;align-items:center;">
          <a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>
       </div>
     </div>
-    <!-- ... 后续 hero, fbar, dual 等模块保持原样，无需修改 ... -->
-    
-    <!-- 热门推荐头部 -->
-    <div class="sec-head">
-      <div class="st" data-i18n="hot.title">🔥 同城推荐</div>
-      <div class="more" id="hot-more-btn" data-i18n="hot.more" data-register role="button" tabindex="0">查看全部主播 ›</div>
-    </div>
-    <!-- ... 热门推荐卡片保持原样 ... -->
-    
-    <!-- ... 后续 steps, cta, footer 保持原样 ... -->
 
-  </div>
+    <!-- hero -->
+    <div class="hero">
+      <div class="arc"></div>
+      <span class="heart h1p">💗</span>
+      <span class="heart h2p">💛</span>
+      <span class="heart h3p">💗</span>
+      <span class="heart h4p">💜</span>
+      <span class="heart h5p">💛</span>
 
-  <!-- ============ 注册/登录 弹窗 ============ -->
-  <div class="modal-overlay" id="register-modal" hidden>
-    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
-      <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
+      <div class="hero-content">
+        <span class="badge-top" data-i18n="hero.badge" data-register role="button" tabindex="0">真实同城 ✨</span>
+        <div class="h1" data-register role="button" tabindex="0"><span class="g-pink" data-i18n="hero.title1">同城心动</span><span class="navy" data-i18n="hero.title2">1V1交友</span></div>
+        <div class="h-sub" data-i18n="hero.subtitle">真实认证 · 同城速配 · 遇见身边的心动</div>
 
-      <!-- 注册视图 -->
-      <section class="modal-view" data-view="form">
-        <h2 id="modal-title" data-i18n="modal.title">创建你的交友账号</h2>
-        <form data-register-form novalidate>
-          <label class="modal-field">
-            <span data-i18n="modal.field.name">昵称</span>
-            <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
-            <small data-i18n="modal.field.name.hint">2–40 个字符</small>
-          </label>
-          <label class="modal-field">
-            <span data-i18n="modal.field.email">邮箱</span>
-            <input name="email" type="email" required autocomplete="email">
-          </label>
-          <label class="modal-field">
-            <span data-i18n="modal.field.password">密码</span>
-            <input name="password" type="password" required minlength="8" autocomplete="new-password">
-            <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
-          </label>
-          <label class="modal-agree">
-            <input name="agree" type="checkbox" required>
-            <span>
-              <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
-              <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
-              <span data-i18n="modal.field.agree.and">和</span>
-              <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
-            </span>
-          </label>
-          <div class="modal-error" data-form-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
-          <button class="modal-submit" type="submit" data-i18n="modal.submit" data-default-zh="免费注册" data-default-en="Sign up free">免费注册</button>
-        </form>
-        <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
-          已有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); showLoginView();">直接登录</a>
-        </p>
-      </section>
+        <div class="chips">
+          <div class="chip"><span class="ic ic-orange">⚡</span><div><div class="t1" data-i18n="hero.chip1.t1">同城速配</div><div class="t2" data-i18n="hero.chip1.t2">距离优先</div></div></div>
+          <div class="chip"><span class="ic ic-purple">🧠</span><div><div class="t1" data-i18n="hero.chip2.t1">1V1视频</div><div class="t2" data-i18n="hero.chip2.t2">独享私聊</div></div></div>
+          <div class="chip"><span class="ic ic-blue">🛡️</span><div><div class="t1" data-i18n="hero.chip3.t1">真人认证</div><div class="t2" data-i18n="hero.chip3.t2">真实交友</div></div></div>
+          <div class="chip"><span class="ic ic-gold">HD</span><div><div class="t1" data-i18n="hero.chip4.t1">隐私安全</div><div class="t2" data-i18n="hero.chip4.t2">加密保护</div></div></div>
+        </div>
 
-      <!-- 登录视图 -->
-      <section class="modal-view" data-view="login" hidden>
-        <h2 data-i18n="modal.login.title">登录你的账号</h2>
-        <form data-login-form novalidate>
-          <label class="modal-field">
-            <span data-i18n="modal.field.email">邮箱</span>
-            <input name="email" type="email" required autocomplete="email">
-          </label>
-          <label class="modal-field">
-            <span data-i18n="modal.field.password">密码</span>
-            <input name="password" type="password" required autocomplete="current-password">
-          </label>
-          <div class="modal-error" data-login-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
-          <button class="modal-submit" type="submit" data-i18n="modal.login.submit" data-default-zh="登录" data-default-en="Log in">登录</button>
-        </form>
-        <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
-          还没有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); showRegisterView();">立即注册</a>
-        </p>
-      </section>
-      
-      <!-- 欢迎视图 (登录/注册成功后显示) -->
-      <section class="modal-view" data-view="welcome" hidden>
-        <div class="modal-success" aria-hidden="true">✓</div>
-        <h2 data-i18n="modal.welcome.title">欢迎回来！</h2>
-        <p data-i18n="modal.welcome.desc">你已成功登录。</p>
-        <button class="modal-submit" onclick="closeModal()" data-i18n="modal.welcome.cta">开始探索</button>
-      </section>
+        <div class="promo">
+          <div class="p-title" data-i18n="hero.promo.title">遇见身边的TA</div>
+          <div class="p-usdt g-warm" data-i18n="hero.promo.amount">同城1V1</div>
+          <div class="p-desc" data-i18n="hero.promo.desc">真实认证，拒绝照骗</div>
+          <a class="p-btn" data-i18n="hero.promo.btn" data-register role="button" tabindex="0">立即免费匹配 ›</a>
+          <div class="p-note" data-i18n="hero.promo.note">注册仅需20秒，即刻开启同城速配</div>
+          <div class="p-gift" data-register role="button" tabindex="0" style="display:flex;align-items:center;justify-content:center;font-size:60px;line-height:1">💖</div>
+        </div>
+      </div>
+
+      <!-- Live Now -->
+      <div class="live-panel">
+        <h4 data-i18n="live.title">正在热播</h4>
+        <div class="lp-row"><span class="lp-rank r1">1</span><img class="lp-av" src="assets/img/ava/ava1.webp" alt=""><div class="lp-info"><div class="lp-name">梓涵</div><div class="lp-cnt">🔥 12.8K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r2">2</span><img class="lp-av" src="assets/img/ava/ava2.webp" alt=""><div class="lp-info"><div class="lp-name">欣怡</div><div class="lp-cnt">🔥 9.6K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r3">3</span><img class="lp-av" src="assets/img/ava/ava3.webp" alt=""><div class="lp-info"><div class="lp-name">雨桐</div><div class="lp-cnt">🔥 7.4K</div></div></div>
+        <div class="lp-row"><span class="lp-rank r4">4</span><img class="lp-av" src="assets/img/ava/ava4.webp" alt=""><div class="lp-info"><div class="lp-name">诗琪</div><div class="lp-cnt">🔥 6.1K</div></div></div>
+        <div class="lp-more" data-i18n="live.more" data-register role="button" tabindex="0">更多人气主播 ›</div>
+      </div>
     </div>
   </div>
 
-  <script>
-    // 在app.js加载前，先根据localStorage判断登录状态，渲染UI
-    (function() {
-      const savedUser = localStorage.getItem('hiya_user');
-      if (savedUser) {
-        try {
-          const user = JSON.parse(savedUser);
-          const authArea = document.getElementById('auth-area');
-          if (authArea) {
-            authArea.innerHTML = `
-              <div class="user-menu-wrapper" style="position:relative;">
-                <div class="user-trigger" id="user-trigger" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:20px;transition:background 0.2s;">
-                  <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ff5c9d&color=fff&size=32&bold=true" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-                  <span style="font-size:13px;font-weight:600;color:#2b2f5b;">${user.name}</span>
-                  <span style="font-size:10px;color:#9a9fb2;">▼</span>
-                </div>
-                <div class="user-dropdown" id="user-dropdown" style="display:none;position:absolute;top:110%;right:0;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);padding:8px;min-width:140px;z-index:50;">
-                  <a href="#" style="display:block;padding:8px 12px;font-size:13px;color:#3a3f5f;border-radius:8px;" onmouseover="this.style.background='#fdf2f7'" onmouseout="this.style.background='transparent'">👤 个人中心</a>
-                  <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;border-radius:8px;" onmouseover="this.style.background='#fdf2f7'" onmouseout="this.style.background='transparent'">🚪 退出登录</a>
-                </div>
+  <!-- ============ FEATURE BAR ============ -->
+  <div class="fbar">
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">📍</span><div><div class="ft1" data-i18n="feat.1.t1">同城推荐</div><div class="ft2" data-i18n="feat.1.t2">发现身边的TA</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">💬</span><div><div class="ft1" data-i18n="feat.2.t1">1V1私聊</div><div class="ft2" data-i18n="feat.2.t2">独享心动时刻</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">🎬</span><div><div class="ft1" data-i18n="feat.3.t1">AI短剧乐园</div><div class="ft2" data-i18n="feat.3.t2">沉浸剧情每日更新</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">🎁</span><div><div class="ft1" data-i18n="feat.4.t1">礼物打赏</div><div class="ft2" data-i18n="feat.4.t2">送礼物传心意</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">🔒</span><div><div class="ft1" data-i18n="feat.5.t1">安全私密</div><div class="ft2" data-i18n="feat.5.t2">加密保护隐私无忧</div></div></div>
+    <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
+  </div>
+
+  <!-- ============ TWO BIG CARDS ============ -->
+  <div class="dual">
+    <div class="dcard left" data-register>
+      <span class="tag live" data-i18n="card.live.tag">热门</span>
+      <h3 data-i18n="card.left.title">全球直播大厅</h3>
+      <p data-i18n="card.left.p1">与全球主播实时互动</p>
+      <p class="sub" data-i18n="card.left.p2">真实陪伴·聆听声音·分享生活</p>
+      <div class="avatars">
+        <img src="assets/img/ava/ava1.webp" alt=""><img src="assets/img/ava/ava2.webp" alt=""><img src="assets/img/ava/ava3.webp" alt=""><img src="assets/img/ava/ava4.webp" alt="">
+      </div>
+      <a class="d-btn" data-i18n="card.left.btn" data-register role="button" tabindex="0">进入直播大厅 ›</a>
+    </div>
+    <div class="dcard right" data-register>
+      <span class="tag new" data-i18n="card.new.tag">最新</span>
+      <h3 data-i18n="card.right.title">AI短剧乐园</h3>
+      <p data-i18n="card.right.p1">原创AI短剧精彩不断</p>
+      <p class="sub" data-i18n="card.right.p2">多元题材·沉浸体验·每日更新</p>
+      <a class="d-btn" data-i18n="card.right.btn" data-register role="button" tabindex="0">看AI短剧 ›</a>
+    </div>
+  </div>
+
+  <!-- ============ HOT PICKS (VIDEO STREAM) ============ -->
+  <div class="sec-head">
+    <div class="st" data-i18n="hot.title">🔥 同城推荐</div>
+    <!-- 🔴 这里改成了 a 标签，直接跳转到内页 shorts.html -->
+    <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none;">查看全部主播 ›</a>
+  </div>
+  <div class="hot-row">
+    <!-- 注意：video 的 src 路径请确保有对应的 .mp4 文件，若无视频会自动展示 poster(webp) 封面 -->
+    <div class="hcard hc1" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/1.webp"><source src="assets/img/live/1.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">静怡</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card1.country">北京</span></span><span>🔥 12.4K</span></div></div>
+    </div>
+    <div class="hcard hc2" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/2.webp"><source src="assets/img/live/2.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">思颖</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card2.country">上海</span></span><span>🔥 9.8K</span></div></div>
+    </div>
+    <div class="hcard hc3" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/3.webp"><source src="assets/img/live/3.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">梦瑶</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card3.country">广州</span></span><span>🔥 8.6K</span></div></div>
+    </div>
+    <div class="hcard hc4" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/4.webp"><source src="assets/img/live/4.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">雅雯</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card4.country">成都</span></span><span>🔥 7.3K</span></div></div>
+    </div>
+    <div class="hcard hc5" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/5.webp"><source src="assets/img/live/5.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">佳琪</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card5.country">杭州</span></span><span>🔥 6.5K</span></div></div>
+    </div>
+    <div class="hcard hc6" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/6.webp"><source src="assets/img/live/6.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">婉婷</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card6.country">深圳</span></span><span>🔥 5.2K</span></div></div>
+    </div>
+    <div class="hcard hc7" data-register role="button" tabindex="0">
+      <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/7.webp"><source src="assets/img/live/7.mp4" type="video/mp4"></video>
+      <span class="live">LIVE</span>
+      <div class="ov"><div class="nm">语嫣</div><div class="meta"><span class="cty">🇨🇳 <span data-i18n="hot.card7.country">重庆</span></span><span>🔥 4.8K</span></div></div>
+    </div>
+  </div>
+
+  <!-- ============ FOUR STEPS ============ -->
+  <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
+  <div class="steps-card">
+    <div class="step">
+      <span class="si ic-pink">🧑‍💻<span class="snum">1</span></span>
+      <div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-purple">🛡️<span class="snum">2</span></span>
+      <div><div class="st1" data-i18n="steps.2.t1">真人认证</div><div class="st2" data-i18n="steps.2.t2a">真实核验，保障交友安全</div><div class="st2" data-i18n="steps.2.t2b">隐私保护</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="timer"><i data-i18n="steps.timer">20秒</i></div>
+    <div class="dash"></div>
+    <div class="step">
+      <span class="si ic-blue">📍<span class="snum">3</span></span>
+      <div><div class="st1" data-i18n="steps.3.t1">同城匹配</div><div class="st2" data-i18n="steps.3.t2a">基于位置</div><div class="st2" data-i18n="steps.3.t2b">推荐身边的TA</div></div>
+    </div>
+    <div class="dash"></div>
+    <div class="step" data-register role="button" tabindex="0">
+      <span class="si ic-orange">💖<span class="snum">4</span></span>
+      <div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div>
+    </div>
+  </div>
+
+  <!-- ============ CTA ============ -->
+  <div class="cta">
+    <div class="gift">💖</div>
+    <div class="ctext">
+      <div class="line1" data-i18n-html="cta.text">遇见同城心动的TA，开启 <b>1V1私聊</b></div>
+      <div class="line2" data-i18n="cta.note">注册仅需20秒，即刻开启同城速配</div>
+    </div>
+    <a class="cbtn" data-i18n="cta.btn" data-register role="button" tabindex="0">立即免费注册 →</a>
+  </div>
+
+  <!-- ============ Footer ============ -->
+  <div class="footer">
+    <div class="f-top">
+      <div class="f-brand">
+        <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
+        <div class="brand-sub" data-i18n="footer.subtitle">同城交友 遇见心动</div>
+        <div class="f-social">
+          <span>🐦</span><span>📷</span><span>🎵</span><span>✈️</span>
+        </div>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col1.title">关于我们</h5>
+        <a data-i18n="footer.col1.a1">关于嗨呀直播</a><a data-i18n="footer.col1.a2">联系我们</a><a data-i18n="footer.col1.a3">合作伙伴</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col2.title">帮助中心</h5>
+        <a data-i18n="footer.col2.a1">常见问题</a><a href="terms.html" data-i18n="footer.col2.a2" data-legal>使用条款</a><a href="privacy.html" data-i18n="footer.col2.a3" data-legal>隐私政策</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col3.title">社区</h5>
+        <a data-i18n="footer.col3.a1">社区准则</a><a data-i18n="footer.col3.a2">主播招募</a><a data-i18n="footer.col3.a3">举报中心</a>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col4.title">下载App</h5>
+        <div class="appbadge">🍎<span><span class="apptop">Download on the</span><b>App Store</b></span></div>
+        <div class="appbadge">▶<span><span class="apptop">GET IT ON</span><b>Google Play</b></span></div>
+      </div>
+      <div class="f-col">
+        <h5 data-i18n="footer.col5.title">安全支付</h5>
+        <div class="pay">
+          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="VISA"><rect width="48" height="30" rx="4" fill="#fff"/><text x="24" y="21" font-family="Arial,Helvetica,sans-serif" font-size="14" font-style="italic" font-weight="700" fill="#1a1f71" text-anchor="middle">VISA</text></svg>
+          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="Mastercard"><rect width="48" height="30" rx="4" fill="#fff"/><circle cx="20" cy="15" r="8" fill="#eb001b"/><circle cx="28" cy="15" r="8" fill="#f79e1b" fill-opacity=".9"/></svg>
+          <svg viewBox="0 0 60 30" width="50" height="25" aria-label="PayPal"><rect width="60" height="30" rx="4" fill="#fff"/><text x="30" y="20" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#003087">Pay<tspan fill="#009cde">Pal</tspan></text></svg>
+          <svg viewBox="0 0 30 30" width="25" height="25" aria-label="Crypto"><circle cx="15" cy="15" r="14" fill="#f7931a"/><text x="15" y="21" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">&#8383;</text></svg>
+        </div>
+        <div class="f-note"><span data-i18n="footer.age">🔞 仅限18岁以上用户</span><br><span data-i18n="footer.privacy">🔒 我们致力于保护您的隐私与数据安全</span></div>
+      </div>
+    </div>
+    <div class="copyright" data-i18n="footer.copyright">© 2026 嗨呀直播. 保留所有权利。</div>
+  </div>
+
+</div>
+
+<!-- ============ 注册/登录 弹窗 ============ -->
+<div class="modal-overlay" id="register-modal" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-modal-dialog tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
+
+    <!-- 注册视图 -->
+    <section class="modal-view" data-view="form">
+      <h2 id="modal-title" data-i18n="modal.title">创建你的交友账号</h2>
+      <form data-register-form novalidate>
+        <label class="modal-field">
+          <span data-i18n="modal.field.name">昵称</span>
+          <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
+          <small data-i18n="modal.field.name.hint">2–40 个字符</small>
+        </label>
+        <label class="modal-field">
+          <span data-i18n="modal.field.email">邮箱</span>
+          <input name="email" type="email" required autocomplete="email">
+        </label>
+        <label class="modal-field">
+          <span data-i18n="modal.field.password">密码</span>
+          <input name="password" type="password" required minlength="8" autocomplete="new-password">
+          <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
+        </label>
+        <label class="modal-agree">
+          <input name="agree" type="checkbox" required>
+          <span>
+            <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
+            <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
+            <span data-i18n="modal.field.agree.and">和</span>
+            <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
+          </span>
+        </label>
+        <div class="modal-error" data-form-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
+        <button class="modal-submit" type="submit" data-i18n="modal.submit" data-default-zh="免费注册" data-default-en="Sign up free">免费注册</button>
+      </form>
+      <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
+        已有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); showLoginView();">直接登录</a>
+      </p>
+    </section>
+
+    <!-- 登录视图 -->
+    <section class="modal-view" data-view="login" hidden>
+      <h2 data-i18n="modal.login.title">登录你的账号</h2>
+      <form data-login-form novalidate>
+        <label class="modal-field">
+          <span data-i18n="modal.field.email">邮箱</span>
+          <input name="email" type="email" required autocomplete="email">
+        </label>
+        <label class="modal-field">
+          <span data-i18n="modal.field.password">密码</span>
+          <input name="password" type="password" required autocomplete="current-password">
+        </label>
+        <div class="modal-error" data-login-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
+        <button class="modal-submit" type="submit" data-i18n="modal.login.submit" data-default-zh="登录" data-default-en="Log in">登录</button>
+      </form>
+      <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
+        还没有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); showRegisterView();">立即注册</a>
+      </p>
+    </section>
+    
+    <!-- 欢迎视图 (登录/注册成功后显示) -->
+    <section class="modal-view" data-view="welcome" hidden>
+      <div class="modal-success" aria-hidden="true">✓</div>
+      <h2 data-i18n="modal.welcome.title">欢迎回来！</h2>
+      <p data-i18n="modal.welcome.desc">你已成功登录。</p>
+      <button class="modal-submit" onclick="document.querySelector('[data-modal-close]').click()" data-i18n="modal.welcome.cta">开始探索</button>
+    </section>
+  </div>
+</div>
+
+<!-- 提前执行的脚本，防止刷新时登录状态闪烁 -->
+<script>
+  (function() {
+    const savedUser = localStorage.getItem('hiya_user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        const authArea = document.getElementById('auth-area');
+        if (authArea) {
+          authArea.innerHTML = `
+            <div class="user-menu-wrapper" style="position:relative;">
+              <div class="user-trigger" id="user-trigger" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:20px;transition:background 0.2s;">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ff5c9d&color=fff&size=32&bold=true" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                <span style="font-size:13px;font-weight:600;color:#2b2f5b;">${user.name}</span>
+                <span style="font-size:10px;color:#9a9fb2;">▼</span>
               </div>
-            `;
-            // 绑定下拉菜单事件
-            const trigger = document.getElementById('user-trigger');
-            const dropdown = document.getElementById('user-dropdown');
-            trigger.addEventListener('click', (e) => {
-              e.stopPropagation();
-              dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-            });
-            document.addEventListener('click', () => { if (dropdown) dropdown.style.display = 'none'; });
-            
-            // 退出登录事件
-            document.getElementById('logout-btn').addEventListener('click', (e) => {
-              e.preventDefault();
-              localStorage.removeItem('hiya_user');
-              window.location.reload();
-            });
-          }
-        } catch(e) { console.error(e); }
-      }
-    })();
-  </script>
-  <script src="assets/js/app.js" defer></script>
+              <div class="user-dropdown" id="user-dropdown" style="display:none;position:absolute;top:110%;right:0;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);padding:8px;min-width:140px;z-index:50;">
+                <a href="#" style="display:block;padding:8px 12px;font-size:13px;color:#3a3f5f;border-radius:8px;" onmouseover="this.style.background='#fdf2f7'" onmouseout="this.style.background='transparent'">👤 个人中心</a>
+                <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;border-radius:8px;" onmouseover="this.style.background='#fdf2f7'" onmouseout="this.style.background='transparent'">🚪 退出登录</a>
+              </div>
+            </div>
+          `;
+          const trigger = document.getElementById('user-trigger');
+          const dropdown = document.getElementById('user-dropdown');
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+          });
+          document.addEventListener('click', () => { if (dropdown) dropdown.style.display = 'none'; });
+          
+          document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('hiya_user');
+            window.location.reload();
+          });
+        }
+      } catch(e) { console.error(e); }
+    }
+  })();
+</script>
+
+<script src="assets/js/app.js" defer></script>
 </body>
 </html>
