@@ -307,20 +307,24 @@
 </script>
  <!-- LiveChat 动态注入 -->
 <script>
-  fetch('https://jiaoyouweb.onrender.com/api/config')
-    .then(res => res.json())
-    .then(data => {
-        if(!data.livechat_license) return;
-        const licenseId = String(data.livechat_license).trim();
-        if (!licenseId || isNaN(Number(licenseId))) return;
-
-        window.__lc = window.__lc || {};
-        window.__lc.license = Number(licenseId);
-        window.__lc.integration_name = "manual_channels";
-        window.__lc.product_name = "livechat";
-        (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
-    })
-    .catch(e => console.warn('客服加载失败', e));
+// 🔴 此处是内页专用的 LiveChat 加载代码
+(async function initLiveChatInner() {
+    try {
+        const res = await fetch('https://jiaoyouweb.onrender.com/api/config');
+        const config = await res.json();
+        if (config.livechat_license) {
+            const licenseId = String(config.livechat_license).trim();
+            if (licenseId && !isNaN(Number(licenseId))) {
+                window.__lc = window.__lc || {};
+                window.__lc.license = Number(licenseId);
+                window.__lc.integration_name = "manual_channels";
+                window.__lc.product_name = "livechat";
+                (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push([function(){var n=this,t=arguments;return new Promise(function(r){r(n.apply(t,Array.from(arguments)))})},n,Array.from(arguments)])}function o(){return function(){var n=arguments;return new Promise(function(r){r(i(n))})}}var e={_q:[],_h:null,_v:"2.0",on:o(),once:o(),off:o(),get:o(),call:o()};if(!window.LiveChatWidget){window.LiveChatWidget=e}var a=t.createElement("script");a.async=true;a.src="https://cdn.livechatinc.com/tracking.js";var s=t.getElementsByTagName("head")[0];s.appendChild(a)})(window,document);
+                console.log('内页 LiveChat 客服加载成功');
+            }
+        }
+    } catch(e) { console.warn('客服加载失败'); }
+})();
 </script>
 </body>
 </html>
