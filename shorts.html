@@ -11,6 +11,7 @@
   .header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0f0f0; }
   .header h1 { font-size: 18px; font-weight: 800; color: #1f2551; }
   .back-btn { font-size: 13px; color: #ff3d8b; font-weight: 600; text-decoration: none; padding: 6px 14px; border-radius: 20px; background: #fff0f5; }
+  
   .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; max-width: 800px; margin: 0 auto; }
   .card { position: relative; width: 100%; aspect-ratio: 9 / 16; background: #f5f5f5; overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -19,14 +20,26 @@
   .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 9px; opacity: 0.9; }
   .live-tag { position: absolute; top: 4px; left: 4px; background: #ff3b5c; color: #fff; font-size: 8px; font-weight: 700; padding: 2px 4px; border-radius: 4px; z-index: 2; }
   #sentinel { text-align: center; padding: 24px 0; font-size: 12px; color: #999; }
+
+  /* 播放器 Modal */
   #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
   #player-modal.active { display: flex; }
-  .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; }
-  .close-btn { position: absolute; top: 20px; left: 20px; z-index: 20; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; overflow: hidden; }
+  .close-btn { position: absolute; top: 20px; left: 20px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
+
+  /* 🔴 底部时间倒计时条 */
+  .player-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 20; pointer-events: none; }
+  .time-info { display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+  .time-left { color: #ff6b9d; font-weight: bold; }
+  .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+  .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff9a4d, #ff4d94); transition: width 0.1s; }
+
+  /* 遮罩 */
   .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
   .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
   .limit-mask button { background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+  .unlock-btn { background: #4ade80 !important; margin-top: 10px !important; }
 </style>
 </head>
 <body>
@@ -36,13 +49,27 @@
 </header>
 <div class="grid-container" id="grid"></div>
 <div id="sentinel">正在获取数据...</div>
+
 <div id="player-modal">
   <div class="player-box">
     <button class="close-btn" id="close-btn">×</button>
     <video id="video-el" controls playsinline controlsList="nodownload"></video>
+    
+    <!-- 底部倒计时条 -->
+    <div class="player-bottom-bar">
+      <div class="time-info">
+        <span id="time-text">试看剩余: --</span>
+        <span id="time-price"></span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
     <div class="limit-mask" id="limit-mask"></div>
   </div>
 </div>
+
 <script>
   const API_BASE = 'https://jiaoyouweb.onrender.com';
   const grid = document.getElementById('grid');
@@ -52,12 +79,26 @@
   
   let currentConfig = { previewLimit: null, regLimit: null, price: null, trc20: '' };
   let hls = null, videoLimitHandler = null;
+  let currentVideoId = null;
+
+  // 🔴 新增：判断该视频是否已被购买
+  function isVideoPurchased(vid) {
+    let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+    return purchased.includes(vid);
+  }
+  // 🔴 新增：记录购买
+  function markVideoPurchased(vid) {
+    let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+    if(!purchased.includes(vid)) {
+      purchased.push(vid);
+      localStorage.setItem('purchased_videos', JSON.stringify(purchased));
+    }
+  }
 
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
       const data = await res.json();
-      // 严格读取，如果是 null 就是 null
       currentConfig.previewLimit = data.hotConfig?.previewLimit ?? null;
       currentConfig.regLimit = data.hotConfig?.regLimit ?? null;
       currentConfig.price = data.hotConfig?.unlockPrice ?? null;
@@ -88,7 +129,7 @@
         <div class="card-meta"><span>📍 ${video.category || '同城'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
       </div>
     `;
-    div.onclick = () => openPlayer(src, title);
+    div.onclick = () => openPlayer(video.id, src, title);
     return div;
   }
 
@@ -129,9 +170,13 @@
   const playerModal = document.getElementById('player-modal');
   const videoEl = document.getElementById('video-el');
   const limitMask = document.getElementById('limit-mask');
+  const progressFill = document.getElementById('progress-fill');
+  const timeText = document.getElementById('time-text');
+  const timePrice = document.getElementById('time-price');
 
-  function openPlayer(src, title) {
+  function openPlayer(vid, src, title) {
     if (!src) return alert('视频源无效');
+    currentVideoId = vid;
     limitMask.style.display = 'none';
     playerModal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -144,27 +189,58 @@
     videoEl.play().catch(e => console.log('播放失败'));
 
     const isLogin = !!localStorage.getItem('hiya_user');
-    const maxTime = isLogin ? currentConfig.regLimit : currentConfig.previewLimit;
+    // 判断是否已购买该视频
+    const isPurchased = isVideoPurchased(vid);
+    
+    // 如果已购买，时间无限制；否则取后端配置
+    let maxTime = isPurchased ? Infinity : (isLogin ? currentConfig.regLimit : currentConfig.previewLimit);
 
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
-    // 🔴 核心拦截逻辑：只有 maxTime 存在且大于 0 才生效
-    if (maxTime !== null && maxTime > 0) {
-      let isBlocked = false;
-      videoLimitHandler = () => {
-        if (videoEl.currentTime >= maxTime && !isBlocked) {
+    // 设置初始UI
+    if (isPurchased || maxTime === null || maxTime <= 0) {
+      timeText.innerText = "已解锁完整版";
+      timePrice.innerText = "";
+      progressFill.style.width = '0%';
+      progressFill.style.background = '#4ade80';
+    } else {
+      timeText.innerText = `试看剩余: ${maxTime} 秒`;
+      if (currentConfig.price !== null) {
+        timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
+      }
+      progressFill.style.width = '0%';
+      progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
+    }
+
+    // 🔴 核心倒计时与拦截逻辑
+    let isBlocked = false;
+    videoLimitHandler = () => {
+      const curTime = videoEl.currentTime;
+      
+      // 如果还没被拦截且有最大时间限制
+      if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
+        // 更新时间条
+        const remain = Math.max(0, maxTime - curTime);
+        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
+        const percent = Math.min(100, (curTime / maxTime) * 100);
+        progressFill.style.width = `${percent}%`;
+
+        // 超时拦截
+        if (curTime >= maxTime) {
           videoEl.pause(); 
           isBlocked = true; 
           showPaywall();
         }
-        if (videoEl.currentTime < maxTime && isBlocked) {
-          isBlocked = false;
-          limitMask.style.display = 'none';
-          videoEl.play();
-        }
-      };
-      videoEl.addEventListener('timeupdate', videoLimitHandler);
-    }
+      }
+      
+      // 如果用户往回拖拽，恢复播放
+      if (isBlocked && curTime < maxTime - 1) {
+        isBlocked = false;
+        limitMask.style.display = 'none';
+        videoEl.play();
+      }
+    };
+    videoEl.addEventListener('timeupdate', videoLimitHandler);
   }
 
   function showPaywall() {
@@ -175,7 +251,6 @@
       return;
     }
     
-    // 如果没配置金额，显示联系客服
     if (currentConfig.price === null) {
       limitMask.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
       limitMask.style.display = 'flex';
@@ -204,13 +279,40 @@
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      
       document.getElementById('pay-detail').innerHTML = `
         <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-        <p style="font-size:11px; opacity:0.7;">系统自动匹配金额上分（15分钟内有效）</p>
+        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后请联系客服或在后台审核上分</p>
+        <button class="unlock-btn" onclick="mockPaySuccess()">【测试】我已支付，立即解锁</button>
       `;
     } catch(e) {
       alert('生成订单失败: ' + e.message);
       btn.disabled = false; btn.innerText = '生成专属付款金额';
+    }
+  }
+
+  // 🔴 模拟支付成功后解锁
+  function mockPaySuccess() {
+    markVideoPurchased(currentVideoId); // 记录该视频已买
+    alert('支付成功！已解锁该视频完整版');
+    limitMask.style.display = 'none';
+    
+    // 恢复播放并重置UI
+    const isLogin = !!localStorage.getItem('hiya_user');
+    timeText.innerText = "已解锁完整版";
+    timePrice.innerText = "";
+    progressFill.style.width = '0%';
+    progressFill.style.background = '#4ade80';
+    
+    // 重新触发 openPlayer 刷新状态，或者直接让 videoEl 继续播放（这里直接刷新最稳妥）
+    const videoSrc = videoEl.src || videoEl.currentSrc;
+    // 简单处理：重置 timeupdate 逻辑
+    videoEl.currentTime = 0; 
+    videoEl.play();
+    // 由于 timeupdate 还在用旧的 maxTime，这里可以通过重新调用 openPlayer 来彻底重置
+    const cardData = allVideos.find(v => v.id === currentVideoId);
+    if(cardData) {
+      openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
     }
   }
 
