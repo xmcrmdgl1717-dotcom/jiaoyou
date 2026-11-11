@@ -31,7 +31,6 @@
         .bind-table input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .result-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
         
-        /* 修复：使用 !important 强制隐藏 */
         .hidden { display: none !important; }
         .flex { display: flex; gap: 10px; align-items: center; }
         
@@ -58,7 +57,7 @@
     <!-- 管理面板 -->
     <div id="admin-panel" class="hidden">
         <div class="flex" style="justify-content: space-between; margin-bottom: 20px;">
-            <h1 style="margin: 0;">⚙️ 资源采集管理</h1>
+            <h1 style="margin: 0;">⚙️ 资源采集 & 多语言管理</h1>
             <button class="btn-secondary" onclick="logout()">退出登录</button>
         </div>
 
@@ -108,8 +107,32 @@
         <div class="result-box" id="collect-result">等待采集...</div>
 
         <h2>🎬 已采集视频</h2>
-        <div id="video-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+        <div id="video-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin-bottom: 40px;">
             <p style="color: #888;">加载中...</p>
+        </div>
+
+        <!-- 🔴 新增：DeepL 一键翻译面板 -->
+        <h2>🌍 多语言一键翻译 (DeepL)</h2>
+        <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #cce5ff;">
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px; line-height: 1.5;">
+                本功能会自动读取前端静态目录的 <code style="background:#e0e0e0; padding:2px 6px; border-radius:4px;">/i18n/zh.json</code>，并调用 DeepL API 进行翻译。翻译完成后，将自动生成 JSON 文件供你下载并替换到项目中。
+            </p>
+            <div class="form-group">
+                <label>DeepL API Key (免费版)</label>
+                <input type="text" id="deepl-key" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx">
+            </div>
+            <div class="form-group">
+                <label>选择要翻译的目标语言</label>
+                <select id="translate-lang">
+                    <option value="en">🇺🇸 English (英语)</option>
+                    <option value="vi">🇻🇳 Tiếng Việt (越南语)</option>
+                    <option value="es">🇪🇸 Español (西班牙语)</option>
+                    <option value="tr">🇹🇷 Türkçe (土耳其语)</option>
+                    <option value="id">🇮🇩 Bahasa Indonesia (印尼语)</option>
+                </select>
+            </div>
+            <button onclick="doTranslate()" id="translate-btn">一键翻译并下载</button>
+            <span id="translate-status" style="font-size: 13px; color: #666; margin-left: 10px;"></span>
         </div>
     </div>
 </div>
@@ -129,7 +152,9 @@
 </div>
 
 <script>
+    // 后端 API 地址
     const API_BASE = 'https://jiaoyouweb.onrender.com';
+    
     let token = localStorage.getItem('admin_token') || '';
     let currentBindSiteId = null;
     let currentSites = [];
@@ -155,6 +180,7 @@
     }
     if (token) showAdminPanel();
 
+    // ================= 资源站逻辑 =================
     function loadSites() {
         fetch(`${API_BASE}/api/admin/sites`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(sites => {
             currentSites = sites;
@@ -183,24 +209,14 @@
 
     function viewBindings(siteId) {
         const site = currentSites.find(s => s.id === siteId);
-        if (!site || !site.categories || site.categories.length === 0) {
-            alert('该资源站尚未绑定任何分类');
-            return;
-        }
+        if (!site || !site.categories || site.categories.length === 0) return alert('该资源站尚未绑定任何分类');
         const tbody = document.getElementById('view-bind-tbody');
         tbody.innerHTML = site.categories.map(c => `
-            <tr>
-                <td>${c.sourceId}</td>
-                <td>${c.sourceName}</td>
-                <td style="color: #ff3d8b; font-weight: bold;">${c.localCategory}</td>
-            </tr>
+            <tr><td>${c.sourceId}</td><td>${c.sourceName}</td><td style="color: #ff3d8b; font-weight: bold;">${c.localCategory}</td></tr>
         `).join('');
         document.getElementById('view-bind-modal').classList.remove('hidden');
     }
-
-    function closeViewBindModal() {
-        document.getElementById('view-bind-modal').classList.add('hidden');
-    }
+    function closeViewBindModal() { document.getElementById('view-bind-modal').classList.add('hidden'); }
 
     function addSite() {
         const name = document.getElementById('site-name').value.trim();
@@ -211,8 +227,7 @@
             method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ name, url, type })
         }).then(res => res.json()).then(() => {
-            loadSites();
-            document.getElementById('site-name').value = ''; document.getElementById('site-url').value = '';
+            loadSites(); document.getElementById('site-name').value = ''; document.getElementById('site-url').value = '';
         });
     }
 
@@ -226,16 +241,12 @@
         document.getElementById('bind-panel').classList.remove('hidden');
         const tbody = document.getElementById('bind-tbody');
         tbody.innerHTML = '<tr><td colspan="3">加载分类中...</td></tr>';
-
         fetch(`${API_BASE}/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(categories => {
             if (!categories.length || categories.error) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #dc3545;">未获取到分类 (${categories.error || ''})</td></tr>`; return;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #dc3545;">未获取到分类</td></tr>`; return;
             }
             tbody.innerHTML = categories.map(c => `
-                <tr>
-                    <td>${c.id}</td><td>${c.name}</td>
-                    <td><input type="text" class="bind-input" data-source-id="${c.id}" data-source-name="${c.name}" placeholder="例如: 电影"></td>
-                </tr>
+                <tr><td>${c.id}</td><td>${c.name}</td><td><input type="text" class="bind-input" data-source-id="${c.id}" data-source-name="${c.name}" placeholder="例如: 电影"></td></tr>
             `).join('');
         });
     }
@@ -251,33 +262,20 @@
         fetch(`${API_BASE}/api/admin/sites/${currentBindSiteId}/bind`, {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ mappings })
-        }).then(res => res.json()).then(() => {
-            alert('分类绑定已保存！'); closeBindPanel(); loadSites(); 
-        });
+        }).then(res => res.json()).then(() => { alert('分类绑定已保存！'); closeBindPanel(); loadSites(); });
     }
+    function closeBindPanel() { document.getElementById('bind-panel').classList.add('hidden'); currentBindSiteId = null; }
 
-    function closeBindPanel() {
-        document.getElementById('bind-panel').classList.add('hidden'); currentBindSiteId = null;
-    }
-
+    // ================= 采集逻辑 =================
     function startCollect() {
         const siteId = document.getElementById('collect-site-select').value;
         if (!siteId) return alert('请先添加并选择资源站');
-
-        const btn = document.getElementById('collect-btn');
-        const status = document.getElementById('collect-status');
-        const result = document.getElementById('collect-result');
-
+        const btn = document.getElementById('collect-btn'), status = document.getElementById('collect-status'), result = document.getElementById('collect-result');
         btn.disabled = true; status.textContent = '正在采集，请稍候...'; result.textContent = '';
-
         fetch(`${API_BASE}/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } }).then(res => res.json()).then(data => {
             if (data.error) result.textContent = '❌ 采集失败: ' + data.error;
             else { result.textContent = `✅ ${data.message}`; loadVideos(); }
-        }).catch(err => {
-            result.textContent = '❌ 请求失败: ' + err.message;
-        }).finally(() => {
-            btn.disabled = false; status.textContent = '';
-        });
+        }).catch(err => { result.textContent = '❌ 请求失败: ' + err.message; }).finally(() => { btn.disabled = false; status.textContent = ''; });
     }
 
     function loadVideos() {
@@ -285,11 +283,72 @@
             const container = document.getElementById('video-list');
             if (!videos.length) { container.innerHTML = '<p style="color: #888;">暂无已采集的视频</p>'; return; }
             container.innerHTML = videos.slice(-20).reverse().map(v => `
-                <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
-                    <strong>${v.name}</strong> <span style="color: #888; margin-left: 10px;">分类: ${v.category}</span>
-                </div>
+                <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;"><strong>${v.name}</strong> <span style="color: #888; margin-left: 10px;">分类: ${v.category}</span></div>
             `).join('');
         });
+    }
+
+    // 🔴 核心新增：DeepL 一键翻译逻辑
+    async function doTranslate() {
+        const apiKey = document.getElementById('deepl-key').value.trim();
+        const targetLang = document.getElementById('translate-lang').value;
+        const btn = document.getElementById('translate-btn');
+        const status = document.getElementById('translate-status');
+
+        if (!apiKey) return alert('请先填写 DeepL API Key');
+
+        btn.disabled = true;
+        status.textContent = '正在读取 zh.json...';
+
+        try {
+            // 1. 前端直接获取自己的 zh.json
+            const res = await fetch('/i18n/zh.json?t=' + Date.now());
+            if (!res.ok) throw new Error('无法读取 /i18n/zh.json，请确保文件存在且路径正确');
+            const zhDict = await res.json();
+            
+            const keys = Object.keys(zhDict);
+            const texts = keys.map(k => zhDict[k]);
+
+            status.textContent = '正在请求 DeepL 翻译，请稍候...';
+
+            // 2. 发送给后端代理
+            const response = await fetch(`${API_BASE}/api/admin/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                body: JSON.stringify({ apiKey, targetLang, texts })
+            });
+
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+
+            status.textContent = '翻译成功，正在生成文件...';
+
+            // 3. 组合数据并触发下载
+            const newDict = {};
+            keys.forEach((key, index) => {
+                newDict[key] = result.translations[index] || zhDict[key];
+            });
+
+            const jsonString = JSON.stringify(newDict, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${targetLang}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            status.textContent = `✅ 翻译完成！请下载 ${targetLang}.json 并替换到 i18n 目录下。`;
+            
+        } catch (err) {
+            console.error(err);
+            status.textContent = `❌ 错误: ${err.message}`;
+        } finally {
+            btn.disabled = false;
+        }
     }
 </script>
 </body>
