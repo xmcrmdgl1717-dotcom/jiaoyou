@@ -124,7 +124,6 @@
         <div class="lang-dropdown" id="lang-dropdown" style="display: none;">
           <div class="lang-option" data-lang="zh">🇨🇳 中文</div>
           <div class="lang-option" data-lang="en">🇺🇸 English</div>
-          <!-- 🔴 越南语代码改为 vn -->
           <div class="lang-option" data-lang="vn">🇻🇳 Tiếng Việt</div>
           <div class="lang-option" data-lang="es">🇪🇸 Español</div>
           <div class="lang-option" data-lang="tr">🇹🇷 Türkçe</div>
@@ -216,6 +215,13 @@
   </div>
   <div class="hot-row" id="index-video-list"></div>
 
+  <!-- ============ 🔴 新增：直播推荐 (动态加载) ============ -->
+  <div class="sec-head">
+    <div class="st" data-i18n="recommend.title">🔥 直播推荐</div>
+    <a class="more" href="live.html" data-i18n="recommend.more" style="text-decoration:none; cursor:pointer;">查看更多 ›</a>
+  </div>
+  <div class="hot-row" id="index-recommend-list"></div>
+
   <!-- ============ FOUR STEPS ============ -->
   <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
   <div class="steps-card">
@@ -242,7 +248,7 @@
     </div>
   </div>
 
-  <!-- ============ 🔴 新增：实时在线动态条 ============ -->
+  <!-- ============ 🔴 实时在线动态条 ============ -->
   <div class="live-stats-bar">
     <div class="live-pulse-dot"></div>
     <div class="live-avatars" id="live-avatars">
