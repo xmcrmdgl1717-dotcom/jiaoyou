@@ -112,18 +112,19 @@
       <h3 data-i18n="card.right.title">AI短剧乐园</h3>
       <p data-i18n="card.right.p1">原创AI短剧精彩不断</p>
       <p class="sub" data-i18n="card.right.p2">多元题材·沉浸体验·每日更新</p>
-      <a class="d-btn" data-i18n="card.right.btn" data-register role="button" tabindex="0">看AI短剧 ›</a>
+      <!-- 🔴 修改点1：移除了 data-register，改为 a 标签直接跳转 -->
+      <a class="d-btn" href="shorts.html" data-i18n="card.right.btn" style="text-decoration:none;">看AI短剧 ›</a>
     </div>
   </div>
 
   <!-- ============ HOT PICKS (支持视频点击播放) ============ -->
   <div class="sec-head">
-    <div class="st" data-i18n="hot.title">🔥 同城推荐</div>
-    <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">查看全部主播 ›</a>
+    <!-- 🔴 修改点2：标题改成 精彩视频 -->
+    <div class="st" data-i18n="hot.title">🔥 精彩视频</div>
+    <!-- 🔴 修改点3：右侧按钮改成 全部视频 -->
+    <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">全部视频 ›</a>
   </div>
   <div class="hot-row">
-    <!-- 注意：下面每个卡片都加了 data-video-src 和 data-video-poster -->
-    <!-- 这里我用的是 m3u8 测试流和 mp4 占位，你可以换成你采集的真实 swag.live 视频链接 -->
     <div class="hcard" data-register role="button" tabindex="0" data-video-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-video-poster="assets/img/live/1.webp">
       <video class="hvideo" autoplay loop muted playsinline poster="assets/img/live/1.webp"><source src="" type="video/mp4"></video>
       <span class="live">LIVE</span>
@@ -312,7 +313,7 @@
   <div class="modal-dialog" role="dialog" aria-modal="true" style="background: #111; color: #fff; overflow: hidden; padding: 0; max-width: 380px; width: 90%;">
     <button class="modal-close" type="button" data-customer-close aria-label="关闭" style="position: absolute; top: 12px; right: 14px; z-index: 10; color: #fff; font-size: 20px; background: rgba(0,0,0,0.4); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">×</button>
 
-    <!-- 背景图区域（可换成你本地更暴露/性感的图） -->
+    <!-- 背景图区域 -->
     <div style="position: relative; height: 340px; background: url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;">
       <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, #111 100%);"></div>
       <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
