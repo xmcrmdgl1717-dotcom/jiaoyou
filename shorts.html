@@ -2,77 +2,235 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>嗨呀直播 · 全部视频</title>
 <link rel="stylesheet" href="assets/css/styles.css">
+<!-- 引入 HLS.js 支持 m3u8 视频流播放 -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  body { background: #fdf7fa; margin: 0; font-family: sans-serif; }
+  /* 基础重置 */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fdf7fa; font-family: sans-serif; padding-bottom: 40px; }
   
-  /* 修复布局：严格限制宽度和列数 */
   .shorts-page {
-    max-width: 1000px; /* 限制最大宽度，防止太宽 */
+    max-width: 1000px;
     margin: 0 auto;
+    padding: 16px 12px; /* 手机端左右留一点安全间距 */
+  }
+
+  /* 顶部导航 */
+  .shorts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f5;
+    margin-bottom: 16px;
+  }
+  .shorts-header h1 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1f2551;
+    margin: 0;
+  }
+  .back-btn {
+    font-size: 13px;
+    color: #ff3d8b;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #ffd1e3;
+  }
+
+  /* 🔴 核心布局：强制全端一行3个 */
+  .shorts-grid {
+    display: grid;
+    /* 强制三列等宽，彻底防止手机端变成单列 */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px; /* 手机端卡片间距稍微缩小，让内容更饱满 */
+    width: 100%;
+  }
+
+  /* 视频卡片结构 */
+  .short-card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    /* 经典竖屏短影音比例 */
+    aspect-ratio: 3 / 4;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    /* 防止点击时出现高亮或闪烁 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .short-card video, .short-card img.cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* 卡片信息遮罩 */
+  .short-card .card-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 24px 6px 6px; /* 顶部大留白让渐变自然 */
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
+    color: #fff;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .short-card .card-name {
+    font-size: 11px; /* 适配三列小卡片 */
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .short-card .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    opacity: 0.9;
+    line-height: 1.2;
+  }
+
+  /* LIVE 角标 */
+  .short-card .live-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: #ff3b5c;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    z-index: 2;
+    letter-spacing: 0.5px;
+  }
+
+  /* 加载动画 */
+  .loading-indicator {
+    text-align: center;
+    padding: 24px 0;
+    font-size: 12px;
+    color: #9a9fb2;
+  }
+
+  /* 视频播放弹窗 */
+  #video-player-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 9999;
+    display: none; /* 默认隐藏 */
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #video-player-modal.active {
+    display: flex;
+  }
+  .player-container {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    height: 85vh;
+    max-height: 750px;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .player-close-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .player-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 60px 20px 20px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8));
+    color: #fff;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* 试看限制遮罩 */
+  #video-limit-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
     padding: 20px;
   }
-  .shorts-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0 24px; border-bottom: 1px solid #f0f0f5; margin-bottom: 24px;
+  #video-limit-overlay h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #ff6b9d;
   }
-  .shorts-header h1 { font-size: 22px; font-weight: 800; color: #1f2551; margin: 0; }
-  .back-btn {
-    font-size: 14px; color: #ff3d8b; font-weight: 600; text-decoration: none;
-    padding: 8px 16px; border-radius: 20px; background: #fff; border: 1px solid #ffd1e3;
+  #video-limit-overlay p {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 16px;
   }
-
-  /* 强制 3 列布局 */
-  .shorts-grid {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; /* 强制3列，等宽 */
-    gap: 20px;
-    width: 100%;
-  }
-
-  .short-card {
-    position: relative; border-radius: 16px; overflow: hidden; background: #000;
-    aspect-ratio: 3 / 4; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    width: 100%;
-  }
-  .short-card img {
-    width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
-  }
-  
-  .short-card .card-overlay {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 12px 12px;
-    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85)); color: #fff;
-  }
-  .short-card .card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .short-card .card-meta { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.9; }
-  .short-card .live-badge {
-    position: absolute; top: 10px; left: 10px; background: #ff3b5c; color: #fff;
-    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
-  }
-
-  /* 响应式调整 */
-  @media (max-width: 850px) {
-    .shorts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px; }
-  }
-  @media (max-width: 560px) {
-    .shorts-page { padding: 12px; }
-    .shorts-grid { grid-template-columns: 1fr !important; gap: 16px; }
-  }
-
-  /* 遮罩层样式 */
-  #video-limit-overlay {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 20;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    color: #fff; text-align: center; padding: 20px;
-  }
-  #video-limit-overlay h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ff6b9d; }
-  #video-limit-overlay p { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }
   #video-limit-overlay button {
-    background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff;
-    border: none; padding: 12px 30px; border-radius: 25px; font-size: 15px; font-weight: bold; cursor: pointer;
+    background: linear-gradient(90deg, #ff9a4d, #ff4d94);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* 针对更小的手机屏幕进行微调 */
+  @media (max-width: 360px) {
+    .shorts-grid { gap: 6px; }
+    .short-card .card-name { font-size: 10px; }
+    .short-card .card-meta { font-size: 8px; }
   }
 </style>
 </head>
@@ -84,33 +242,48 @@
     <a href="index.html" class="back-btn">← 返回首页</a>
   </header>
 
+  <!-- 数据容器 -->
   <div class="shorts-grid" id="shorts-grid"></div>
+  
+  <!-- 加载提示 -->
+  <div class="loading-indicator" id="loading-indicator" style="display:none;">正在加载更多…</div>
 </div>
 
-<!-- 视频播放器 -->
-<div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
-  <div style="position: relative; width: 100%; max-width: 420px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
-    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 30; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%;">×</button>
-    <video id="video-player" controls autoplay playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000;"></video>
+<!-- ================= 视频播放弹窗 ================= -->
+<div id="video-player-modal">
+  <div class="player-container">
+    <button class="player-close-btn" id="video-close-btn">×</button>
+    <video id="video-player" controls autoplay playsinline></video>
     
-    <!-- 试看结束遮罩层 -->
+    <!-- 试看限制层 -->
     <div id="video-limit-overlay">
       <h3>试看已结束</h3>
       <p>注册登录后可无限畅看完整版视频</p>
       <button onclick="window.location.href='index.html'">去首页注册</button>
     </div>
 
-    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none; z-index: 10;">
+    <div class="player-info">
       <div style="font-size: 18px; font-weight: 700;" id="video-player-name"></div>
-      <div style="font-size: 12px; opacity: 0.7;" id="video-player-meta"></div>
+      <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;" id="video-player-meta"></div>
     </div>
   </div>
 </div>
 
 <script>
+  // 🔴 配置你的后端 API 地址
   const API_BASE = 'https://jiaoyouweb.onrender.com';
-  const grid = document.getElementById('shorts-grid');
   
+  const grid = document.getElementById('shorts-grid');
+  const loadingIndicator = document.getElementById('loading-indicator');
+  
+  // 分页核心变量
+  let ALL_VIDEOS = [];      // 存放所有拉取到的视频
+  let renderedCount = 0;    // 已经渲染到页面的数量
+  const PAGE_SIZE = 9;      // 每次加载 9 个（正好是3行）
+  let isLoading = false;
+  let hasMoreData = true;
+
+  // 1. 解析播放地址（兼容苹果CMS格式）
   function parsePlayUrl(urlStr) {
     if (!urlStr) return '';
     if (urlStr.includes('$')) {
@@ -120,93 +293,203 @@
     return urlStr;
   }
 
-  // 拉取数据并渲染
-  fetch(`${API_BASE}/api/videos`).then(res => res.json()).then(videos => {
-    if (!videos || videos.length === 0) {
-      grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:#999;">暂无视频</p>';
+  // 2. 创建单张卡片的 HTML 结构
+  function createCardHTML(video) {
+    const realUrl = parsePlayUrl(video.playUrl);
+    const poster = video.pic || 'assets/img/live/1.webp';
+    // 生成一个随机的热度，看起来更真实
+    const randomLikes = (Math.random() * 5 + 1).toFixed(1) + 'K';
+    
+    return `
+      <div class="short-card" 
+           data-video-src="${realUrl}" 
+           data-video-poster="${poster}"
+           data-video-name="${video.name}"
+           data-video-meta="📍 ${video.category || '同城'} · 🔥 ${randomLikes}">
+        <img class="cover" src="${poster}" referrerpolicy="no-referrer" onerror="this.src='assets/img/live/1.webp'">
+        <span class="live-badge">LIVE</span>
+        <div class="card-overlay">
+          <div class="card-name">${video.name}</div>
+          <div class="card-meta">
+            <span>📍 ${video.category || '同城'}</span>
+            <span>🔥 ${randomLikes}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. 渲染当前页（每次调用追加 9 个）
+  function renderNextPage() {
+    if (isLoading || !hasMoreData) return;
+    isLoading = true;
+    loadingIndicator.style.display = 'block';
+
+    // 模拟一点点网络加载延迟，让过渡更自然
+    setTimeout(() => {
+      // 计算需要截取的数据范围
+      const nextVideos = ALL_VIDEOS.slice(renderedCount, renderedCount + PAGE_SIZE);
+      
+      // 如果没有更多数据了，停止加载
+      if (nextVideos.length === 0) {
+        hasMoreData = false;
+        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+        isLoading = false;
+        return;
+      }
+
+      // 使用 DocumentFragment 批量插入，避免页面重绘卡顿
+      const fragment = document.createDocumentFragment();
+      nextVideos.forEach(video => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = createCardHTML(video).trim();
+        fragment.appendChild(tempDiv.firstChild);
+      });
+
+      grid.appendChild(fragment);
+      renderedCount += nextVideos.length;
+      isLoading = false;
+      
+      // 判断是否已经加载完所有数据
+      if (renderedCount >= ALL_VIDEOS.length) {
+        hasMoreData = false;
+        loadingIndicator.innerHTML = '<span>已经到底啦，没有更多视频了~</span>';
+      } else {
+        loadingIndicator.style.display = 'none';
+      }
+    }, 300); // 300ms 的轻微延迟
+  }
+
+  // 4. 初始化：从后端拉取数据并渲染第一页
+  function initShortsPage() {
+    fetch(`${API_BASE}/api/videos`)
+      .then(res => res.json())
+      .then(videos => {
+        if (!videos || videos.length === 0) {
+          grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:#999; padding: 40px 0;">暂无视频</p>';
+          return;
+        }
+        ALL_VIDEOS = videos;
+        renderNextPage(); // 先渲染前 9 个
+      })
+      .catch(err => {
+        console.error('拉取数据失败:', err);
+        grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:red; padding: 40px 0;">加载失败，请刷新重试</p>';
+      });
+  }
+
+  // 5. 触底检测（防抖处理）
+  let scrollTimeout = null;
+  window.addEventListener('scroll', () => {
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      
+      // 获取当前滚动位置
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // 当距离底部还有 300px 时触发加载
+      if (documentHeight - scrollTop - windowHeight < 300) {
+        if (!isLoading && hasMoreData) {
+          renderNextPage();
+        }
+      }
+    }, 100); // 100ms 的防抖，避免高频触发
+  });
+
+  // ================= 视频播放与试看逻辑 =================
+  let hls = null;
+  let videoLimitHandler = null;
+  const playerModal = document.getElementById('video-player-modal');
+  const videoEl = document.getElementById('video-player');
+  const limitOverlay = document.getElementById('video-limit-overlay');
+
+  // 点击卡片打开视频
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.short-card');
+    if (!card) return;
+
+    const src = card.getAttribute('data-video-src');
+    const poster = card.getAttribute('data-video-poster');
+    const name = card.getAttribute('data-video-name');
+    const meta = card.getAttribute('data-video-meta');
+
+    if (!src) {
+      alert('该视频暂未配置播放源');
       return;
     }
 
-    grid.innerHTML = videos.map(video => {
-      const realUrl = parsePlayUrl(video.playUrl);
-      return `
-        <div class="short-card" 
-             data-video-src="${realUrl}" 
-             data-video-poster="${video.pic || 'assets/img/live/1.webp'}"
-             data-video-name="${video.name}"
-             data-video-meta="📍 ${video.category || '同城'} · 🔥 ${(Math.random()*5+1).toFixed(1)}K">
-          <img src="${video.pic || 'assets/img/live/1.webp'}" referrerpolicy="no-referrer" onerror="this.src='assets/img/live/1.webp'">
-          <span class="live-badge">LIVE</span>
-          <div class="card-overlay">
-            <div class="card-name">${video.name}</div>
-            <div class="card-meta">
-              <span>📍 ${video.category || '同城'}</span>
-              <span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+    // 填充信息
+    document.getElementById('video-player-name').textContent = name;
+    document.getElementById('video-player-meta').textContent = meta;
+    
+    // 隐藏试看遮罩
+    limitOverlay.style.display = 'none';
 
-    bindPlayEvents();
-  }).catch(() => {
-    grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1/-1; color:red;">加载失败</p>';
-  });
+    // 处理 HLS (m3u8) 和 普通 MP4
+    if (src.includes('.m3u8')) {
+      if (window.Hls && Hls.isSupported()) {
+        if (hls) hls.destroy();
+        hls = new Hls(); 
+        hls.loadSource(src); 
+        hls.attachMedia(videoEl);
+      } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        videoEl.src = src;
+      }
+    } else {
+      videoEl.src = src;
+    }
+    
+    videoEl.poster = poster || '';
+    videoEl.load();
 
-  let hls = null;
-  let videoLimitHandler = null;
+    // 显示弹窗并播放
+    playerModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // 阻止背景滚动
+    videoEl.play().catch(() => {});
 
-  function bindPlayEvents() {
-    document.querySelectorAll('.short-card').forEach(card => {
-      card.onclick = () => {
-        const src = card.getAttribute('data-video-src');
-        const poster = card.getAttribute('data-video-poster');
-        const name = card.getAttribute('data-video-name');
-        const meta = card.getAttribute('data-video-meta');
-        
-        const playerModal = document.getElementById('video-player-modal');
-        const videoEl = document.getElementById('video-player');
-        const limitOverlay = document.getElementById('video-limit-overlay');
+    // 🔴 15秒试看限制逻辑
+    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
+    const isLoggedIn = !!localStorage.getItem('hiya_user');
 
-        document.getElementById('video-player-name').textContent = name;
-        document.getElementById('video-player-meta').textContent = meta;
-        limitOverlay.style.display = 'none';
-
-        if (src.includes('.m3u8')) {
-          if (window.Hls && Hls.isSupported()) {
-            if (hls) hls.destroy();
-            hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-          } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) { videoEl.src = src; }
-        } else { videoEl.src = src; }
-
-        videoEl.poster = poster || ''; videoEl.load();
-
-        playerModal.hidden = false; playerModal.style.display = 'flex';
-        videoEl.play().catch(() => {});
-
-        // 15秒试看逻辑
-        if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-        const isLoggedIn = !!localStorage.getItem('hiya_user');
-        if (!isLoggedIn) {
-          videoLimitHandler = function() {
-            if (videoEl.currentTime >= 15 && limitOverlay.style.display !== 'flex') {
-              videoEl.pause();
-              limitOverlay.style.display = 'flex';
-            }
-          };
-          videoEl.addEventListener('timeupdate', videoLimitHandler);
+    if (!isLoggedIn) {
+      videoLimitHandler = function() {
+        if (videoEl.currentTime >= 15 && limitOverlay.style.display !== 'flex') {
+          videoEl.pause();
+          limitOverlay.style.display = 'flex'; // 显示试看结束遮罩
         }
       };
-    });
+      videoEl.addEventListener('timeupdate', videoLimitHandler);
+    }
+  });
 
-    document.getElementById('video-close-btn').onclick = () => {
-      const videoEl = document.getElementById('video-player');
-      if (hls) { hls.destroy(); hls = null; }
-      if (videoLimitHandler) { videoEl.removeEventListener('timeupdate', videoLimitHandler); }
-      videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
-      document.getElementById('video-player-modal').style.display = 'none';
-    };
+  // 关闭播放器
+  function closePlayer() {
+    if (hls) { hls.destroy(); hls = null; }
+    if (videoLimitHandler) { 
+      videoEl.removeEventListener('timeupdate', videoLimitHandler); 
+      videoLimitHandler = null; 
+    }
+    videoEl.pause(); 
+    videoEl.removeAttribute('src'); 
+    videoEl.load();
+    
+    playerModal.classList.remove('active');
+    document.body.style.overflow = ''; // 恢复背景滚动
   }
+
+  document.getElementById('video-close-btn').addEventListener('click', closePlayer);
+  
+  // 点击黑色背景关闭
+  playerModal.addEventListener('click', (e) => {
+    if (e.target === playerModal) closePlayer();
+  });
+
+  // 页面启动
+  window.addEventListener('DOMContentLoaded', initShortsPage);
+
 </script>
 </body>
 </html>
