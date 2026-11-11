@@ -8,11 +8,9 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #fdf7fa; font-family: sans-serif; padding-bottom: env(safe-area-inset-bottom); }
-  
   .header { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.95); border-bottom: 1px solid #eee; }
   .header h1 { font-size: 18px; font-weight: 800; color: #1f2551; }
   .back-btn { font-size: 13px; color: #ff3d8b; padding: 6px 14px; background: #fff0f5; border-radius: 20px; text-decoration: none;}
-  
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; max-width: 800px; margin: 0 auto; }
   .card { position: relative; aspect-ratio: 9 / 16; background: #f5f5f5; overflow: hidden; cursor: pointer; }
   .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -21,13 +19,11 @@
   .card-meta { font-size: 9px; opacity: 0.9; display: flex; justify-content: space-between; }
   .live-tag { position: absolute; top: 4px; left: 4px; background: #ff3b5c; color: #fff; font-size: 8px; padding: 2px 4px; border-radius: 4px; }
   #sentinel { text-align: center; padding: 20px; font-size: 12px; color: #999; }
-
   #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
   #player-modal.active { display: flex; }
   .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; }
   .close-btn { position: absolute; top: 20px; left: 20px; z-index: 20; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
-  
   .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
   .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
   .limit-mask button { background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
@@ -40,7 +36,6 @@
 </header>
 <div class="grid" id="grid"></div>
 <div id="sentinel">正在加载...</div>
-
 <div id="player-modal">
   <div class="player-box">
     <button class="close-btn" id="close-btn">×</button>
@@ -48,7 +43,6 @@
     <div class="limit-mask" id="limit-mask"></div>
   </div>
 </div>
-
 <script>
   const API = 'https://jiaoyouweb.onrender.com';
   const grid = document.getElementById('grid');
@@ -57,20 +51,17 @@
   const BATCH = 9;
   
   let currentConfig = { previewLimit: 15, regLimit: 120, price: 9.99, trc20: '' };
-  let hls = null, videoLimitHandler = null, seekingHandler = null;
+  let hls = null, videoLimitHandler = null;
 
-  // 🔴 严格读取 recommendConfig
   async function fetchConfig() {
     try {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
-      currentConfig = {
-        previewLimit: data.recommendConfig.previewLimit,
-        regLimit: data.recommendConfig.regLimit,
-        price: data.recommendConfig.unlockPrice,
-        trc20: data.trc20 || ''
-      };
-      console.log('直播推荐当前配置:', currentConfig); // 打印到控制台
+      currentConfig.previewLimit = Number(data.recommendConfig?.previewLimit) || 15;
+      currentConfig.regLimit = Number(data.recommendConfig?.regLimit) || 120;
+      currentConfig.price = Number(data.recommendConfig?.unlockPrice) || 9.99;
+      currentConfig.trc20 = data.trc20 || '';
+      console.log("【直播推荐配置已加载】:", currentConfig);
     } catch(e) { console.warn('配置拉取失败'); }
   }
 
@@ -112,7 +103,7 @@
   }
 
   async function init() {
-    await fetchConfig(); // 拉取配置
+    await fetchConfig(); 
     try {
       const res = await fetch(`${API}/api/videos/recommend`);
       allVideos = await res.json();
@@ -145,23 +136,17 @@
 
     const isLogin = !!localStorage.getItem('hiya_user');
     const maxTime = isLogin ? currentConfig.regLimit : currentConfig.previewLimit;
-    
-    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    if (seekingHandler) videoEl.removeEventListener('seeking', seekingHandler);
+    console.log(`当前状态: ${isLogin ? '已登录' : '未登录'}, 允许观看时长: ${maxTime} 秒`);
 
-    let lastTime = 0;
-    seekingHandler = () => {
-      if (videoEl.currentTime > lastTime + 0.5) {
-        videoEl.currentTime = lastTime;
-      }
-    };
-    videoEl.addEventListener('seeking', seekingHandler);
+    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
     let isBlocked = false;
     videoLimitHandler = () => {
-      lastTime = videoEl.currentTime;
       if (videoEl.currentTime >= maxTime && !isBlocked) {
         videoEl.pause(); isBlocked = true; showPaywall();
+      }
+      if (videoEl.currentTime < maxTime && isBlocked) {
+        isBlocked = false; limitMask.style.display = 'none'; videoEl.play();
       }
     };
     videoEl.addEventListener('timeupdate', videoLimitHandler);
@@ -174,7 +159,6 @@
       limitMask.style.display = 'flex';
       return;
     }
-    
     limitMask.innerHTML = `
       <h3>试看已结束</h3>
       <p>开通全集需支付 <strong style="color:#ff1a75;">${currentConfig.price} USDT</strong></p>
@@ -212,7 +196,6 @@
     document.body.style.overflow = '';
     if (hls) { hls.destroy(); hls = null; }
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    if (seekingHandler) videoEl.removeEventListener('seeking', seekingHandler);
     videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
   };
 
