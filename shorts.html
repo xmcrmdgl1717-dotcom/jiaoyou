@@ -6,6 +6,7 @@
 <title>嗨呀直播 · 精彩视频</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
+  /* 保持你原有的样式完全不变 */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #ffffff; font-family: -apple-system, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
   .header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0f0f0; }
@@ -24,13 +25,11 @@
   .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; overflow: hidden; }
   .close-btn { position: absolute; top: 20px; left: 20px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
-  
   .player-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 20; pointer-events: none; }
   .time-info { display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
   .time-left { color: #ff6b9d; font-weight: bold; }
   .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
   .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff9a4d, #ff4d94); transition: width 0.1s; }
-
   .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
   .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
   .limit-mask button { background: linear-gradient(90deg, #ff9a4d, #ff4d94); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
@@ -49,17 +48,13 @@
   <div class="player-box">
     <button class="close-btn" id="close-btn">×</button>
     <video id="video-el" controls playsinline controlsList="nodownload"></video>
-    
     <div class="player-bottom-bar">
       <div class="time-info">
         <span id="time-text" class="time-left">试看剩余: --</span>
         <span id="time-price"></span>
       </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progress-fill"></div>
-      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
-
     <div class="limit-mask" id="limit-mask"></div>
   </div>
 </div>
@@ -70,18 +65,15 @@
   const sentinel = document.getElementById('sentinel');
   let allVideos = [], renderedIndex = 0, isLoading = false, hasMore = false, isInitialLoaded = false;
   const INITIAL_SIZE = 12, LOAD_MORE_SIZE = 9;
-  
   let currentConfig = { previewLimit: null, regLimit: null, price: null, trc20: '' };
   let hls = null, videoLimitHandler = null;
   let currentVideoId = null;
+  let currentVideoName = '';
 
-  function isVideoPurchased(vid) {
-    let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
-    return purchased.includes(vid);
-  }
+  function isVideoPurchased(vid) { return JSON.parse(localStorage.getItem('purchased_videos') || '[]').includes(vid); }
   function markVideoPurchased(vid) {
-    let purchased = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
-    if(!purchased.includes(vid)) { purchased.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(purchased)); }
+    let p = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+    if(!p.includes(vid)) { p.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(p)); }
   }
 
   async function fetchConfig() {
@@ -97,10 +89,7 @@
 
   function parseUrl(urlStr) {
     if (!urlStr) return '';
-    if (urlStr.includes('$')) {
-      const parts = urlStr.split('#');
-      if (parts.length > 0 && parts[0].includes('$')) return parts[0].split('$')[1];
-    }
+    if (urlStr.includes('$')) return urlStr.split('#')[0].split('$')[1];
     return urlStr;
   }
 
@@ -118,7 +107,7 @@
         <div class="card-meta"><span>📍 ${video.category || '同城'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
       </div>
     `;
-    div.onclick = () => openPlayer(video.id, src, title);
+    div.onclick = () => openPlayer(video.id, src, video.name);
     return div;
   }
 
@@ -163,9 +152,10 @@
   const timeText = document.getElementById('time-text');
   const timePrice = document.getElementById('time-price');
 
-  function openPlayer(vid, src, title) {
+  function openPlayer(vid, src, name) {
     if (!src) return alert('视频源无效');
     currentVideoId = vid;
+    currentVideoName = name;
     limitMask.style.display = 'none';
     playerModal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -183,16 +173,15 @@
 
     if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
+    // 🔴 核心提示语与倒计时限制
     if (isPurchased || maxTime === null || maxTime <= 0) {
       timeText.innerText = "已解锁完整版";
       timePrice.innerText = "";
-      progressFill.style.width = '0%';
-      progressFill.style.background = '#4ade80';
+      progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
     } else {
-      timeText.innerText = `试看剩余: ${maxTime} 秒`;
-      if (currentConfig.price !== null) timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
-      progressFill.style.width = '0%';
-      progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
+      timeText.innerText = isLogin ? `试看剩余: ${maxTime} 秒` : `试看剩余: ${maxTime} 秒（注册解锁）`;
+      if (isLogin && currentConfig.price !== null) timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
+      progressFill.style.width = '0%'; progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
     }
 
     let isBlocked = false;
@@ -200,10 +189,9 @@
       const curTime = videoEl.currentTime;
       if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
         const remain = Math.max(0, maxTime - curTime);
-        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
-        const percent = Math.min(100, (curTime / maxTime) * 100);
-        progressFill.style.width = `${percent}%`;
-
+        timeText.innerText = isLogin ? `试看剩余: ${Math.ceil(remain)} 秒` : `试看剩余: ${Math.ceil(remain)} 秒（注册解锁）`;
+        progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
+        
         if (curTime >= maxTime) {
           videoEl.pause(); isBlocked = true; showPaywall();
         }
@@ -243,18 +231,25 @@
   async function generateOrder() {
     const btn = document.getElementById('gen-order-btn');
     btn.disabled = true; btn.innerText = '生成中...';
+    
+    const userStr = localStorage.getItem('hiya_user');
+    let user = { id: 'guest', name: '游客', email: '未知' };
+    if (userStr) { const parsed = JSON.parse(userStr); user = { id: parsed.id, name: parsed.name, email: parsed.email }; }
+
     try {
       const res = await fetch(`${API_BASE}/api/orders/create`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ baseAmount: currentConfig.price })
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              baseAmount: currentConfig.price, 
+              userId: user.id, userName: user.name, userEmail: user.email, 
+              videoId: currentVideoId, videoName: currentVideoName, configType: 'hot' 
+          })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      
       document.getElementById('pay-detail').innerHTML = `
         <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
-        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后请联系客服或在后台审核上分</p>
+        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后请联系客服或在后台审核</p>
         <button class="unlock-btn" onclick="mockPaySuccess()">【测试】我已支付，立即解锁</button>
       `;
     } catch(e) {
@@ -269,9 +264,7 @@
     limitMask.style.display = 'none';
     timeText.innerText = "已解锁完整版";
     timePrice.innerText = "";
-    progressFill.style.width = '0%';
-    progressFill.style.background = '#4ade80';
-    
+    progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
     const cardData = allVideos.find(v => v.id === currentVideoId);
     if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
   }
