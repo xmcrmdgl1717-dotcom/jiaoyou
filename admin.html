@@ -7,38 +7,54 @@
     <style>
         :root { --primary: #ff6b9d; --bg: #f4f7f6; --text-main: #333; --border: #e0e0e0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
+        /* 侧边栏 */
         .sidebar { width: 240px; background: #1a1a1a; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-logo { padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #333; color: var(--primary); text-align: center; }
         .nav-item { padding: 15px 20px; cursor: pointer; color: #aaa; font-weight: 600; border-left: 4px solid transparent; }
         .nav-item:hover, .nav-item.active { background: #2a2a2a; color: #fff; border-left-color: var(--primary); }
         
+        /* 主内容区 */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .header { background: #fff; padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .header h2 { font-size: 18px; margin: 0; }
         .content-scroll { flex: 1; overflow-y: auto; padding: 30px; }
 
+        /* 面板 */
         .tab-pane { display: none; }
-        .tab-pane.active { display: block; }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 24px; }
-        h3 { font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
+        h3 { font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
         
+        /* 表单与按钮 */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: monospace; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-secondary { background: #6c757d; } .btn-danger { background: #dc3545; } .btn-text { background: none; color: #1890ff; padding: 0; font-size: 13px; }
-        .btn-text:hover { text-decoration: underline; }
-
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        button:hover { background: #e55a8a; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; } .btn-secondary:hover { background: #5a6268; }
+        .btn-danger { background: #dc3545; } .btn-danger:hover { background: #c82333; }
+        .btn-text { background: none; color: #1890ff; padding: 0; font-size: 13px; font-weight: normal; }
+        .btn-text:hover { text-decoration: underline; background: none; }
+        
+        /* 表格 */
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 14px; }
-        .tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; background: #e6f7e6; color: #38a169; border: 1px solid #c6f6d5; }
-        .hidden { display: none !important; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #fafafa; font-weight: 600; color: #555; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: #e6f7e6; color: #38a169; border: 1px solid #c6f6d5; }
 
         /* 弹窗 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-box { background: #fff; width: 90%; max-width: 800px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; max-height: 90vh; }
-        .modal-box textarea { flex: 1; min-height: 400px; resize: vertical; padding: 15px; font-size: 13px; border: 1px solid #ccc; border-radius: 8px; }
+        .modal-box textarea { flex: 1; min-height: 400px; resize: vertical; padding: 15px; font-size: 13px; border: 1px solid #ccc; border-radius: 8px; font-family: monospace; }
+        .hidden { display: none !important; }
+
+        /* 配置高亮区 */
+        .config-box { background: #fff0f5; border: 1px solid #ffd1e3; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
     </style>
 </head>
 <body>
@@ -54,30 +70,72 @@
 <div class="main-content">
     <div class="header">
         <h2 id="page-title">采集管理</h2>
-        <button class="btn-secondary" onclick="logout()">退出</button>
+        <button class="btn-secondary" onclick="logout()">退出系统</button>
     </div>
     
     <div class="content-scroll">
-        <!-- ================= 采集管理 (保持原样，无需文件上传) ================= -->
+        <!-- ================= 面板 1：采集管理 ================= -->
         <div id="tab-collect" class="tab-pane active">
             <div class="card">
-                <h3>📡 资源站管理</h3>
+                <h3>📡 资源站列表</h3>
                 <div id="site-list"></div>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
-                    <input type="text" id="site-name" placeholder="资源站名称" style="margin-bottom:10px;">
-                    <input type="text" id="site-url" placeholder="接口地址" style="margin-bottom:10px;">
-                    <select id="site-type" style="margin-bottom:10px;"><option value="xml">XML</option><option value="json">JSON</option></select>
+            </div>
+
+            <div class="card">
+                <h3>➕ 添加资源站</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="site-name" placeholder="资源站名称 (如：奶香香)" style="flex:1; min-width:150px; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    <input type="text" id="site-url" placeholder="接口地址 (如：https://naixxzy.com/api.php/provide/vod/at/xml/)" style="flex:2; min-width:250px; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    <select id="site-type" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="xml">XML</option>
+                        <option value="json">JSON</option>
+                    </select>
                     <button onclick="addSite()">保存资源站</button>
                 </div>
             </div>
-            <!-- 此处省略控制台，保持你原来的即可 -->
+
+            <!-- 分类绑定面板 (动态显示) -->
+            <div id="bind-panel" class="card hidden">
+                <h3>🔗 分类绑定 <button class="btn-secondary btn-text" style="color:white; padding:4px 8px;" onclick="closeBindPanel()">关闭</button></h3>
+                <table>
+                    <thead><tr><th>资源站分类 ID</th><th>资源站分类名称</th><th>绑定到本地分类</th></tr></thead>
+                    <tbody id="bind-tbody"></tbody>
+                </table>
+                <button style="margin-top: 15px;" onclick="saveBindings()">保存绑定关系</button>
+            </div>
+
+            <div class="card">
+                <h3>🚀 采集控制台</h3>
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                    <select id="collect-site-select" style="padding:10px; border:1px solid #ddd; border-radius:6px; width: 300px;"></select>
+                    <button onclick="startCollect()" id="collect-btn">开始一键采集</button>
+                    <span id="collect-status" style="font-size: 14px; color: #666;"></span>
+                </div>
+                <div id="collect-result" style="padding: 15px; background: #e9ecef; border-radius: 8px; font-size: 14px;">等待采集...</div>
+            </div>
+
+            <div class="card">
+                <h3>🎬 已采集视频 (最新20条)</h3>
+                <div id="video-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+                    <p style="color: #888;">加载中...</p>
+                </div>
+            </div>
         </div>
 
-        <!-- ================= 多语言管理 ================= -->
+        <!-- ================= 面板 2：多语言管理 ================= -->
         <div id="tab-i18n" class="tab-pane">
+            
+            <!-- 🔴 全局 API Key 配置区 -->
+            <div class="config-box">
+                <label style="font-weight:bold; white-space:nowrap;">DeepL API Key:</label>
+                <input type="text" id="deepl-key-input" placeholder="在这里输入你的 DeepL API Key (保存后全局生效)" style="flex:1; padding:8px; border:1px solid #ffb6c1; border-radius:6px;">
+                <button onclick="saveDeeplKey()" style="padding:8px 15px;">保存配置</button>
+                <span id="key-status" style="font-size:12px; color:#38a169;"></span>
+            </div>
+
             <div class="card">
-                <h3>🌐 语言列表</h3>
-                <p style="font-size:13px; color:#888; margin-bottom:15px;">提示：所有修改会自动保存到后端，全球用户实时生效，无需下载上传。</p>
+                <h3>🌐 语言字典列表</h3>
+                <p style="font-size:13px; color:#888; margin-bottom:15px;">提示：所有修改会自动保存到后端数据库，全球用户刷新页面实时生效，无需下载上传。</p>
                 <table>
                     <thead>
                         <tr><th>代码</th><th>名称</th><th>状态</th><th>操作</th></tr>
@@ -91,7 +149,7 @@
     </div>
 </div>
 
-<!-- 🔴 编辑字典弹窗 -->
+<!-- 编辑字典弹窗 -->
 <div id="edit-modal" class="modal hidden">
     <div class="modal-box">
         <h3 id="edit-title" style="margin-bottom:15px;">编辑字典</h3>
@@ -106,19 +164,16 @@
 <script>
     const API_BASE = 'https://jiaoyouweb.onrender.com';
     let token = localStorage.getItem('admin_token') || '';
+    let currentBindSiteId = null;
+    let currentSites = [];
     let currentLangForEdit = '';
-    let currentLangList = [];
 
     // ================= 登录与基础逻辑 =================
-    // 假设你已经有了登录逻辑，这里省略，只写关键业务
     if (!token) {
         const pwd = prompt("请输入管理员密码 (默认 admin888)");
-        if (pwd) {
-            localStorage.setItem('admin_token', pwd);
-            location.reload();
-        }
+        if (pwd) { localStorage.setItem('admin_token', pwd); location.reload(); }
+        else { document.body.innerHTML = '<h1 style="text-align:center; margin-top:20vh;">未授权</h1>'; }
     }
-
     function logout() { localStorage.removeItem('admin_token'); location.reload(); }
 
     function switchTab(tabId, el) {
@@ -128,28 +183,136 @@
         el.classList.add('active');
         document.getElementById('page-title').textContent = el.innerText.substring(2).trim();
         
-        if (tabId === 'tab-i18n') {
-            loadLangList();
-        }
+        if (tabId === 'tab-collect') { loadSites(); loadVideos(); }
+        if (tabId === 'tab-i18n') { loadLangList(); loadDeeplKey(); }
     }
 
-    // ================= 多语言 API 逻辑 =================
+    // ================= 采集功能逻辑 =================
+    function loadSites() {
+        fetch(`${API_BASE}/api/admin/sites`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(sites => {
+            currentSites = sites;
+            const container = document.getElementById('site-list');
+            const select = document.getElementById('collect-site-select');
+            if (!sites.length) {
+                container.innerHTML = '<p style="color: #888;">暂无资源站，请添加</p>';
+                select.innerHTML = '<option value="">请先添加资源站</option>'; return;
+            }
+            container.innerHTML = sites.map(site => `
+                <div style="border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background:#fafafa;">
+                    <div>
+                        <strong style="display: block; margin-bottom: 4px;">${site.name}</strong>
+                        <small style="color: #888;">${site.url} (${site.type.toUpperCase()})</small>
+                    </div>
+                    <div>
+                        <button class="btn-secondary" onclick="openBindPanel('${site.id}')">绑定分类</button>
+                        <button class="btn-danger" onclick="deleteSite('${site.id}')">删除</button>
+                    </div>
+                </div>
+            `).join('');
+            select.innerHTML = sites.map(site => `<option value="${site.id}">${site.name}</option>`).join('');
+        });
+    }
+
+    function addSite() {
+        const name = document.getElementById('site-name').value.trim();
+        const url = document.getElementById('site-url').value.trim();
+        const type = document.getElementById('site-type').value;
+        if (!name || !url) return alert('请填写名称和接口地址');
+        fetch(`${API_BASE}/api/admin/sites`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            body: JSON.stringify({ name, url, type })
+        }).then(res => res.json()).then(() => {
+            loadSites();
+            document.getElementById('site-name').value = ''; document.getElementById('site-url').value = '';
+        });
+    }
+
+    function deleteSite(id) {
+        if (!confirm('确定删除该资源站？')) return;
+        fetch(`${API_BASE}/api/admin/sites/${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } }).then(() => loadSites());
+    }
+
+    function openBindPanel(siteId) {
+        currentBindSiteId = siteId;
+        document.getElementById('bind-panel').classList.remove('hidden');
+        const tbody = document.getElementById('bind-tbody');
+        tbody.innerHTML = '<tr><td colspan="3">加载分类中...</td></tr>';
+        fetch(`${API_BASE}/api/admin/sites/${siteId}/categories`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(categories => {
+            if (!categories.length || categories.error) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: red;">获取分类失败，请检查接口是否可用</td></tr>`; return;
+            }
+            tbody.innerHTML = categories.map(c => `
+                <tr>
+                    <td>${c.id}</td><td>${c.name}</td>
+                    <td><input type="text" class="bind-input" data-source-id="${c.id}" data-source-name="${c.name}" placeholder="输入本地分类(如:电影)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                </tr>
+            `).join('');
+        });
+    }
+
+    function saveBindings() {
+        const inputs = document.querySelectorAll('.bind-input');
+        const mappings = [];
+        inputs.forEach(input => {
+            const local = input.value.trim();
+            if (local) mappings.push({ sourceId: input.dataset.sourceId, sourceName: input.dataset.sourceName, localCategory: local });
+        });
+        if (!mappings.length) return alert('请至少绑定一个分类');
+        fetch(`${API_BASE}/api/admin/sites/${currentBindSiteId}/bind`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            body: JSON.stringify({ mappings })
+        }).then(res => res.json()).then(() => { alert('分类绑定已保存！'); closeBindPanel(); });
+    }
+    function closeBindPanel() { document.getElementById('bind-panel').classList.add('hidden'); currentBindSiteId = null; }
+
+    function startCollect() {
+        const siteId = document.getElementById('collect-site-select').value;
+        if (!siteId) return alert('请先选择资源站');
+        const btn = document.getElementById('collect-btn'), result = document.getElementById('collect-result');
+        btn.disabled = true; result.textContent = '正在发起采集请求，请稍候...';
+        fetch(`${API_BASE}/api/admin/collect/${siteId}`, { method: 'POST', headers: { 'x-admin-token': token } }).then(res => res.json()).then(data => {
+            if (data.error) result.textContent = '❌ 采集失败: ' + data.error;
+            else { result.textContent = `✅ ${data.message}`; loadVideos(); }
+        }).catch(err => { result.textContent = '❌ 请求失败: ' + err.message; }).finally(() => { btn.disabled = false; });
+    }
+
+    function loadVideos() {
+        fetch(`${API_BASE}/api/admin/videos`, { headers: { 'x-admin-token': token } }).then(res => res.json()).then(videos => {
+            const container = document.getElementById('video-list');
+            if (!videos.length) { container.innerHTML = '<p style="color: #888;">暂无视频</p>'; return; }
+            container.innerHTML = videos.slice(-20).reverse().map(v => `
+                <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; display:flex; justify-content:space-between;">
+                    <span style="font-weight:bold;">${v.name}</span> 
+                    <span style="color: #888;">分类: ${v.category}</span>
+                </div>
+            `).join('');
+        });
+    }
+
+    // ================= 多语言翻译逻辑 =================
+    // 1. 存储 API Key
+    function loadDeeplKey() {
+        const key = localStorage.getItem('deepl_api_key');
+        if (key) document.getElementById('deepl-key-input').value = key;
+    }
+    function saveDeeplKey() {
+        const key = document.getElementById('deepl-key-input').value.trim();
+        localStorage.setItem('deepl_api_key', key);
+        document.getElementById('key-status').textContent = '✅ 已保存到本地';
+        setTimeout(() => document.getElementById('key-status').textContent = '', 3000);
+    }
+
+    // 2. 语言列表加载
     async function loadLangList() {
         try {
             const res = await fetch(`${API_BASE}/api/admin/i18n-list`, { headers: { 'x-admin-token': token } });
-            const data = await res.json();
+            let data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) data = ['zh', 'en', 'vn', 'es', 'tr', 'id'];
             
-            // 默认如果后端没数据，先展示静态列表
-            if (!Array.isArray(data) || data.length === 0) {
-                currentLangList = ['zh', 'en', 'vn', 'es', 'tr', 'id'];
-            } else {
-                currentLangList = data;
-            }
-
             const tbody = document.getElementById('lang-list');
             const langNames = { 'zh': 'CN 简体中文', 'en': 'US English', 'vn': 'VN Tiếng Việt', 'es': 'ES Español', 'tr': 'TR Türkçe', 'id': 'ID Bahasa Indonesia' };
-
-            tbody.innerHTML = currentLangList.map(lang => `
+            
+            tbody.innerHTML = data.map(lang => `
                 <tr>
                     <td><strong>${lang}</strong></td>
                     <td>${langNames[lang] || lang}</td>
@@ -160,12 +323,36 @@
                     </td>
                 </tr>
             `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // 3. 一键翻译
+    async function translateLang(targetLang) {
+        const apiKey = localStorage.getItem('deepl_api_key');
+        if (!apiKey) return alert('请先在页面顶部输入并保存 DeepL API Key！');
+        if (!confirm(`确定要基于中文包翻译成 ${targetLang.toUpperCase()} 吗？此过程会消耗 API 额度。`)) return;
+
+        const originalText = document.getElementById('page-title').textContent;
+        document.getElementById('page-title').textContent = '⚡ 正在静默翻译，请稍候...';
+
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                body: JSON.stringify({ apiKey, targetLang })
+            });
+            const result = await res.json();
+            if (result.error) throw new Error(result.error);
+            alert(result.message || '翻译成功！已保存到后端数据库。');
+            loadLangList();
         } catch (error) {
-            alert('获取语言列表失败，请检查后端');
+            alert('翻译失败: ' + error.message);
+        } finally {
+            document.getElementById('page-title').textContent = originalText;
         }
     }
 
-    // 打开字典编辑弹窗
+    // 4. 字典编辑
     async function openEditModal(lang) {
         currentLangForEdit = lang;
         document.getElementById('edit-title').textContent = `编辑字典 - ${lang.toUpperCase()}`;
@@ -177,84 +364,29 @@
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('dict-content').value = JSON.stringify(data, null, 2);
-            } else {
-                // 如果是新语言没有数据，给一个空 JSON 模板
-                document.getElementById('dict-content').value = "{}";
-            }
-        } catch (e) {
-            document.getElementById('dict-content').value = "拉取失败，请确认网络";
-        }
+            } else { document.getElementById('dict-content').value = "{}"; }
+        } catch (e) { document.getElementById('dict-content').value = "拉取失败"; }
     }
 
-    function closeEditModal() {
-        document.getElementById('edit-modal').classList.add('hidden');
-    }
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-    // 保存字典
     async function saveDict() {
         const rawJson = document.getElementById('dict-content').value;
         let parsedData;
+        try { parsedData = JSON.parse(rawJson); } catch (e) { return alert('JSON 格式错误，请检查！'); }
+        
+        const btn = event.target; btn.disabled = true; btn.textContent = '保存中...';
         try {
-            parsedData = JSON.parse(rawJson);
-        } catch (e) {
-            return alert('JSON 格式错误，请检查括号或逗号！');
-        }
-
-        const btn = event.target;
-        btn.disabled = true;
-        btn.textContent = '保存中...';
-
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/i18n/${currentLangForEdit}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            await fetch(`${API_BASE}/api/admin/i18n/${currentLangForEdit}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                 body: JSON.stringify(parsedData)
             });
-            if (res.ok) {
-                alert('保存成功！全球用户刷新页面即刻生效。');
-                closeEditModal();
-            } else {
-                alert('保存失败');
-            }
-        } catch (e) { alert('网络错误'); }
-        finally { btn.disabled = false; btn.textContent = '保存到服务器'; }
+            alert('保存成功！即时生效。'); closeEditModal();
+        } catch (e) { alert('保存失败'); } finally { btn.disabled = false; btn.textContent = '保存到服务器'; }
     }
 
-    // 一键翻译
-    async function translateLang(targetLang) {
-        if (targetLang === 'zh') return alert('中文是基准语言');
-        
-        const apiKey = prompt("请输入 DeepL API Key:");
-        if (!apiKey) return;
-
-        // 这里为了方便，弹窗确认
-        if (!confirm(`确定要基于后端的中文包翻译成 ${targetLang.toUpperCase()} 吗？这可能需要几秒钟。`)) return;
-
-        try {
-            // 通过提示框告知正在翻译
-            const originalText = document.getElementById('page-title').textContent;
-            document.getElementById('page-title').textContent = '⚡ 正在翻译，请稍候...';
-
-            const res = await fetch(`${API_BASE}/api/admin/translate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-                body: JSON.stringify({ apiKey, targetLang })
-            });
-            
-            const result = await res.json();
-            if (result.error) throw new Error(result.error);
-            
-            alert(result.message || '翻译成功！');
-            loadLangList(); // 刷新表格
-            document.getElementById('page-title').textContent = originalText;
-        } catch (error) {
-            alert('翻译失败: ' + error.message);
-            document.getElementById('page-title').textContent = '多语言管理';
-        }
-    }
-
-    // 初始化加载列表
-    if (token) loadLangList();
+    // 初始化
+    if (token) { loadSites(); loadVideos(); }
 </script>
 </body>
 </html>
