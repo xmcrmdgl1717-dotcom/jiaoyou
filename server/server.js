@@ -107,6 +107,7 @@ app.post('/api/register', async (req, res) => {
         res.status(201).json({ message: '注册成功', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
     } catch (error) { res.status(500).json({ error: '服务器内部错误' }); }
 });
+
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -117,42 +118,282 @@ app.post('/api/login', async (req, res) => {
     } catch (error) { res.status(500).json({ error: '服务器内部错误' }); }
 });
 
-// ================= 后台接口 =================
+// ================= 后台：系统设置 =================
+app.get('/api/admin/settings', authMiddleware, (req, res) => res.json(readJSON(SETTINGS_FILE)));
+app.post('/api/admin/settings', authMiddleware, (req, res) => {
+    writeJSON(SETTINGS_FILE, { ...readJSON(SETTINGS_FILE), ...req.body });
+    res.json({ success: true });
+});
 
-// 1. 订单管理（完整字段记录）
+// ================= 后台：多语言管理 =================
+app.get('/api/admin/i18n-list', authMiddleware, (req, res) => {
+    const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json')).map(f => f.replace('.json', ''));
+    res.json(files);
+});
+app.get('/api/admin/i18n-content/:lang', authMiddleware, (req, res) => res.json(readJSON(path.join(I18N_DIR, `${req.params.lang}.json`))));
+app.post('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
+    writeJSON(path.join(I18N_DIR, `${req.params.lang}.json`), req.body);
+    res.json({ success: true });
+});
+app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
+    const filePath = path.join(I18N_DIR, `${req.params.lang}.json`);
+    if(fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.json({ success: true });
+});
+
+app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
+    const { apiKey } = req.body;
+    const targetLang = req.params.lang;
+    if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
+    if (targetLang === 'zh') return res.status(400).json({ error: '中文无需翻译' });
+
+    const zhPath = path.join(I18N_DIR, 'zh.json');
+    if (!fs.existsSync(zhPath)) return res.status(400).json({ error: '基准中文包不存在' });
+    const zhDict = readJSON(zhPath);
+    const keys = Object.keys(zhDict);
+    const texts = keys.map(k => zhDict[k]);
+
+    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU', 'pt':'PT-PT', 'it':'IT', 'ar':'AR', 'th':'TH' };
+    
+    try {
+        let allTexts = [];
+        for (let i = 0; i < texts.length; i += 45) {
+            const chunk = texts.slice(i, i + 45);
+            const params = new URLSearchParams();
+            params.append('target_lang', deeplMap[targetLang] || 'EN-US');
+            chunk.forEach(t => params.append('text', t));
+            const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `DeepL-Auth-Key ${apiKey}`
+                }
+            });
+            allTexts = allTexts.concat(response.data.translations.map(t => t.text));
+        }
+        const newDict = {};
+        keys.forEach((key, index) => { newDict[key] = allTexts[index]; });
+        writeJSON(path.join(I18N_DIR, `${targetLang}.json`), newDict);
+        res.json({ success: true, message: `${targetLang} 翻译成功` });
+    } catch (err) {
+        res.status(500).json({ error: err.response?.data?.message || err.message });
+    }
+});
+
+app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
+    const { apiKey } = req.body;
+    if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
+
+    const settings = readJSON(SETTINGS_FILE);
+    const enabledLangs = settings.enabledLangs || ['zh'];
+    const zhPath = path.join(I18N_DIR, 'zh.json');
+    const zhDict = readJSON(zhPath);
+    const keys = Object.keys(zhDict);
+    const texts = keys.map(k => zhDict[k]);
+
+    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU', 'pt':'PT-PT', 'it':'IT', 'ar':'AR', 'th':'TH' };
+    let successList = [];
+    let failList = [];
+
+    for (const lang of enabledLangs) {
+        if (lang === 'zh') continue;
+        try {
+            let allTexts = [];
+            for (let i = 0; i < texts.length; i += 45) {
+                const chunk = texts.slice(i, i + 45);
+                const params = new URLSearchParams();
+                params.append('target_lang', deeplMap[lang] || 'EN-US');
+                chunk.forEach(t => params.append('text', t));
+                const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
+                    headers: { 
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': `DeepL-Auth-Key ${apiKey}`
+                    }
+                });
+                allTexts = allTexts.concat(response.data.translations.map(t => t.text));
+            }
+            const newDict = {};
+            keys.forEach((key, index) => { newDict[key] = allTexts[index]; });
+            writeJSON(path.join(I18N_DIR, `${lang}.json`), newDict);
+            successList.push(lang);
+        } catch (err) {
+            failList.push(lang);
+        }
+    }
+    res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
+});
+
+// ================= 后台：视频分类管理 =================
+app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
+app.post('/api/admin/categories', authMiddleware, (req, res) => {
+    let cats = readJSON(CATEGORIES_FILE, []);
+    cats.push({ id: Date.now().toString(), name: req.body.name });
+    writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
+});
+app.post('/api/admin/categories/edit', authMiddleware, (req, res) => {
+    let cats = readJSON(CATEGORIES_FILE, []);
+    const cat = cats.find(c => c.id === req.body.id);
+    if (cat) { cat.name = req.body.name; writeJSON(CATEGORIES_FILE, cats); res.json({ success: true }); }
+    else res.status(404).json({ error: '不存在' });
+});
+app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => {
+    let cats = readJSON(CATEGORIES_FILE, []).filter(c => c.id !== req.params.id);
+    writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
+});
+
+// ================= 后台：视频采集 =================
+app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
+app.post('/api/admin/sites', authMiddleware, (req, res) => {
+    const sites = readJSON(SITES_FILE); 
+    sites.push({ id: Date.now().toString(), ...req.body, categories: [] }); 
+    writeJSON(SITES_FILE, sites); res.json({ success: true });
+});
+app.delete('/api/admin/sites/:id', authMiddleware, (req, res) => {
+    writeJSON(SITES_FILE, readJSON(SITES_FILE).filter(s => s.id !== req.params.id)); res.json({ success: true });
+});
+app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => {
+    const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
+    if (!site) return res.status(404).json({ error: '不存在' });
+    try {
+        const baseUrl = site.url.split('?')[0].replace(/\/$/, '');
+        const response = await fetch(`${baseUrl}?ac=list`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (site.type === 'json') {
+            const data = await response.json();
+            res.json((data.class || []).map(c => ({ id: String(c.type_id), name: c.type_name })));
+        } else {
+            const xmlText = await response.text();
+            const result = await new xml2js.Parser().parseStringPromise(xmlText);
+            res.json((result.rss?.class?.[0]?.ty || []).map(c => ({ id: String(c.$.id), name: c._ })));
+        }
+    } catch (err) { res.status(500).json({ error: '获取分类失败' }); }
+});
+app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => {
+    const sites = readJSON(SITES_FILE);
+    const site = sites.find(s => s.id === req.params.id);
+    if (site) { site.categories = req.body.mappings || []; writeJSON(SITES_FILE, sites); res.json({ success: true }); }
+});
+app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
+    const site = readJSON(SITES_FILE).find(s => s.id === req.params.id);
+    if (!site) return res.status(404).json({ error: '不存在' });
+    if (!site.categories || site.categories.length === 0) return res.status(400).json({ error: '请先绑定分类！' });
+
+    try {
+        let count = 0;
+        let allVideos = readJSON(VIDEOS_FILE);
+        const baseUrl = site.url.split('?')[0].replace(/\/$/, '');
+        for (let pg = 1; pg <= 3; pg++) {
+            const response = await fetch(`${baseUrl}?ac=detail&pg=${pg}`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            let videoList = [];
+            if (site.type === 'json') {
+                const data = await response.json();
+                videoList = (data.list || []).map(v => ({ id: v.vod_id, name: v.vod_name, typeId: String(v.type_id), pic: v.vod_pic, playUrl: v.vod_play_url }));
+            } else {
+                const xmlText = await response.text();
+                const result = await new xml2js.Parser().parseStringPromise(xmlText);
+                const list = result.rss?.list?.[0]?.video || [];
+                videoList = list.map(v => ({ id: v.id?.[0], name: v.name?.[0], typeId: String(v.type?.[0]), pic: v.pic?.[0], playUrl: v.dl?.[0]?.dd?.[0]?._ || '' }));
+            }
+            if (videoList.length === 0) break;
+            for (const video of videoList) {
+                if (!video.playUrl) continue;
+                let targetCategory = '未分类精选'; 
+                const binding = site.categories.find(c => String(c.sourceId) === String(video.typeId));
+                if (binding) targetCategory = binding.localCategory;
+                if (!allVideos.find(v => v.name === video.name)) {
+                    allVideos.push({ id: Date.now().toString() + Math.random(), name: video.name, pic: video.pic, category: targetCategory, playUrl: video.playUrl, createdAt: new Date().toISOString() });
+                    count++;
+                }
+            }
+            writeJSON(VIDEOS_FILE, allVideos);
+        }
+        res.json({ success: true, message: `采集完成，新增 ${count} 条` });
+    } catch (err) { res.status(500).json({ error: '采集失败' }); }
+});
+
+// ================= 后台：视频上传管理 =================
+app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: '请选择视频' });
+    const videos = readJSON(VIDEOS_FILE);
+    videos.push({ id: Date.now().toString(), name: req.body.name || req.file.originalname, category: req.body.category || '默认分类', playUrl: `/uploads/${req.file.filename}`, pic: '', createdAt: new Date().toISOString() });
+    writeJSON(VIDEOS_FILE, videos); res.json({ success: true, message: '上传成功' });
+});
+app.get('/api/admin/videos', authMiddleware, (req, res) => res.json(readJSON(VIDEOS_FILE).reverse()));
+app.post('/api/admin/videos/edit', authMiddleware, (req, res) => {
+    let videos = readJSON(VIDEOS_FILE);
+    const v = videos.find(x => x.id === req.body.id);
+    if (v) { v.name = req.body.name; v.category = req.body.category; writeJSON(VIDEOS_FILE, videos); res.json({ success: true }); }
+    else res.status(404).json({ error: '未找到' });
+});
+app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => {
+    writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true });
+});
+
+// ================= 后台：用户管理 (补齐了密码修改) =================
+app.get('/api/admin/users', authMiddleware, (req, res) => {
+    let users = readJSON(USERS_FILE);
+    res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, balance: u.balance || 0, createdAt: u.createdAt })));
+});
+app.post('/api/admin/users/edit', authMiddleware, async (req, res) => {
+    let users = readJSON(USERS_FILE);
+    const u = users.find(x => x.id === req.body.id);
+    if (u) { 
+        u.name = req.body.name; 
+        u.email = req.body.email; 
+        u.balance = Number(req.body.balance); 
+        // 🔴 补回：修改密码逻辑
+        if (req.body.password && req.body.password.trim() !== '') {
+            const salt = await bcrypt.genSalt(10);
+            u.password = await bcrypt.hash(req.body.password.trim(), salt);
+        }
+        writeJSON(USERS_FILE, users); 
+        res.json({ success: true }); 
+    }
+    else res.status(404).json({ error: '未找到' });
+});
+app.delete('/api/admin/users/:id', authMiddleware, (req, res) => {
+    let users = readJSON(USERS_FILE).filter(x => x.id !== req.params.id);
+    writeJSON(USERS_FILE, users); res.json({ success: true });
+});
+
+// ================= 前台：订单创建 (补齐了用户和视频信息) =================
 app.post('/api/orders/create', async (req, res) => {
-    const { baseAmount, userId, userName, userEmail, videoId, videoName, configType } = req.body;
     const settings = readJSON(SETTINGS_FILE);
     if (!settings.trc20) return res.status(400).json({ error: '未配置TRC20地址' });
-
+    
+    // 🔴 补回：接收前端传来的完整信息
+    const { baseAmount, userId, userName, userEmail, videoId, videoName, configType } = req.body;
     let orders = readJSON(ORDERS_FILE, []);
     let baseAmountNum = Number(baseAmount) || 9.99;
     let finalAmount = baseAmountNum;
     let isUnique = false;
+    
+    // 生成唯一尾数
     while (!isUnique) {
         finalAmount = baseAmountNum + Number((Math.random() * 0.99 + 0.01).toFixed(2));
         if (!orders.find(o => Number(o.amount) === finalAmount && o.status === 'pending')) isUnique = true;
     }
-
-    const order = {
-        id: 'ORD' + Date.now() + Math.floor(Math.random() * 1000),
-        amount: finalAmount,
-        address: settings.trc20,
-        status: 'pending',
+    
+    const order = { 
+        id: 'ORD' + Date.now() + Math.floor(Math.random() * 1000), 
+        amount: finalAmount, 
+        address: settings.trc20, 
+        status: 'pending', 
         createdAt: new Date().toISOString(),
+        // 🔴 补回：完整字段
         userId: userId || 'guest',
         userName: userName || '游客',
-        userEmail: userEmail || '未知邮箱',
+        userEmail: userEmail || '未知',
         videoId: videoId || '',
         videoName: videoName || '未知项目',
         configType: configType || 'hot',
         txHash: '',
         confirmedAt: ''
     };
-    orders.push(order); writeJSON(ORDERS_FILE, orders); 
+    orders.push(order); 
+    writeJSON(ORDERS_FILE, orders); 
     res.json({ success: true, order });
 });
 
+// ================= 后台：订单审核与删除 (补齐) =================
 app.get('/api/admin/orders', authMiddleware, (req, res) => res.json(readJSON(ORDERS_FILE, []).reverse()));
 
 app.post('/api/admin/orders/:id/review', authMiddleware, (req, res) => {
@@ -169,62 +410,27 @@ app.post('/api/admin/orders/:id/review', authMiddleware, (req, res) => {
 
 app.delete('/api/admin/orders/:id', authMiddleware, (req, res) => {
     let orders = readJSON(ORDERS_FILE, []).filter(o => o.id !== req.params.id);
-    writeJSON(ORDERS_FILE, orders); 
+    writeJSON(ORDERS_FILE, orders);
     res.json({ success: true });
 });
 
-// 2. 用户管理（支持修改密码）
-app.get('/api/admin/users', authMiddleware, (req, res) => {
-    let users = readJSON(USERS_FILE);
-    res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, balance: u.balance || 0, createdAt: u.createdAt })));
-});
-app.post('/api/admin/users/edit', authMiddleware, async (req, res) => {
-    let users = readJSON(USERS_FILE);
-    const u = users.find(x => x.id === req.body.id);
-    if (u) { 
-        u.name = req.body.name; 
-        u.email = req.body.email; 
-        u.balance = Number(req.body.balance); 
-        // 修改密码逻辑
-        if (req.body.password && req.body.password.trim() !== '') {
-            const salt = await bcrypt.genSalt(10);
-            u.password = await bcrypt.hash(req.body.password.trim(), salt);
-        }
-        writeJSON(USERS_FILE, users); 
-        res.json({ success: true }); 
-    }
-    else res.status(404).json({ error: '未找到' });
-});
-app.delete('/api/admin/users/:id', authMiddleware, (req, res) => {
-    let users = readJSON(USERS_FILE).filter(x => x.id !== req.params.id);
-    writeJSON(USERS_FILE, users); res.json({ success: true });
+// ================= 登录与其他路由 =================
+app.post('/api/admin/login', (req, res) => {
+    if (req.body.password === 'admin888') res.json({ success: true, token: 'admin888' });
+    else res.status(401).json({ error: '密码错误' });
 });
 
-// ... 其他设置、采集、上传、翻译接口保持原样 ...
-app.get('/api/admin/settings', authMiddleware, (req, res) => res.json(readJSON(SETTINGS_FILE)));
-app.post('/api/admin/settings', authMiddleware, (req, res) => { writeJSON(SETTINGS_FILE, { ...readJSON(SETTINGS_FILE), ...req.body }); res.json({ success: true }); });
-app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
-app.post('/api/admin/categories', authMiddleware, (req, res) => { let cats = readJSON(CATEGORIES_FILE, []); cats.push({ id: Date.now().toString(), name: req.body.name }); writeJSON(CATEGORIES_FILE, cats); res.json({ success: true }); });
-app.post('/api/admin/categories/edit', authMiddleware, (req, res) => { let cats = readJSON(CATEGORIES_FILE, []); const cat = cats.find(c => c.id === req.body.id); if (cat) { cat.name = req.body.name; writeJSON(CATEGORIES_FILE, cats); res.json({ success: true }); } else res.status(404).json({ error: '不存在' }); });
-app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => { let cats = readJSON(CATEGORIES_FILE, []).filter(c => c.id !== req.params.id); writeJSON(CATEGORIES_FILE, cats); res.json({ success: true }); });
-app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
-app.post('/api/admin/sites', authMiddleware, (req, res) => { const sites = readJSON(SITES_FILE); sites.push({ id: Date.now().toString(), ...req.body, categories: [] }); writeJSON(SITES_FILE, sites); res.json({ success: true }); });
-app.delete('/api/admin/sites/:id', authMiddleware, (req, res) => { writeJSON(SITES_FILE, readJSON(SITES_FILE).filter(s => s.id !== req.params.id)); res.json({ success: true }); });
-app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => { /* 原有逻辑 */ res.json([]); });
-app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => { const sites = readJSON(SITES_FILE); const site = sites.find(s => s.id === req.params.id); if (site) { site.categories = req.body.mappings || []; writeJSON(SITES_FILE, sites); res.json({ success: true }); } });
-app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => { /* 原有逻辑 */ res.json({success:true}); });
-app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req, res) => { if (!req.file) return res.status(400).json({ error: '请选择视频' }); const videos = readJSON(VIDEOS_FILE); videos.push({ id: Date.now().toString(), name: req.body.name || req.file.originalname, category: req.body.category || '默认分类', playUrl: `/uploads/${req.file.filename}`, pic: '', createdAt: new Date().toISOString() }); writeJSON(VIDEOS_FILE, videos); res.json({ success: true, message: '上传成功' }); });
-app.get('/api/admin/videos', authMiddleware, (req, res) => res.json(readJSON(VIDEOS_FILE).reverse()));
-app.post('/api/admin/videos/edit', authMiddleware, (req, res) => { let videos = readJSON(VIDEOS_FILE); const v = videos.find(x => x.id === req.body.id); if (v) { v.name = req.body.name; v.category = req.body.category; writeJSON(VIDEOS_FILE, videos); res.json({ success: true }); } });
-app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => { writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true }); });
-app.get('/api/admin/i18n-list', authMiddleware, (req, res) => { const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json')).map(f => f.replace('.json', '')); res.json(files); });
-app.get('/api/admin/i18n-content/:lang', authMiddleware, (req, res) => res.json(readJSON(path.join(I18N_DIR, `${req.params.lang}.json`))));
-app.post('/api/admin/i18n/:lang', authMiddleware, (req, res) => { writeJSON(path.join(I18N_DIR, `${req.params.lang}.json`), req.body); res.json({ success: true }); });
-app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => { const filePath = path.join(I18N_DIR, `${req.params.lang}.json`); if(fs.existsSync(filePath)) fs.unlinkSync(filePath); res.json({ success: true }); });
-app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => { /* 原有逻辑 */ res.json({success:true}); });
-app.post('/api/admin/translate-all', authMiddleware, async (req, res) => { /* 原有逻辑 */ res.json({success:true}); });
-app.post('/api/admin/login', (req, res) => { if (req.body.password === 'admin888') res.json({ success: true, token: 'admin888' }); else res.status(401).json({ error: '密码错误' }); });
-app.get('/api/videos', (req, res) => { const settings = readJSON(SETTINGS_FILE); let v = readJSON(VIDEOS_FILE).reverse(); if (settings.hotCat !== 'all') v = v.filter(x => x.category === settings.hotCat); res.json(v); });
-app.get('/api/videos/recommend', (req, res) => { const settings = readJSON(SETTINGS_FILE); let v = readJSON(VIDEOS_FILE).reverse(); if (settings.recommendCat !== 'all') v = v.filter(x => x.category === settings.recommendCat); res.json(v); });
+app.get('/api/videos', (req, res) => {
+    const settings = readJSON(SETTINGS_FILE);
+    let v = readJSON(VIDEOS_FILE).reverse();
+    if (settings.hotCat !== 'all') v = v.filter(x => x.category === settings.hotCat);
+    res.json(v);
+});
+app.get('/api/videos/recommend', (req, res) => {
+    const settings = readJSON(SETTINGS_FILE);
+    let v = readJSON(VIDEOS_FILE).reverse();
+    if (settings.recommendCat !== 'all') v = v.filter(x => x.category === settings.recommendCat);
+    res.json(v);
+});
 
 app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
