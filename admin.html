@@ -227,7 +227,15 @@
                     </div>
                     <div class="flex" style="margin-bottom:15px;">
                         <label style="width: 130px;">LiveChat License ID：</label>
-                        <input type="text" id="set-livechat" placeholder="填入纯数字 License ID，留空则不启用客服" style="flex:1;">
+                        <input type="text" id="set-livechat" placeholder="填入纯数字 License ID，留空则不启用在线客服" style="flex:1;">
+                    </div>
+                    <div class="flex" style="margin-bottom:15px;">
+                        <label style="width: 130px;">Telegram 链接：</label>
+                        <input type="text" id="set-contact-tg" placeholder="例如：https://t.me/yourusername (留空则不显示)" style="flex:1;">
+                    </div>
+                    <div class="flex" style="margin-bottom:15px;">
+                        <label style="width: 130px;">WhatsApp 链接：</label>
+                        <input type="text" id="set-contact-wa" placeholder="例如：https://wa.me/123456789 (留空则不显示)" style="flex:1;">
                     </div>
                     <div class="flex" style="margin-bottom:15px; align-items: flex-start;">
                         <label style="width: 130px;">首页精彩视频分类：</label><div id="set-hotCats-box" class="checkbox-group" style="flex:1;"></div>
@@ -696,7 +704,9 @@
         const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('set-trc20').value = s.trc20 || '';
-        document.getElementById('set-livechat').value = s.livechat_license || ''; // 加载 LiveChat 配置
+        document.getElementById('set-livechat').value = s.livechat_license || ''; 
+        document.getElementById('set-contact-tg').value = s.contact_tg || ''; 
+        document.getElementById('set-contact-wa').value = s.contact_wa || ''; 
         const renderCheckboxes = (boxId, selectedArr) => {
             document.getElementById(boxId).innerHTML = cats.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c.name}" ${selectedArr.includes(c.name) ? 'checked' : ''}> ${c.name}</label>`).join('') || '<span style="color:#999;font-size:12px;">暂无分类</span>';
         };
@@ -721,7 +731,9 @@
         const getChecked = (boxId) => Array.from(document.querySelectorAll(`#${boxId} input:checked`)).map(cb => cb.value);
         const data = {
             trc20: document.getElementById('set-trc20').value,
-            livechat_license: document.getElementById('set-livechat').value.trim(), // 提交 LiveChat 配置
+            livechat_license: document.getElementById('set-livechat').value.trim(), 
+            contact_tg: document.getElementById('set-contact-tg').value.trim(), 
+            contact_wa: document.getElementById('set-contact-wa').value.trim(), 
             hotCats: getChecked('set-hotCats-box'), recommendCats: getChecked('set-recommendCats-box'), freeCats: getChecked('set-freeCats-box'),
             hotConfig: { previewLimit: getVal('hot-preview'), regLimit: getVal('hot-reg'), unlockPrice: getVal('hot-price') },
             recommendConfig: { previewLimit: getVal('rec-preview'), regLimit: getVal('rec-reg'), unlockPrice: getVal('rec-price') },
