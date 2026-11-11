@@ -1,6 +1,6 @@
 {
   "brand.name": "Hiya Live",
-  "nav.subtitle": "Local Sparks · Meet IRL",
+  "nav.subtitle": "Local Dating · Meet Sparks",
   "nav.home": "Home",
   "nav.live": "Live",
   "nav.drama": "AI Drama",
@@ -9,7 +9,6 @@
   "nav.benefits": "Rewards",
   "nav.more": "More",
   "nav.login": "Log in / Sign up",
-
   "hero.badge": "Verified Local ✨",
   "hero.title1": "Local Sparks",
   "hero.title2": "1-on-1 Match",
@@ -22,16 +21,13 @@
   "hero.chip3.t2": "Real People",
   "hero.chip4.t1": "Private & Safe",
   "hero.chip4.t2": "Encrypted",
-  
   "hero.promo.title": "Meet Someone Nearby",
   "hero.promo.amount": "Local 1V1",
   "hero.promo.desc": "Verified profiles, real connections",
   "hero.promo.btn": "Start Free Match ›",
   "hero.promo.note": "Takes 20 seconds to sign up, start local matching instantly",
-
   "live.title": "Trending Now",
   "live.more": "More popular hosts ›",
-
   "feat.1.t1": "Local Picks",
   "feat.1.t2": "Meet nearby people",
   "feat.2.t1": "1V1 Chat",
@@ -44,7 +40,6 @@
   "feat.5.t2": "Encrypted, privacy protected",
   "feat.6.t1": "Multi-device",
   "feat.6.t2": "Phone · Tablet · Desktop",
-
   "card.live.tag": "LIVE",
   "card.left.title": "Global Live Hall",
   "card.left.p1": "Interact with hosts worldwide in real time",
@@ -55,9 +50,8 @@
   "card.right.p1": "Original AI shorts, always fresh",
   "card.right.p2": "Many genres · Immersive · Updated daily",
   "card.right.btn": "Watch AI drama ›",
-
-  "hot.title": "🔥 Local Picks",
-  "hot.more": "See all hosts ›",
+  "hot.title": "🔥 Awesome Videos",
+  "hot.more": "All Videos ›",
   "hot.card1.country": "Beijing",
   "hot.card2.country": "Shanghai",
   "hot.card3.country": "Guangzhou",
@@ -65,7 +59,6 @@
   "hot.card5.country": "Hangzhou",
   "hot.card6.country": "Shenzhen",
   "hot.card7.country": "Chongqing",
-
   "steps.title": "Four steps to local sparks",
   "steps.1.t1": "Sign up",
   "steps.1.t2a": "Quick sign-up, complete profile",
@@ -80,12 +73,10 @@
   "steps.4.t2a": "Enjoy 1-on-1 private chat",
   "steps.4.t2b": "Meet the one for you",
   "steps.timer": "20s",
-
   "cta.text": "Meet local sparks and start <b>1-on-1 Chat</b>",
   "cta.note": "Takes only 20 seconds to sign up, start local matching instantly",
   "cta.btn": "Sign up for free →",
-
-  "footer.subtitle": "Local Sparks · Meet IRL",
+  "footer.subtitle": "Local Dating · Meet Sparks",
   "footer.col1.title": "About",
   "footer.col1.a1": "About Hiya Live",
   "footer.col1.a2": "Contact us",
@@ -103,9 +94,8 @@
   "footer.age": "🔞 Users 18+ only",
   "footer.privacy": "🔒 We are committed to protecting your privacy and data",
   "footer.copyright": "© 2026 Hiya Live. All rights reserved.",
-
   "modal.close": "Close",
-  "modal.title": "Create your Hiya Live account",
+  "modal.title": "Create your dating account",
   "modal.field.name": "Display name",
   "modal.field.name.hint": "2–40 characters",
   "modal.field.email": "Email",
@@ -117,17 +107,11 @@
   "modal.field.agree.privacy": "Privacy Policy",
   "modal.submit": "Sign up free",
   "modal.submitting": "Submitting…",
-  "modal.waiting.title": "Searching for local users",
-  "modal.waiting.remain": "{n} seconds left",
-  "modal.waiting.cancel": "Cancel",
-  "modal.waiting.cancelNote": "Cancelling the wait does not undo the submitted sign-up.",
-  "modal.tips.1": "Verifying your account…",
-  "modal.tips.2": "Preparing your personal picks…",
-  "modal.tips.3": "Almost there, starting the match…",
-  "modal.complete.title": "Welcome to Hiya Live",
-  "modal.complete.desc": "Your account is ready. Go discover local matches now.",
-  "modal.complete.cta": "Enter Hiya Live",
-
+  "modal.login.title": "Log in to your account",
+  "modal.login.submit": "Log in",
+  "modal.welcome.title": "Welcome back!",
+  "modal.welcome.desc": "You have successfully logged in.",
+  "modal.welcome.cta": "Start Exploring",
   "legal.back": "← Back to home",
   "legal.disclaimer": "This page is placeholder sample text and is not valid legal terms.",
   "legal.terms.title": "Terms of Use",
