@@ -68,7 +68,6 @@ const authMiddleware = (req, res, next) => {
 // ================= 前台公共接口 =================
 app.get('/api/config', (req, res) => {
     const s = readJSON(SETTINGS_FILE);
-    // 🔴 强制保证数值类型，防止前端比较出错
     const hotCfg = s.hotConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
     const recCfg = s.recommendConfig || { previewLimit: 15, regLimit: 120, unlockPrice: 9.99 };
     
@@ -141,6 +140,7 @@ app.delete('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
+// 🔴 修复：一键翻译单个语言 (改用 Header 鉴权)
 app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     const targetLang = req.params.lang;
@@ -160,11 +160,15 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
         for (let i = 0; i < texts.length; i += 45) {
             const chunk = texts.slice(i, i + 45);
             const params = new URLSearchParams();
-            params.append('auth_key', apiKey);
             params.append('target_lang', deeplMap[targetLang] || 'EN-US');
             chunk.forEach(t => params.append('text', t));
+            
+            // 🔴 核心修复：使用 Authorization Header
             const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `DeepL-Auth-Key ${apiKey}`
+                }
             });
             allTexts = allTexts.concat(response.data.translations.map(t => t.text));
         }
@@ -177,6 +181,7 @@ app.post('/api/admin/translate/:lang', authMiddleware, async (req, res) => {
     }
 });
 
+// 🔴 修复：一键翻译全部 (改用 Header 鉴权)
 app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     const { apiKey } = req.body;
     if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
@@ -199,11 +204,15 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
             for (let i = 0; i < texts.length; i += 45) {
                 const chunk = texts.slice(i, i + 45);
                 const params = new URLSearchParams();
-                params.append('auth_key', apiKey);
                 params.append('target_lang', deeplMap[lang] || 'EN-US');
                 chunk.forEach(t => params.append('text', t));
+                
+                // 🔴 核心修复：使用 Authorization Header
                 const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    headers: { 
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': `DeepL-Auth-Key ${apiKey}`
+                    }
                 });
                 allTexts = allTexts.concat(response.data.translations.map(t => t.text));
             }
