@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>嗨呀直播 · 免费精选</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #ffffff; font-family: -apple-system, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
+  .header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0f0f0; }
+  .header h1 { font-size: 18px; font-weight: 800; color: #1f2551; }
+  .back-btn { font-size: 13px; color: #ff3d8b; font-weight: 600; text-decoration: none; padding: 6px 14px; border-radius: 20px; background: #fff0f5; }
+  .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; max-width: 800px; margin: 0 auto; }
+  .card { position: relative; width: 100%; aspect-ratio: 9 / 16; background: #f5f5f5; overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 6px 6px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85)); color: #fff; pointer-events: none; }
+  .card-title { font-size: 11px; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; word-break: break-all; }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 9px; opacity: 0.9; }
+  .live-tag { position: absolute; top: 4px; left: 4px; background: #4ade80; color: #fff; font-size: 8px; font-weight: 700; padding: 2px 4px; border-radius: 4px; z-index: 2; }
+  #sentinel { text-align: center; padding: 24px 0; font-size: 12px; color: #999; }
+  #player-modal { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; }
+  #player-modal.active { display: flex; }
+  .player-box { position: relative; width: 100%; height: 100%; max-width: 480px; overflow: hidden; }
+  .close-btn { position: absolute; top: 20px; left: 20px; z-index: 40; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  #video-el { width: 100%; height: 100%; object-fit: contain; }
+  .player-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 16px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); z-index: 20; pointer-events: none; }
+  .time-info { display: flex; justify-content: space-between; color: #fff; font-size: 12px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+  .time-left { color: #ff6b9d; font-weight: bold; }
+  .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+  .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); transition: width 0.1s; }
+  .limit-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 20px; }
+  .limit-mask h3 { color: #ff6b9d; font-size: 20px; margin-bottom: 10px; }
+  .limit-mask button { background: linear-gradient(90deg, #4ade80, #22c55e); color: #fff; border: none; padding: 12px 30px; border-radius: 20px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+  .unlock-btn { background: #4ade80 !important; margin-top: 10px !important; }
+</style>
+</head>
+<body>
+<header class="header">
+  <h1>🎁 免费精选</h1>
+  <a href="index.html" class="back-btn">← 返回首页</a>
+</header>
+<div class="grid-container" id="grid"></div>
+<div id="sentinel">正在获取数据...</div>
+
+<div id="player-modal">
+  <div class="player-box">
+    <button class="close-btn" id="close-btn">×</button>
+    <video id="video-el" controls playsinline controlsList="nodownload"></video>
+    <div class="player-bottom-bar">
+      <div class="time-info">
+        <span id="time-text" class="time-left">试看剩余: --</span>
+        <span id="time-price"></span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="limit-mask" id="limit-mask"></div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://jiaoyouweb.onrender.com';
+  const grid = document.getElementById('grid');
+  const sentinel = document.getElementById('sentinel');
+  let allVideos = [], renderedIndex = 0, isLoading = false, hasMore = false, isInitialLoaded = false;
+  const INITIAL_SIZE = 12, LOAD_MORE_SIZE = 9;
+  let currentConfig = { previewLimit: null, regLimit: null, price: null, trc20: '' };
+  let hls = null, videoLimitHandler = null;
+  let currentVideoId = null;
+  let currentVideoName = '';
+
+  function isVideoPurchased(vid) { return JSON.parse(localStorage.getItem('purchased_videos') || '[]').includes(vid); }
+  function markVideoPurchased(vid) {
+    let p = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
+    if(!p.includes(vid)) { p.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(p)); }
+  }
+
+  async function fetchConfig() {
+    try {
+      const res = await fetch(`${API_BASE}/api/config`);
+      const data = await res.json();
+      // 读取 freeConfig 配置
+      currentConfig.previewLimit = data.freeConfig?.previewLimit ?? null;
+      currentConfig.regLimit = data.freeConfig?.regLimit ?? null;
+      currentConfig.price = data.freeConfig?.unlockPrice ?? null;
+      currentConfig.trc20 = data.trc20 || '';
+    } catch(e) {}
+  }
+
+  function parseUrl(urlStr) {
+    if (!urlStr) return '';
+    if (urlStr.includes('$')) return urlStr.split('#')[0].split('$')[1];
+    return urlStr;
+  }
+
+  function createCard(video) {
+    const src = parseUrl(video.playUrl);
+    const pic = video.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
+    const title = video.name.length > 20 ? video.name.substring(0, 20) + '...' : video.name;
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <img src="${pic}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80'">
+      <span class="live-tag">FREE</span>
+      <div class="card-info">
+        <div class="card-title">${title}</div>
+        <div class="card-meta"><span>📍 ${video.category || '免费'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
+      </div>
+    `;
+    div.onclick = () => openPlayer(video.id, src, video.name);
+    return div;
+  }
+
+  function loadBatch(count) {
+    if (isLoading || !hasMore) return;
+    isLoading = true; sentinel.textContent = '正在加载...';
+    setTimeout(() => {
+      const nextVideos = allVideos.slice(renderedIndex, renderedIndex + count);
+      if (nextVideos.length === 0) { hasMore = false; sentinel.textContent = '到底啦~'; isLoading = false; return; }
+      const fragment = document.createDocumentFragment();
+      nextVideos.forEach(v => fragment.appendChild(createCard(v)));
+      grid.appendChild(fragment);
+      renderedIndex += nextVideos.length; isLoading = false;
+      sentinel.textContent = renderedIndex >= allVideos.length ? '到底啦~' : '上滑加载更多...';
+    }, 200); 
+  }
+
+  async function init() {
+    await fetchConfig(); 
+    try {
+      // 请求免费视频接口
+      const res = await fetch(`${API_BASE}/api/videos/free`);
+      allVideos = await res.json();
+      if (!Array.isArray(allVideos) || allVideos.length === 0) { sentinel.textContent = '暂无免费视频数据'; return; }
+      hasMore = true; loadBatch(INITIAL_SIZE); isInitialLoaded = true;
+    } catch(e) { sentinel.textContent = '网络错误'; }
+  }
+
+  let scrollTimeout = null;
+  window.addEventListener('scroll', () => {
+    if (!isInitialLoaded || isLoading || !hasMore) return;
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      if (document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 300) loadBatch(LOAD_MORE_SIZE);
+    }, 100);
+  });
+
+  const playerModal = document.getElementById('player-modal');
+  const videoEl = document.getElementById('video-el');
+  const limitMask = document.getElementById('limit-mask');
+  const progressFill = document.getElementById('progress-fill');
+  const timeText = document.getElementById('time-text');
+  const timePrice = document.getElementById('time-price');
+
+  function openPlayer(vid, src, name) {
+    if (!src) return alert('视频源无效');
+    currentVideoId = vid;
+    currentVideoName = name;
+    limitMask.style.display = 'none';
+    playerModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    if (src.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+      if (hls) hls.destroy();
+      hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
+    } else { videoEl.src = src; }
+    
+    videoEl.play().catch(e => console.log('播放失败'));
+
+    const isLogin = !!localStorage.getItem('hiya_user');
+    const isPurchased = isVideoPurchased(vid);
+    let maxTime = isPurchased ? Infinity : (isLogin ? currentConfig.regLimit : currentConfig.previewLimit);
+
+    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
+
+    if (isPurchased || maxTime === null || maxTime <= 0) {
+      timeText.innerText = "已解锁完整版";
+      timePrice.innerText = "";
+      progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
+    } else {
+      timeText.innerText = isLogin ? `试看剩余: ${maxTime} 秒` : `试看剩余: ${maxTime} 秒（注册解锁）`;
+      if (isLogin && currentConfig.price !== null) timePrice.innerText = `解锁需 ${currentConfig.price} USDT`;
+      progressFill.style.width = '0%'; progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
+    }
+
+    let isBlocked = false;
+    videoLimitHandler = () => {
+      const curTime = videoEl.currentTime;
+      if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
+        const remain = Math.max(0, maxTime - curTime);
+        timeText.innerText = isLogin ? `试看剩余: ${Math.ceil(remain)} 秒` : `试看剩余: ${Math.ceil(remain)} 秒（注册解锁）`;
+        progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
+        
+        if (curTime >= maxTime) {
+          videoEl.pause(); isBlocked = true; showPaywall();
+        }
+      }
+      if (isBlocked && curTime < maxTime - 1) {
+        isBlocked = false; limitMask.style.display = 'none'; videoEl.play();
+      }
+    };
+    videoEl.addEventListener('timeupdate', videoLimitHandler);
+  }
+
+  function showPaywall() {
+    const isLogin = !!localStorage.getItem('hiya_user');
+    if (!isLogin) {
+      limitMask.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请先登录/注册观看完整版</p><button onclick="window.location.href='index.html'">去登录</button>`;
+      limitMask.style.display = 'flex';
+      return;
+    }
+    
+    if (currentConfig.price === null) {
+      limitMask.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
+      limitMask.style.display = 'flex';
+      return;
+    }
+
+    limitMask.innerHTML = `
+      <h3>试看已结束</h3>
+      <p>开通全集需支付 <strong style="color:#ff1a75;">${currentConfig.price} USDT</strong></p>
+      <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
+      <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:15px;">${currentConfig.trc20}</div>
+      <button onclick="generateOrder()" id="gen-order-btn">生成专属付款金额</button>
+      <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
+    `;
+    limitMask.style.display = 'flex';
+  }
+
+  async function generateOrder() {
+    const btn = document.getElementById('gen-order-btn');
+    btn.disabled = true; btn.innerText = '生成中...';
+    
+    const userStr = localStorage.getItem('hiya_user');
+    let user = { id: 'guest', name: '游客', email: '未知' };
+    if (userStr) { const parsed = JSON.parse(userStr); user = { id: parsed.id, name: parsed.name, email: parsed.email }; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/create`, { 
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              baseAmount: currentConfig.price, 
+              userId: user.id, userName: user.name, userEmail: user.email, 
+              videoId: currentVideoId, videoName: currentVideoName, configType: 'free' // 标记为 free
+          })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      document.getElementById('pay-detail').innerHTML = `
+        <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">请务必精确转账 <span style="font-size:18px;">${data.order.amount.toFixed(2)}</span> USDT</p>
+        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">转账后请联系客服或在后台审核</p>
+        <button class="unlock-btn" onclick="mockPaySuccess()">【测试】我已支付，立即解锁</button>
+      `;
+    } catch(e) {
+      alert('生成订单失败: ' + e.message);
+      btn.disabled = false; btn.innerText = '生成专属付款金额';
+    }
+  }
+
+  function mockPaySuccess() {
+    markVideoPurchased(currentVideoId); 
+    alert('支付成功！已解锁该视频完整版');
+    limitMask.style.display = 'none';
+    timeText.innerText = "已解锁完整版";
+    timePrice.innerText = "";
+    progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
+    const cardData = allVideos.find(v => v.id === currentVideoId);
+    if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
+  }
+
+  document.getElementById('close-btn').onclick = () => {
+    playerModal.classList.remove('active');
+    document.body.style.overflow = '';
+    if (hls) { hls.destroy(); hls = null; }
+    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
+    videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
+  };
+
+  init();
+</script>
+</body>
+</html>
