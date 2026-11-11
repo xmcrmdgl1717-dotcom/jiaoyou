@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>嗨呀直播 · 全部视频</title>
-<!-- 引入 HLS.js 支持 m3u8 视频流播放 -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 彻底重置 */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { 
     background: #ffffff;
@@ -15,7 +13,6 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   
-  /* 顶部悬浮导航栏 */
   .header {
     position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -30,7 +27,6 @@
     padding: 6px 14px; border-radius: 20px; background: #fff0f5;
   }
 
-  /* 瀑布流布局（严格一行3个） */
   .grid-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -40,7 +36,6 @@
     margin: 0 auto;
   }
 
-  /* 卡片 - 竖屏长图 9:16 */
   .card {
     position: relative;
     width: 100%;
@@ -56,7 +51,6 @@
     object-fit: cover; display: block;
   }
 
-  /* 底部信息 */
   .card-info {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 30px 6px 6px;
@@ -73,14 +67,12 @@
     font-size: 9px; opacity: 0.9;
   }
 
-  /* LIVE 角标 */
   .live-tag {
     position: absolute; top: 4px; left: 4px;
     background: #ff3b5c; color: #fff; font-size: 8px; font-weight: 700;
     padding: 2px 4px; border-radius: 4px; z-index: 2;
   }
 
-  /* 底部加载提示 */
   #sentinel {
     text-align: center; padding: 24px 0; font-size: 12px; color: #999;
   }
@@ -102,8 +94,13 @@
   }
   #video-el { width: 100%; height: 100%; object-fit: contain; }
   
+  /* 🔴 试看结束遮罩 - 深度黑化+毛玻璃 */
   .limit-mask {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 30;
+    position: absolute; inset: 0; 
+    background: rgba(0, 0, 0, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 30;
     display: none; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; text-align: center;
   }
@@ -145,15 +142,13 @@
   let allVideos = [];      
   let renderedIndex = 0;   
   
-  // 🔴 加载数量配置
-  const INITIAL_SIZE = 12; // 初始加载12个（4行），保证撑满屏幕
-  const LOAD_MORE_SIZE = 9; // 后续每次加载9个（3行）
+  const INITIAL_SIZE = 12; // 首屏加载12个填满屏幕
+  const LOAD_MORE_SIZE = 9; // 后续每次加载9个
   
   let isLoading = false;
   let hasMore = false;     
-  let isInitialLoaded = false; // 标记是否完成了首屏加载
+  let isInitialLoaded = false;
 
-  // 解析苹果CMS播放地址
   function parseUrl(urlStr) {
     if (!urlStr) return '';
     if (urlStr.includes('$')) {
@@ -163,7 +158,6 @@
     return urlStr;
   }
 
-  // 创建卡片
   function createCard(video) {
     const src = parseUrl(video.playUrl);
     const pic = video.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
@@ -187,7 +181,6 @@
     return div;
   }
 
-  // 加载数据
   function loadBatch(count) {
     if (isLoading || !hasMore) return;
     isLoading = true;
@@ -219,7 +212,6 @@
     }, 200); 
   }
 
-  // 初始化
   function init() {
     fetch(`${API_BASE}/api/videos`)
       .then(res => res.json())
@@ -231,8 +223,6 @@
         
         allVideos = data;
         hasMore = true; 
-        
-        // 首次加载 12 个（4行）
         loadBatch(INITIAL_SIZE); 
         isInitialLoaded = true;
       })
@@ -242,7 +232,6 @@
       });
   }
 
-  // 🔴 核心防抖滑动加载：原生计算距离底部高度
   let scrollTimeout = null;
   window.addEventListener('scroll', () => {
     if (!isInitialLoaded || isLoading || !hasMore) return;
@@ -250,20 +239,16 @@
 
     scrollTimeout = setTimeout(() => {
       scrollTimeout = null;
-      
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
 
-      // 距离底部 300px 时触发加载
       if (documentHeight - scrollTop - windowHeight < 300) {
-        // 后续每次严格加载 9 个（3行）
         loadBatch(LOAD_MORE_SIZE); 
       }
-    }, 100); // 100ms 防抖
+    }, 100); 
   });
 
-  // ================= 播放器逻辑 =================
   let hls = null;
   const playerModal = document.getElementById('player-modal');
   const videoEl = document.getElementById('video-el');
@@ -272,7 +257,6 @@
 
   function openPlayer(src, title, category) {
     if (!src) return alert('视频源无效');
-    
     limitMask.style.display = 'none';
     playerModal.classList.add('active');
     document.body.style.overflow = 'hidden';
