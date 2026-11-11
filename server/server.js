@@ -81,7 +81,21 @@ function parseUA(ua) {
     else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
     else if (/Firefox/i.test(ua)) browser = 'Firefox';
     else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
+    
+    // 简单提取版本号
+    const osVer = ua.match(/(?:Windows NT|Mac OS X|Android|iPhone OS) ([\d_\.]+)/);
+    if(osVer) os += ' ' + osVer[1].replace(/_/g, '.');
+    const brVer = ua.match(/(?:Chrome|Firefox|Safari|Edg)\/([\d\.]+)/);
+    if(brVer) browser += ' ' + brVer[1];
+
     return { device, os, browser };
+}
+
+function getIpCountry(ip) {
+    if (!ip || ip === '127.0.0.1' || ip === '::1') return '本地';
+    if (ip.startsWith('43.') || ip.startsWith('203.') || ip.startsWith('160.')) return '日本';
+    if (ip.startsWith('104.') || ip.startsWith('8.')) return '美国';
+    return '未知';
 }
 
 app.post('/api/visit', (req, res) => {
@@ -91,20 +105,24 @@ app.post('/api/visit', (req, res) => {
     const parse = parseUA(ua);
     
     const visits = readJSON(VISITS_FILE, []);
-    let existingVisit = visits.find(v => v.ip === ip && v.ua === ua && v.time > Date.now() - 30 * 60 * 1000); // 30分钟内同一设备算同一次
+    const now = Date.now();
+    let existingVisit = visits.find(v => v.ip === ip && v.ua === ua && (now - v.enterTime) < 30 * 60 * 1000);
     
     if (existingVisit) {
-        existingVisit.lastActive = Date.now();
+        existingVisit.lastActive = now;
         existingVisit.lang = lang;
         writeJSON(VISITS_FILE, visits);
         return res.json({ visitId: existingVisit.id });
     }
 
     const newVisit = {
-        id: 'V' + Date.now() + Math.floor(Math.random() * 1000),
-        time: Date.now(),
-        lastActive: Date.now(),
+        id: 'V' + now + Math.floor(Math.random() * 1000),
+        enterTime: now,
+        lastActive: now,
+        submitTime: null,
+        leaveTime: null,
         ip: ip || '127.0.0.1',
+        country: getIpCountry(ip),
         ua: ua,
         device: parse.device,
         os: parse.os,
@@ -114,6 +132,8 @@ app.post('/api/visit', (req, res) => {
         userId: null,
         userName: null,
         userEmail: null,
+        contact: '',
+        payAddress: '',
         rechargeAmount: 0,
         rechargeCount: 0
     };
@@ -423,7 +443,7 @@ app.post('/api/orders/create', async (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     if (!settings.trc20) return res.status(400).json({ error: '未配置TRC20地址' });
     
-    const { baseAmount, userId, userName, userEmail, videoId, videoName, configType, visitId, contactTg, contactWa, payAddress } = req.body;
+    const { baseAmount, userId, userName, userEmail, videoId, videoName, configType, visitId, contact, payAddress } = req.body;
     let orders = readJSON(ORDERS_FILE, []);
     let baseAmountNum = Number(baseAmount) || 9.99;
     let finalAmount = baseAmountNum;
@@ -447,8 +467,7 @@ app.post('/api/orders/create', async (req, res) => {
         videoName: videoName || '未知项目',
         configType: configType || 'hot',
         visitId: visitId || '', // 关联的访客记录
-        contactTg: contactTg || '', // TG联系方式
-        contactWa: contactWa || '', // WhatsApp联系方式
+        contact: contact || '', // 合并的联系方式 (TG/WA)
         payAddress: payAddress || '', // 用户付款的TRC20地址
         txHash: '',
         confirmedAt: ''
@@ -462,6 +481,9 @@ app.post('/api/orders/create', async (req, res) => {
         let visit = visits.find(v => v.id === visitId);
         if (visit) {
             visit.status = 'pending';
+            visit.submitTime = Date.now(); // 记录提交时间
+            visit.contact = contact || visit.contact;
+            visit.payAddress = payAddress || visit.payAddress;
             writeJSON(VISITS_FILE, visits);
         }
     }
@@ -490,11 +512,30 @@ app.post('/api/admin/orders/:id/review', authMiddleware, (req, res) => {
             visit.status = 'paid';
             visit.rechargeAmount = (visit.rechargeAmount || 0) + order.amount;
             visit.rechargeCount = (visit.rechargeCount || 0) + 1;
+            visit.leaveTime = Date.now(); // 记录离开时间
             writeJSON(VISITS_FILE, visits);
         }
     }
 
     res.json({ success: true, message: '审核通过' });
+});
+
+// 新增：拒绝订单
+app.post('/api/admin/orders/:id/reject', authMiddleware, (req, res) => {
+    let orders = readJSON(ORDERS_FILE, []);
+    const order = orders.find(o => o.id === req.params.id);
+    if (!order) return res.status(404).json({ error: '订单不存在' });
+    
+    order.status = 'rejected';
+    order.confirmedAt = new Date().toISOString();
+    writeJSON(ORDERS_FILE, orders);
+
+    if (order.visitId) {
+        let visits = readJSON(VISITS_FILE, []);
+        let visit = visits.find(v => v.id === order.visitId);
+        if (visit) { visit.status = 'rejected'; writeJSON(VISITS_FILE, visits); }
+    }
+    res.json({ success: true, message: '已拒绝' });
 });
 
 app.delete('/api/admin/orders/:id', authMiddleware, (req, res) => {
@@ -510,13 +551,13 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
     let stats = {
         total: visits.length,
         visiting: visits.filter(v => v.status === 'visiting').length,
-        registered: visits.filter(v => v.status === 'registered').length,
-        pending: visits.filter(v => v.status === 'pending').length,
-        paid: visits.filter(v => v.status === 'paid').length,
-        rejected: visits.filter(v => v.status === 'rejected').length,
+        noSubmit: visits.filter(v => v.status === 'visiting' || v.status === 'registered').length,
         deviceApple: visits.filter(v => v.device === '苹果').length,
         deviceAndroid: visits.filter(v => v.device === '安卓').length,
-        deviceDesktop: visits.filter(v => v.device === '桌面').length
+        deviceDesktop: visits.filter(v => v.device === '桌面').length,
+        pending: visits.filter(v => v.status === 'pending').length,
+        paid: visits.filter(v => v.status === 'paid').length,
+        rejected: visits.filter(v => v.status === 'rejected').length
     };
     res.json({ stats, list: visits });
 });
