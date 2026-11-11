@@ -5,14 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>嗨呀直播</title>
 <link rel="stylesheet" href="assets/css/styles.css">
-<!-- 引入 HLS.js 用于支持 m3u8 视频流播放 -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<style>
+  /* 增加一个简单的遮罩层样式 */
+  #video-limit-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+  }
+  #video-limit-overlay h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ff6b9d; }
+  #video-limit-overlay p { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }
+  #video-limit-overlay button {
+    background: linear-gradient(90deg, #ff9a4d, #ff4d94);
+    color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+    font-size: 15px; font-weight: bold; cursor: pointer;
+  }
+</style>
 </head>
 <body>
 <div class="page">
   <!-- ============ HERO WRAP ============ -->
   <div class="hero-wrap">
-    <!-- nav -->
     <div class="nav">
       <div class="brand" data-register role="button" tabindex="0">
         <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
@@ -35,14 +55,11 @@
           <option value="en">English</option>
         </select>
       </label>
-      
-      <!-- 动态登录区域 -->
       <div id="auth-area" style="display:flex;align-items:center;">
          <a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>
       </div>
     </div>
 
-    <!-- hero -->
     <div class="hero">
       <div class="arc"></div>
       <span class="heart h1p">💗</span>
@@ -73,7 +90,6 @@
         </div>
       </div>
 
-      <!-- Live Now -->
       <div class="live-panel">
         <h4 data-i18n="live.title">正在热播</h4>
         <div class="lp-row"><span class="lp-rank r1">1</span><img class="lp-av" src="assets/img/ava/ava1.webp" alt=""><div class="lp-info"><div class="lp-name">梓涵</div><div class="lp-cnt">🔥 12.8K</div></div></div>
@@ -85,7 +101,6 @@
     </div>
   </div>
 
-  <!-- ============ FEATURE BAR ============ -->
   <div class="fbar">
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-pink">📍</span><div><div class="ft1" data-i18n="feat.1.t1">同城推荐</div><div class="ft2" data-i18n="feat.1.t2">发现身边的TA</div></div></div>
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-purple">💬</span><div><div class="ft1" data-i18n="feat.2.t1">1V1私聊</div><div class="ft2" data-i18n="feat.2.t2">独享心动时刻</div></div></div>
@@ -95,7 +110,6 @@
     <div class="f" data-register role="button" tabindex="0"><span class="fi ic-blue">📱</span><div><div class="ft1" data-i18n="feat.6.t1">多端支持</div><div class="ft2" data-i18n="feat.6.t2">手机·平板·电脑</div></div></div>
   </div>
 
-  <!-- ============ TWO BIG CARDS ============ -->
   <div class="dual">
     <div class="dcard left" data-register>
       <span class="tag live" data-i18n="card.live.tag">热门</span>
@@ -107,7 +121,6 @@
       </div>
       <a class="d-btn" data-i18n="card.left.btn" data-register role="button" tabindex="0">进入直播大厅 ›</a>
     </div>
-    <!-- 🔴 修复点1：移除了 data-register，让按钮可以直接跳转 -->
     <div class="dcard right" style="cursor:pointer;" onclick="window.location.href='shorts.html'">
       <span class="tag new" data-i18n="card.new.tag">最新</span>
       <h3 data-i18n="card.right.title">AI短剧乐园</h3>
@@ -117,42 +130,25 @@
     </div>
   </div>
 
-  <!-- ============ HOT PICKS (动态加载) ============ -->
   <div class="sec-head">
     <div class="st" data-i18n="hot.title">🔥 精彩视频</div>
     <a class="more" href="shorts.html" data-i18n="hot.more" style="text-decoration:none; cursor:pointer;">全部视频 ›</a>
   </div>
-  <div class="hot-row" id="index-video-list">
-    <!-- 动态渲染区域 -->
-  </div>
+  <div class="hot-row" id="index-video-list"></div>
 
-  <!-- ============ FOUR STEPS ============ -->
   <div class="sec-head"><div class="st" data-i18n="steps.title">简单四步，开启同城交友</div></div>
   <div class="steps-card">
-    <div class="step">
-      <span class="si ic-pink">🧑‍💻<span class="snum">1</span></span>
-      <div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div>
-    </div>
+    <div class="step"><span class="si ic-pink">🧑‍💻<span class="snum">1</span></span><div><div class="st1" data-i18n="steps.1.t1">注册账号</div><div class="st2" data-i18n="steps.1.t2a">简单注册，完善资料</div><div class="st2" data-i18n="steps.1.t2b">大约20秒</div></div></div>
     <div class="dash"></div>
-    <div class="step">
-      <span class="si ic-purple">🛡️<span class="snum">2</span></span>
-      <div><div class="st1" data-i18n="steps.2.t1">真人认证</div><div class="st2" data-i18n="steps.2.t2a">真实核验，保障交友安全</div><div class="st2" data-i18n="steps.2.t2b">隐私保护</div></div>
-    </div>
+    <div class="step"><span class="si ic-purple">🛡️<span class="snum">2</span></span><div><div class="st1" data-i18n="steps.2.t1">真人认证</div><div class="st2" data-i18n="steps.2.t2a">真实核验，保障交友安全</div><div class="st2" data-i18n="steps.2.t2b">隐私保护</div></div></div>
     <div class="dash"></div>
     <div class="timer"><i data-i18n="steps.timer">20秒</i></div>
     <div class="dash"></div>
-    <div class="step">
-      <span class="si ic-blue">📍<span class="snum">3</span></span>
-      <div><div class="st1" data-i18n="steps.3.t1">同城匹配</div><div class="st2" data-i18n="steps.3.t2a">基于位置</div><div class="st2" data-i18n="steps.3.t2b">推荐身边的TA</div></div>
-    </div>
+    <div class="step"><span class="si ic-blue">📍<span class="snum">3</span></span><div><div class="st1" data-i18n="steps.3.t1">同城匹配</div><div class="st2" data-i18n="steps.3.t2a">基于位置</div><div class="st2" data-i18n="steps.3.t2b">推荐身边的TA</div></div></div>
     <div class="dash"></div>
-    <div class="step" data-register role="button" tabindex="0">
-      <span class="si ic-orange">💖<span class="snum">4</span></span>
-      <div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div>
-    </div>
+    <div class="step" data-register role="button" tabindex="0"><span class="si ic-orange">💖<span class="snum">4</span></span><div><div class="st1" data-i18n="steps.4.t1">开始交友</div><div class="st2" data-i18n="steps.4.t2a">畅享1V1私密互动</div><div class="st2" data-i18n="steps.4.t2b">遇见心动的人</div></div></div>
   </div>
 
-  <!-- ============ CTA ============ -->
   <div class="cta">
     <div class="gift">💖</div>
     <div class="ctext">
@@ -162,158 +158,88 @@
     <a class="cbtn" data-i18n="cta.btn" data-register role="button" tabindex="0">立即免费注册 →</a>
   </div>
 
-  <!-- ============ Footer ============ -->
   <div class="footer">
     <div class="f-top">
       <div class="f-brand">
         <div class="brand-name g-pink" data-i18n="brand.name">嗨呀直播</div>
         <div class="brand-sub" data-i18n="footer.subtitle">同城交友 遇见心动</div>
-        <div class="f-social">
-          <span>🐦</span><span>📷</span><span>🎵</span><span>✈️</span>
-        </div>
+        <div class="f-social"><span>🐦</span><span>📷</span><span>🎵</span><span>✈️</span></div>
       </div>
-      <div class="f-col">
-        <h5 data-i18n="footer.col1.title">关于我们</h5>
-        <a data-i18n="footer.col1.a1">关于嗨呀直播</a><a data-i18n="footer.col1.a2">联系我们</a><a data-i18n="footer.col1.a3">合作伙伴</a>
-      </div>
-      <div class="f-col">
-        <h5 data-i18n="footer.col2.title">帮助中心</h5>
-        <a data-i18n="footer.col2.a1">常见问题</a><a href="terms.html" data-i18n="footer.col2.a2" data-legal>使用条款</a><a href="privacy.html" data-i18n="footer.col2.a3" data-legal>隐私政策</a>
-      </div>
-      <div class="f-col">
-        <h5 data-i18n="footer.col3.title">社区</h5>
-        <a data-i18n="footer.col3.a1">社区准则</a><a data-i18n="footer.col3.a2">主播招募</a><a data-i18n="footer.col3.a3">举报中心</a>
-      </div>
-      <div class="f-col">
-        <h5 data-i18n="footer.col4.title">下载App</h5>
-        <div class="appbadge">🍎<span><span class="apptop">Download on the</span><b>App Store</b></span></div>
-        <div class="appbadge">▶<span><span class="apptop">GET IT ON</span><b>Google Play</b></span></div>
-      </div>
-      <div class="f-col">
-        <h5 data-i18n="footer.col5.title">安全支付</h5>
-        <div class="pay">
-          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="VISA"><rect width="48" height="30" rx="4" fill="#fff"/><text x="24" y="21" font-family="Arial,Helvetica,sans-serif" font-size="14" font-style="italic" font-weight="700" fill="#1a1f71" text-anchor="middle">VISA</text></svg>
-          <svg viewBox="0 0 48 30" width="40" height="25" aria-label="Mastercard"><rect width="48" height="30" rx="4" fill="#fff"/><circle cx="20" cy="15" r="8" fill="#eb001b"/><circle cx="28" cy="15" r="8" fill="#f79e1b" fill-opacity=".9"/></svg>
-          <svg viewBox="0 0 60 30" width="50" height="25" aria-label="PayPal"><rect width="60" height="30" rx="4" fill="#fff"/><text x="30" y="20" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="#003087">Pay<tspan fill="#009cde">Pal</tspan></text></svg>
-          <svg viewBox="0 0 30 30" width="25" height="25" aria-label="Crypto"><circle cx="15" cy="15" r="14" fill="#f7931a"/><text x="15" y="21" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">&#8383;</text></svg>
-        </div>
-        <div class="f-note"><span data-i18n="footer.age">🔞 仅限18岁以上用户</span><br><span data-i18n="footer.privacy">🔒 我们致力于保护您的隐私与数据安全</span></div>
-      </div>
+      <div class="f-col"><h5 data-i18n="footer.col1.title">关于我们</h5><a data-i18n="footer.col1.a1">关于嗨呀直播</a><a data-i18n="footer.col1.a2">联系我们</a><a data-i18n="footer.col1.a3">合作伙伴</a></div>
+      <div class="f-col"><h5 data-i18n="footer.col2.title">帮助中心</h5><a data-i18n="footer.col2.a1">常见问题</a><a href="terms.html" data-i18n="footer.col2.a2" data-legal>使用条款</a><a href="privacy.html" data-i18n="footer.col2.a3" data-legal>隐私政策</a></div>
+      <div class="f-col"><h5 data-i18n="footer.col3.title">社区</h5><a data-i18n="footer.col3.a1">社区准则</a><a data-i18n="footer.col3.a2">主播招募</a><a data-i18n="footer.col3.a3">举报中心</a></div>
+      <div class="f-col"><h5 data-i18n="footer.col4.title">下载App</h5><div class="appbadge">🍎<span><span class="apptop">Download on the</span><b>App Store</b></span></div><div class="appbadge">▶<span><span class="apptop">GET IT ON</span><b>Google Play</b></span></div></div>
+      <div class="f-col"><h5 data-i18n="footer.col5.title">安全支付</h5><div class="pay"><svg viewBox="0 0 48 30" width="40" height="25"><rect width="48" height="30" rx="4" fill="#fff"/><text x="24" y="21" font-size="14" font-style="italic" font-weight="700" fill="#1a1f71" text-anchor="middle">VISA</text></svg><svg viewBox="0 0 48 30" width="40" height="25"><rect width="48" height="30" rx="4" fill="#fff"/><circle cx="20" cy="15" r="8" fill="#eb001b"/><circle cx="28" cy="15" r="8" fill="#f79e1b" fill-opacity=".9"/></svg><svg viewBox="0 0 60 30" width="50" height="25"><rect width="60" height="30" rx="4" fill="#fff"/><text x="30" y="20" font-size="12" font-weight="700" text-anchor="middle" fill="#003087">Pay<tspan fill="#009cde">Pal</tspan></text></svg><svg viewBox="0 0 30 30" width="25" height="25"><circle cx="15" cy="15" r="14" fill="#f7931a"/><text x="15" y="21" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">&#8383;</text></svg></div><div class="f-note"><span data-i18n="footer.age">🔞 仅限18岁以上用户</span><br><span data-i18n="footer.privacy">🔒 我们致力于保护您的隐私与数据安全</span></div></div>
     </div>
     <div class="copyright" data-i18n="footer.copyright">© 2026 嗨呀直播. 保留所有权利。</div>
   </div>
-
 </div>
 
-<!-- ============ 注册/登录 弹窗 ============ -->
+<!-- 弹窗区域 -->
 <div class="modal-overlay" id="register-modal" hidden style="display: none;">
-  <div class="modal-dialog" role="dialog" aria-modal="true" data-modal-dialog tabindex="-1">
-    <button class="modal-close" type="button" data-modal-close aria-label="关闭" data-i18n="modal.close">关闭</button>
-
+  <div class="modal-dialog" data-modal-dialog tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close data-i18n="modal.close">关闭</button>
     <section class="modal-view" data-view="form">
       <h2 id="modal-title" data-i18n="modal.title">创建你的交友账号</h2>
       <form data-register-form novalidate>
-        <label class="modal-field">
-          <span data-i18n="modal.field.name">昵称</span>
-          <input name="name" type="text" required minlength="2" maxlength="40" autocomplete="nickname">
-          <small data-i18n="modal.field.name.hint">2–40 个字符</small>
-        </label>
-        <label class="modal-field">
-          <span data-i18n="modal.field.email">邮箱</span>
-          <input name="email" type="email" required autocomplete="email">
-        </label>
-        <label class="modal-field">
-          <span data-i18n="modal.field.password">密码</span>
-          <input name="password" type="password" required minlength="8" autocomplete="new-password">
-          <small data-i18n="modal.field.password.hint">至少 8 个字符</small>
-        </label>
-        <label class="modal-agree">
-          <input name="agree" type="checkbox" required>
-          <span>
-            <span data-i18n="modal.field.agree.pre">我已阅读并同意</span>
-            <a href="terms.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.terms">使用条款</a>
-            <span data-i18n="modal.field.agree.and">和</span>
-            <a href="privacy.html" target="_blank" rel="noopener" data-legal data-i18n="modal.field.agree.privacy">隐私政策</a>
-          </span>
-        </label>
-        <div class="modal-error" data-form-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
-        <button class="modal-submit" type="submit" data-i18n="modal.submit" data-default-zh="免费注册" data-default-en="Sign up free">免费注册</button>
+        <label class="modal-field"><span data-i18n="modal.field.name">昵称</span><input name="name" type="text" required minlength="2" maxlength="40"><small data-i18n="modal.field.name.hint">2–40 个字符</small></label>
+        <label class="modal-field"><span data-i18n="modal.field.email">邮箱</span><input name="email" type="email" required></label>
+        <label class="modal-field"><span data-i18n="modal.field.password">密码</span><input name="password" type="password" required minlength="8"><small data-i18n="modal.field.password.hint">至少 8 个字符</small></label>
+        <label class="modal-agree"><input name="agree" type="checkbox" required><span><span data-i18n="modal.field.agree.pre">我已阅读并同意</span> <a href="terms.html" data-legal>使用条款</a> <span data-i18n="modal.field.agree.and">和</span> <a href="privacy.html" data-legal>隐私政策</a></span></label>
+        <div class="modal-error" data-form-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;"></div>
+        <button class="modal-submit" type="submit" data-default-zh="免费注册">免费注册</button>
       </form>
-      <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
-        已有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); if(window.showLoginView) window.showLoginView();">直接登录</a>
-      </p>
+      <p style="text-align:center;margin-top:12px;font-size:12px;">已有账号？<a href="#" onclick="event.preventDefault(); window.showLoginView();">直接登录</a></p>
     </section>
-
     <section class="modal-view" data-view="login" hidden>
       <h2 data-i18n="modal.login.title">登录你的账号</h2>
       <form data-login-form novalidate>
-        <label class="modal-field">
-          <span data-i18n="modal.field.email">邮箱</span>
-          <input name="email" type="email" required autocomplete="email">
-        </label>
-        <label class="modal-field">
-          <span data-i18n="modal.field.password">密码</span>
-          <input name="password" type="password" required autocomplete="current-password">
-        </label>
-        <div class="modal-error" data-login-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;text-align:center;"></div>
-        <button class="modal-submit" type="submit" data-i18n="modal.login.submit" data-default-zh="登录" data-default-en="Log in">登录</button>
+        <label class="modal-field"><span data-i18n="modal.field.email">邮箱</span><input name="email" type="email" required></label>
+        <label class="modal-field"><span data-i18n="modal.field.password">密码</span><input name="password" type="password" required></label>
+        <div class="modal-error" data-login-error style="display:none;color:#ff3d8b;font-size:12px;margin-bottom:10px;"></div>
+        <button class="modal-submit" type="submit" data-default-zh="登录">登录</button>
       </form>
-      <p style="text-align:center;margin-top:12px;font-size:12px;color:#9a9fb2;">
-        还没有账号？<a href="#" style="color:#ff3d8b;" onclick="event.preventDefault(); if(window.showRegisterView) window.showRegisterView();">立即注册</a>
-      </p>
+      <p style="text-align:center;margin-top:12px;font-size:12px;">还没有账号？<a href="#" onclick="event.preventDefault(); window.showRegisterView();">立即注册</a></p>
     </section>
-    
     <section class="modal-view" data-view="welcome" hidden>
-      <div class="modal-success" aria-hidden="true">✓</div>
-      <h2 data-i18n="modal.welcome.title">欢迎回来！</h2>
-      <p data-i18n="modal.welcome.desc">你已成功登录。</p>
-      <button class="modal-submit" onclick="if(window.closeModal) window.closeModal()" data-i18n="modal.welcome.cta">开始探索</button>
+      <div class="modal-success">✓</div><h2 data-i18n="modal.welcome.title">欢迎回来！</h2><button class="modal-submit" onclick="window.closeModal()">开始探索</button>
     </section>
   </div>
 </div>
 
-<!-- ============ 客服引导弹窗 ============ -->
 <div class="modal-overlay" id="customer-modal" hidden style="display:none;">
-  <div class="modal-dialog" role="dialog" aria-modal="true" style="background: #111; color: #fff; overflow: hidden; padding: 0; max-width: 380px; width: 90%;">
-    <button class="modal-close" type="button" data-customer-close aria-label="关闭" style="position: absolute; top: 12px; right: 14px; z-index: 10; color: #fff; font-size: 20px; background: rgba(0,0,0,0.4); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">×</button>
-    <div style="position: relative; height: 340px; background: url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;">
-      <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, #111 100%);"></div>
-      <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
-        <h3 style="font-size: 22px; font-weight: 900; margin: 0 0 6px; color: #fff; letter-spacing: 1px;">深夜同城 专属1V1</h3>
-        <p style="font-size: 13px; color: #ff6b9d; margin: 0; font-weight: 700;">发现附近刚刚上线的心动女孩</p>
-      </div>
-    </div>
-    <div style="padding: 20px 24px 28px; text-align: center;">
+  <div class="modal-dialog" style="background: #111; color: #fff; padding: 0; max-width: 380px;">
+    <button class="modal-close" type="button" data-customer-close style="color: #fff;">×</button>
+    <div style="height: 300px; background: url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80') center/cover;"></div>
+    <div style="padding: 20px; text-align: center;">
       <div id="customer-countdown-area">
-        <p style="font-size: 14px; color: #ff6b9d; margin: 0 0 8px;">正在为你匹配同城高颜值空姐/学生…</p>
-        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite;"></span>
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.2s;"></span>
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.4s;"></span>
-        </div>
-        <div style="font-size: 42px; font-weight: 900; color: #ff6b9d; line-height: 1;" id="customer-timer">15</div>
-        <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 6px 0 0;">秒后为你揭晓神秘联系方式</p>
+        <p style="color: #ff6b9d; margin-bottom: 10px;">正在匹配同城高颜值空姐/学生…</p>
+        <div style="font-size: 42px; font-weight: 900; color: #ff6b9d;" id="customer-timer">15</div>
       </div>
       <div id="customer-result-area" style="display: none;">
-        <p style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 6px;">匹配成功！🎉</p>
-        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0 0 16px;">添加 Telegram 专属客服，获取同城资源</p>
-        <a id="customer-tg-link" href="https://t.me/yourusername" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(90deg, #ff6b9d, #ff3d8b); color: #fff; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 30px; text-decoration: none; box-shadow: 0 8px 24px rgba(255,107,157,0.4);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
-          添加 Telegram 客服
-        </a>
+        <p style="font-weight: 700; margin-bottom: 16px;">匹配成功！🎉</p>
+        <a href="https://t.me/yourusername" target="_blank" style="display:inline-block; background:linear-gradient(90deg, #ff6b9d, #ff3d8b); color:#fff; padding:12px 24px; border-radius:20px; text-decoration:none;">添加 Telegram 客服</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ============ 全屏视频播放器 ============ -->
+<!-- 视频播放器（包含试看限制） -->
 <div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
   <div style="position: relative; width: 100%; max-width: 420px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
-    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 10; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+    <button id="video-close-btn" style="position: absolute; top: 16px; left: 16px; z-index: 30; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">×</button>
     <video id="video-player" controls autoplay playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000;"></video>
-    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none;">
-      <div style="font-size: 18px; font-weight: 700;" id="video-player-name">静怡</div>
-      <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;" id="video-player-meta">📍 北京 · 🔥 12.4K</div>
+    
+    <!-- 试看结束遮罩层 -->
+    <div id="video-limit-overlay">
+      <h3>试看已结束</h3>
+      <p>注册登录后可无限畅看完整版视频</p>
+      <button onclick="window.closeVideoPlayer(); window.openRegisterModal();">免费注册 / 登录</button>
+    </div>
+
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 60px 20px 20px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); color: #fff; pointer-events: none; z-index: 10;">
+      <div style="font-size: 18px; font-weight: 700;" id="video-player-name"></div>
+      <div style="font-size: 12px; opacity: 0.7;" id="video-player-meta"></div>
     </div>
   </div>
 </div>
