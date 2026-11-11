@@ -28,8 +28,58 @@ a{text-decoration:none;color:inherit}
 .nav-links{display:flex;gap:17px;margin-left:auto;font-size:13px;font-weight:600;color:#4a4f6b}
 .nav-links a{padding-bottom:3px}
 .nav-links a.active{color:#ff3d8b;border-bottom:2px solid #ff3d8b}
-.lang{margin-left:16px;display:inline-flex;align-items:center;gap:5px;border:1px solid #e7e5ef;border-radius:16px;padding:4px 10px;font-size:11.5px;color:#5a5f77}
-.lang select{border:0;background:transparent;font:inherit;color:inherit;padding:2px 2px;outline:none}
+
+/* 语言选择器 */
+.lang-wrap {
+  position: relative;
+  margin-left: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e7e5ef;
+  background: #fff;
+  font-size: 16px;
+  color: #5a5f77;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+.lang-btn:hover {
+  background: #fdf2f7;
+  border-color: #ffd1e3;
+}
+.lang-dropdown {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  padding: 8px;
+  min-width: 150px;
+  z-index: 100;
+}
+.lang-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #3a3f5f;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.lang-option:hover {
+  background: #fdf2f7;
+}
+
 .login-btn{margin-left:11px;background:linear-gradient(90deg,#ff9a5c,#ff5c9d);color:#fff;padding:7px 15px;border-radius:16px;font-size:12px;font-weight:700}
 
 /* ---------- Hero ---------- */
@@ -130,7 +180,7 @@ a{text-decoration:none;color:inherit}
 
 /* ---------- Hot picks (Video Stream) ---------- */
 .hot-row{display:flex;gap:9px}
-.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden;background:#000; cursor:pointer;}
+.hcard{flex:1;aspect-ratio:1/1.42;border-radius:14px;position:relative;overflow:hidden;background:#000;cursor:pointer;}
 .hcard .hvideo{
   width:100%;height:100%;object-fit:cover;
   position:absolute;inset:0;z-index:0;
@@ -245,7 +295,7 @@ a{text-decoration:none;color:inherit}
   .nav{padding:12px 16px 11px;gap:6px}
   .brand-sub{display:none}
   .nav-toggle{width:30px;height:28px;font-size:13px}
-  .lang{margin-left:8px;padding:3px 7px;font-size:10px}
+  .lang-wrap{margin-left:8px;}
   .login-btn{margin-left:8px;padding:6px 10px;font-size:11px;max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fbar .f{min-width:78px;padding:10px 12px}
   .dcard{flex-basis:88%}
@@ -256,9 +306,9 @@ a{text-decoration:none;color:inherit}
   .hot-row .hcard{flex:0 0 46%}
 }
 
-/* ===== 模块F RTL overrides ===== */
+/* ===== RTL overrides ===== */
 [dir="rtl"] .nav-links{margin-left:0;margin-right:auto}
-[dir="rtl"] .lang{margin-left:0;margin-right:16px}
+[dir="rtl"] .lang-wrap{margin-left:0;margin-right:16px}
 [dir="rtl"] .login-btn{margin-left:0;margin-right:11px}
 [dir="rtl"] .sec-head .more{margin-left:0;margin-right:auto}
 [dir="rtl"] .live-panel{right:auto;left:16px}
@@ -304,9 +354,30 @@ body.modal-open{overflow:hidden}
   border: 1px solid rgba(255, 61, 139, 0.2);
 }
 
+/* ===== 试看限制遮罩层 ===== */
+#video-limit-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+#video-limit-overlay h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #ff6b9d; }
+#video-limit-overlay p { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }
+#video-limit-overlay button {
+  background: linear-gradient(90deg, #ff9a4d, #ff4d94);
+  color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+  font-size: 15px; font-weight: bold; cursor: pointer;
+}
+
 @media (max-width:560px){.modal-dialog{max-width:none;border-radius:14px;padding:20px 16px 16px}}
 
-/* ===== 客服弹窗 动画 ===== */
+/* ===== 客服弹窗动画 ===== */
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.8); }
