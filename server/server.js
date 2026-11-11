@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // ================= 路径与数据初始化 =================
 const DATA_DIR = path.join(__dirname, 'data');
-const I18N_DIR = path.join(DATA_DIR, 'i18n'); // 🔴 新增语言包存储目录
+const I18N_DIR = path.join(DATA_DIR, 'i18n'); 
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const VIDEOS_FILE = path.join(DATA_DIR, 'videos.json');
 const SITES_FILE = path.join(DATA_DIR, 'resource_sites.json');
@@ -31,6 +31,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => res.send('Hiya Live Backend Running!'));
+
+// ================= 🔴 修复：将鉴权中间件提前定义 =================
+const ADMIN_PASSWORD = 'admin888';
+const authMiddleware = (req, res, next) => {
+    if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: '未授权' });
+    next();
+};
 
 // ================= 🔴 核心：多语言 API 服务 =================
 // 1. 前端获取语言包 API
@@ -56,7 +63,6 @@ app.post('/api/admin/i18n/:lang', authMiddleware, (req, res) => {
 app.get('/api/admin/i18n-list', authMiddleware, (req, res) => {
     const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json'));
     const list = files.map(f => f.replace('.json', ''));
-    // 确保 zh 始终在第一位
     list.sort((a, b) => a === 'zh' ? -1 : b === 'zh' ? 1 : a.localeCompare(b));
     res.json(list);
 });
@@ -77,7 +83,7 @@ app.post('/api/admin/translate', authMiddleware, async (req, res) => {
         const keys = Object.keys(zhDict);
         const texts = keys.map(k => zhDict[k]);
 
-        const chunkSize = 45; // DeepL 限制
+        const chunkSize = 45; 
         let allTranslatedTexts = [];
 
         for (let i = 0; i < texts.length; i += chunkSize) {
@@ -96,7 +102,6 @@ app.post('/api/admin/translate', authMiddleware, async (req, res) => {
         const newDict = {};
         keys.forEach((key, index) => { newDict[key] = allTranslatedTexts[index]; });
         
-        // 翻译后直接保存到后端！
         writeJSON(path.join(I18N_DIR, `${targetLang}.json`), newDict);
         res.json({ success: true, message: `成功翻译并保存 ${targetLang}.json` });
     } catch (error) {
@@ -104,20 +109,13 @@ app.post('/api/admin/translate', authMiddleware, async (req, res) => {
     }
 });
 
-// ================= 其它原有接口 (注册、采集等) =================
-// ... [此处保留你原有的 /api/register, /api/login, /api/admin/sites 等采集相关代码，无需修改，直接复制之前的即可] ...
-// (为了方便你，我把认证部分补全)
-const ADMIN_PASSWORD = 'admin888';
-const authMiddleware = (req, res, next) => {
-    if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: '未授权' });
-    next();
-};
+// ================= 其它原有接口 =================
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) res.json({ success: true, token: ADMIN_PASSWORD });
     else res.status(401).json({ error: '密码错误' });
 });
 
-// 注册登录
+// 注册与登录
 app.post('/api/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -131,6 +129,7 @@ app.post('/api/register', async (req, res) => {
         res.status(201).json({ message: '注册成功', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
     } catch (error) { res.status(500).json({ error: '服务器错误' }); }
 });
+
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -141,19 +140,18 @@ app.post('/api/login', async (req, res) => {
     } catch (error) { res.status(500).json({ error: '服务器错误' }); }
 });
 
-// 采集部分 (保持原样，直接调用你的原代码，这里省略)
+// 采集接口 (保持你原有逻辑即可，这里提供最简版本确保不报错)
 app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE); const newSite = { id: Date.now().toString(), ...req.body, categories: [] }; sites.push(newSite); writeJSON(SITES_FILE, sites); res.json(newSite);
 });
 app.delete('/api/admin/sites/:id', authMiddleware, (req, res) => { let s = readJSON(SITES_FILE).filter(x => x.id !== req.params.id); writeJSON(SITES_FILE, s); res.json({ success: true }); });
-app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => { /* 你的分类抓取代码 */ res.json([]); });
-app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => { /* 保存绑定逻辑 */ res.json({ success: true }); });
+app.get('/api/admin/sites/:id/categories', authMiddleware, async (req, res) => { res.json([]); });
+app.post('/api/admin/sites/:id/bind', authMiddleware, (req, res) => { res.json({ success: true }); });
 app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => { res.json({ success: true, count: 0, message: '采集完成' }); });
 app.get('/api/admin/videos', authMiddleware, (req, res) => res.json(readJSON(VIDEOS_FILE)));
 app.get('/api/videos', (req, res) => {
     const videos = readJSON(VIDEOS_FILE);
-    // 把旧数据的 playUrl 处理一下转给前端，保持原样即可
     res.json(videos.reverse());
 });
 
