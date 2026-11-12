@@ -6,11 +6,11 @@ let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: 
 let currentVisitId = '';
 let heartbeatTimer = null; 
 
-// 提前获取配置（防止部分逻辑依赖）
 (async function initEarlyConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
+        // 🔴 只要拿到配置，立刻渲染语言下拉框
         if(globalConfig.enabledLangs) renderLangDropdown(globalConfig.enabledLangs);
     } catch(e) { console.warn('配置拉取失败:', e); }
 })();
@@ -94,24 +94,27 @@ const LANG_NAMES = {
 
 const COUNTRY_TO_LANG = { CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en' };
 
-// 🔴 动态渲染下拉菜单
+// 🔴 核心修复：先清空，再根据后台配置的 langs 渲染
 function renderLangDropdown(enabledLangs) {
     const dropdown = document.getElementById('lang-dropdown');
     if (!dropdown) return;
+    
+    // 强制清空旧的写死内容
+    dropdown.innerHTML = '';
+    
+    // 仅渲染后台启用的语言
     dropdown.innerHTML = enabledLangs.map(lang => {
         return `<div class="lang-option" data-lang="${lang}">${LANG_NAMES[lang] || lang}</div>`;
     }).join('');
+    
     initLangSelector();
 }
 
-// 🔴 核心修复：按照要求的顺序判断语言（本地 -> IP -> 设备 -> 英语）
 async function resolveInitialLang() {
-  // 1. 优先手动选择（本地存储）
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
   if (saved && SUPPORTED.includes(saved)) return saved;
 
-  // 2. 免费接口 IP 识别
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const ipData = await ipRes.json();
@@ -122,14 +125,11 @@ async function resolveInitialLang() {
     }
   } catch (e) {}
 
-  // 3. 设备语言
   const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
     if (SUPPORTED.includes(base)) return base;
   }
-
-  // 4. 兜底英语
   return 'en';
 }
 
@@ -178,7 +178,6 @@ async function applyLang(lang) {
   const titleMap = { zh: '嗨呀直播', en: 'Hiya Live', vn: 'Hiya Live', es: 'Hiya Live', tr: 'Hiya Live', id: 'Hiya Live' };
   document.title = titleMap[lang] || titleMap.en;
   
-  // 重新渲染带有翻译的JS组件
   renderAuthArea();
 }
 
@@ -187,7 +186,6 @@ function initLangSelector() {
   const langDropdown = document.getElementById('lang-dropdown');
   if (!langBtn || !langDropdown) return;
   
-  // 避免重复绑定
   const newLangBtn = langBtn.cloneNode(true);
   langBtn.parentNode.replaceChild(newLangBtn, langBtn);
 
@@ -371,7 +369,7 @@ function renderAuthArea() {
     };
   } else {
     const loginText = translate(dict, 'nav.login') || '登录 / 注册';
-    authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">${loginText}</a>`;
+    authArea.innerHTML = `<a class="login-btn" data-register role="button" tabindex="0">${loginText}</a>`;
   }
 }
 
@@ -402,6 +400,11 @@ function showView(name) {
 function openRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay) return;
+  
+  // 关闭语言下拉框，防止遮挡
+  const langDropdown = document.getElementById('lang-dropdown');
+  if(langDropdown) langDropdown.style.display = 'none';
+
   lastFocused = document.activeElement;
   showView('form');
   overlay.hidden = false; overlay.style.display = 'flex';
