@@ -4,6 +4,7 @@
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
 let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '' };
 let currentVisitId = '';
+let heartbeatTimer = null; // 🔴 心跳定时器
 
 // 提前获取配置（防止部分逻辑依赖）
 (async function initEarlyConfig() {
@@ -24,8 +25,34 @@ async function trackVisit() {
         if(data.visitId) {
             currentVisitId = data.visitId;
             sessionStorage.setItem('hiya_visit_id', data.visitId);
+            startHeartbeat(); // 🔴 开启心跳
         }
     } catch(e) { console.warn('访客记录失败', e); }
+}
+
+// 🔴 新增：心跳机制与离开信标
+function startHeartbeat() {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    
+    // 每 10 秒给后端发一次 ping
+    heartbeatTimer = setInterval(() => {
+        const vid = currentVisitId || sessionStorage.getItem('hiya_visit_id');
+        if (!vid) return;
+        fetch(`${API_BASE_URL}/api/visit/ping`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitId: vid })
+        }).catch(() => {});
+    }, 10000);
+
+    // 关闭页面时发送离开通知
+    window.addEventListener('beforeunload', () => {
+        const vid = currentVisitId || sessionStorage.getItem('hiya_visit_id');
+        if (!vid) return;
+        // 使用 sendBeacon，即使页面关闭也能确保发出去
+        const blob = new Blob([JSON.stringify({ visitId: vid })], { type: 'application/json' });
+        navigator.sendBeacon(`${API_BASE_URL}/api/visit/leave`, blob);
+    });
 }
 
 /* ================= 导航菜单修复与登录拦截 ================= */
@@ -34,28 +61,24 @@ function initNavToggle() {
   const links = document.querySelector('.nav-links');
   if (!btn || !links) return;
 
-  // 1. 点击菜单按钮切换展开/折叠
   btn.addEventListener('click', (e) => { 
       e.stopPropagation();
       links.classList.toggle('is-open'); 
   });
 
-  // 2. 点击页面空白处折叠菜单
   document.addEventListener('click', (e) => {
       if (links.classList.contains('is-open') && !links.contains(e.target) && e.target !== btn) {
           links.classList.remove('is-open');
       }
   });
 
-  // 3. 导航菜单的登录拦截逻辑
   document.querySelectorAll('.nav-page-link').forEach(link => {
       link.addEventListener('click', (e) => {
           const savedUser = localStorage.getItem('hiya_user');
           if (!savedUser) {
-              e.preventDefault(); // 阻止默认跳转
-              openRegisterModal(); // 弹出登录/注册框
+              e.preventDefault();
+              openRegisterModal();
           }
-          // 如果已登录，不阻止跳转，让默认的 href 生效
       });
   });
 }
@@ -331,7 +354,6 @@ function initAuthEvents() {
     e.preventDefault();
     const savedUser = localStorage.getItem('hiya_user');
     if (savedUser) {
-        // 如果登录了，可以触发客服弹窗或去对应页面
         if(window.openServiceModal) window.openServiceModal();
     } else {
         openRegisterModal(); 
