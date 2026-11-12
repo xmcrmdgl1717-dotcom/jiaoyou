@@ -148,6 +148,15 @@
   }
   const t = (key, fallback) => pageDict[key] || fallback;
 
+  // 🔴 视频多语言提取
+  function getVideoText(video, field) {
+      const currentLang = localStorage.getItem('hiya_lang') || 'zh';
+      if (video.translations && video.translations[currentLang] && video.translations[currentLang][field]) {
+          return video.translations[currentLang][field];
+      }
+      return video[field];
+  }
+
   function isVideoPurchased(vid) { return JSON.parse(localStorage.getItem('purchased_videos') || '[]').includes(vid); }
   function markVideoPurchased(vid) {
     let p = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
@@ -163,17 +172,22 @@
   function createCard(v) {
     const src = parseUrl(v.playUrl);
     const pic = v.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
+
+    // 🔴 动态获取多语言字段
+    const vName = getVideoText(v, 'name');
+    const vCat = getVideoText(v, 'category');
+
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
       <img src="${pic}" loading="lazy">
       <span class="live-tag">LIVE</span>
       <div class="card-info">
-        <div class="card-title">${v.name}</div>
-        <div class="card-meta"><span>📍 ${v.category || '同城'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
+        <div class="card-title">${vName}</div>
+        <div class="card-meta"><span>📍 ${vCat || '同城'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
       </div>
     `;
-    div.onclick = () => openPlayer(v.id, src, v.name);
+    div.onclick = () => openPlayer(v.id, src, vName);
     return div;
   }
 
@@ -361,7 +375,7 @@
     timePrice.innerText = "";
     progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
     const cardData = allVideos.find(v => v.id === currentVideoId);
-    if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
+    if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), getVideoText(cardData, 'name'));
   }
 
   document.getElementById('close-btn').onclick = () => {
