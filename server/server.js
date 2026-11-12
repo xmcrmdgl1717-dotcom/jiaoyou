@@ -494,12 +494,77 @@ app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req
     writeJSON(VIDEOS_FILE, videos); res.json({ success: true, message: '上传成功' });
 });
 app.get('/api/admin/videos', authMiddleware, (req, res) => res.json(readJSON(VIDEOS_FILE).reverse()));
+
 app.post('/api/admin/videos/edit', authMiddleware, (req, res) => {
     let videos = readJSON(VIDEOS_FILE);
     const v = videos.find(x => x.id === req.body.id);
-    if (v) { v.name = req.body.name; v.category = req.body.category; writeJSON(VIDEOS_FILE, videos); res.json({ success: true }); }
+    if (v) { 
+        v.name = req.body.name; 
+        v.category = req.body.category; 
+        v.translations = req.body.translations || {}; // 🔴 新增支持保存翻译
+        writeJSON(VIDEOS_FILE, videos); 
+        res.json({ success: true }); 
+    }
     else res.status(404).json({ error: '未找到' });
 });
+
+// 🔴 新增：视频一键翻译接口
+app.post('/api/admin/videos/translate', authMiddleware, async (req, res) => {
+    const { apiKey, videoId } = req.body;
+    if (!apiKey) return res.status(400).json({ error: '请提供 DeepL API Key' });
+
+    let videos = readJSON(VIDEOS_FILE);
+    const settings = readJSON(SETTINGS_FILE);
+    const enabledLangs = settings.enabledLangs || ['zh'];
+    
+    const targetLangs = enabledLangs.filter(l => l !== 'zh');
+    if (targetLangs.length === 0) return res.json({ success: true, message: '没有启用的外语' });
+
+    const deeplMap = { 'en':'EN-US', 'vn':'VI', 'es':'ES', 'tr':'TR', 'id':'ID', 'ja':'JA', 'ko':'KO', 'fr':'FR', 'de':'DE', 'ru':'RU', 'pt':'PT-PT', 'it':'IT', 'ar':'AR', 'th':'TH' };
+
+    let videosToTranslate = videoId ? videos.filter(v => v.id === videoId) : videos;
+    if (videosToTranslate.length === 0) return res.status(404).json({ error: '无视频数据' });
+
+    let successCount = 0;
+    
+    try {
+        for (const video of videosToTranslate) {
+            if (!video.translations) video.translations = {};
+            
+            for (const lang of targetLangs) {
+                // 组合翻译，减少API请求
+                const textToTranslate = `${video.name || ''}\n${video.category || '默认分类'}`;
+                
+                const params = new URLSearchParams();
+                params.append('target_lang', deeplMap[lang] || 'EN-US');
+                params.append('text', textToTranslate);
+                
+                const response = await axios.post('https://api-free.deepl.com/v2/translate', params, {
+                    headers: { 
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': `DeepL-Auth-Key ${apiKey}`
+                    }
+                });
+                
+                const translatedText = response.data.translations[0].text;
+                const parts = translatedText.split('\n');
+                const transName = parts[0] || video.name;
+                const transCat = parts[1] || video.category;
+                
+                video.translations[lang] = {
+                    name: transName.trim(),
+                    category: transCat.trim()
+                };
+            }
+            successCount++;
+            writeJSON(VIDEOS_FILE, videos); // 逐条保存
+        }
+        res.json({ success: true, message: `翻译完成，成功处理 ${successCount} 条视频` });
+    } catch (err) {
+        res.status(500).json({ error: err.response?.data?.message || err.message });
+    }
+});
+
 app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => {
     writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true });
 });
