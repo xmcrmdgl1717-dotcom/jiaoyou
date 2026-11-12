@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const xml2js = require('xml2js');
 const axios = require('axios');
 const multer = require('multer');
-const geoip = require('geoip-lite'); // 真实IP库
+const geoip = require('geoip-lite'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,9 +44,9 @@ if (!fs.existsSync(SETTINGS_FILE)) writeJSON(SETTINGS_FILE, {
     freeConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
     enabledLangs: ['zh', 'en'],
     adminPassword: 'admin888',
-    livechat_license: '', // LiveChat License ID
-    contact_tg: '',       // 新增：Telegram 链接
-    contact_wa: ''        // 新增：WhatsApp 链接
+    livechat_license: '', // 兼容新旧版，统一叫 LiveChat ID
+    contact_tg: '',       
+    contact_wa: ''        
 });
 if (!fs.existsSync(USERS_FILE)) writeJSON(USERS_FILE, []);
 if (!fs.existsSync(VIDEOS_FILE)) writeJSON(VIDEOS_FILE, []);
@@ -55,7 +55,6 @@ if (!fs.existsSync(ORDERS_FILE)) writeJSON(ORDERS_FILE, []);
 if (!fs.existsSync(CATEGORIES_FILE)) writeJSON(CATEGORIES_FILE, [{ id: 'c1', name: '默认分类' }]);
 if (!fs.existsSync(VISITS_FILE)) writeJSON(VISITS_FILE, []);
 
-// 确保老数据能自动补上字段
 let currentSettings = readJSON(SETTINGS_FILE);
 if (!currentSettings.adminPassword) currentSettings.adminPassword = 'admin888';
 if (currentSettings.livechat_license === undefined) currentSettings.livechat_license = '';
@@ -63,7 +62,6 @@ if (currentSettings.contact_tg === undefined) currentSettings.contact_tg = '';
 if (currentSettings.contact_wa === undefined) currentSettings.contact_wa = '';
 writeJSON(SETTINGS_FILE, currentSettings);
 
-// ================= 中间件 =================
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR)); 
@@ -332,7 +330,7 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
 });
 
-// ================= 后台：视频分类管理 =================
+// ================= 后台：视频分类/采集/上传/用户 =================
 app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
 app.post('/api/admin/categories', authMiddleware, (req, res) => {
     let cats = readJSON(CATEGORIES_FILE, []);
@@ -350,7 +348,6 @@ app.delete('/api/admin/categories/:id', authMiddleware, (req, res) => {
     writeJSON(CATEGORIES_FILE, cats); res.json({ success: true });
 });
 
-// ================= 后台：视频采集 =================
 app.get('/api/admin/sites', authMiddleware, (req, res) => res.json(readJSON(SITES_FILE)));
 app.post('/api/admin/sites', authMiddleware, (req, res) => {
     const sites = readJSON(SITES_FILE); 
@@ -419,7 +416,6 @@ app.post('/api/admin/collect/:id', authMiddleware, async (req, res) => {
     } catch (err) { res.status(500).json({ error: '采集失败' }); }
 });
 
-// ================= 后台：视频上传管理 =================
 app.post('/api/admin/upload-video', authMiddleware, upload.single('video'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '请选择视频' });
     const videos = readJSON(VIDEOS_FILE);
@@ -437,7 +433,6 @@ app.delete('/api/admin/videos/:id', authMiddleware, (req, res) => {
     writeJSON(VIDEOS_FILE, readJSON(VIDEOS_FILE).filter(x => x.id !== req.params.id)); res.json({ success: true });
 });
 
-// ================= 后台：用户管理 =================
 app.get('/api/admin/users', authMiddleware, (req, res) => {
     let users = readJSON(USERS_FILE);
     res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, balance: u.balance || 0, createdAt: u.createdAt })));
@@ -463,7 +458,7 @@ app.delete('/api/admin/users/:id', authMiddleware, (req, res) => {
     writeJSON(USERS_FILE, users); res.json({ success: true });
 });
 
-// ================= 前台：订单创建 =================
+// ================= 前台：订单创建/审核 =================
 app.post('/api/orders/create', async (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     if (!settings.trc20) return res.status(400).json({ error: '未配置TRC20地址' });
@@ -515,7 +510,6 @@ app.post('/api/orders/create', async (req, res) => {
     res.json({ success: true, order });
 });
 
-// ================= 后台：订单审核与删除 =================
 app.get('/api/admin/orders', authMiddleware, (req, res) => res.json(readJSON(ORDERS_FILE, []).reverse()));
 
 app.post('/api/admin/orders/:id/review', authMiddleware, (req, res) => {
@@ -572,7 +566,6 @@ app.delete('/api/admin/visits/:id', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
-// ================= 后台：汇总看板数据 =================
 app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
     const visits = readJSON(VISITS_FILE, []);
     const orders = readJSON(ORDERS_FILE, []);
@@ -601,7 +594,6 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
     res.json({ stats, list: mergedList });
 });
 
-// ================= 登录与其他路由 =================
 app.post('/api/admin/login', (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     const currentPassword = settings.adminPassword || 'admin888';
@@ -609,7 +601,6 @@ app.post('/api/admin/login', (req, res) => {
     else res.status(401).json({ error: '密码错误' });
 });
 
-// 前台视频接口
 app.get('/api/videos', (req, res) => {
     const settings = readJSON(SETTINGS_FILE);
     let v = readJSON(VIDEOS_FILE).reverse();
