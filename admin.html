@@ -276,6 +276,7 @@
                 <button onclick="saveSettings()" style="width:100%; padding:12px; font-size:16px; margin-top:15px;">保存所有配置</button>
             </div>
 
+            <!-- 🔴 视频上传与列表多语言翻译 -->
             <div id="tab-upload" class="tab">
                 <div class="card">
                     <h3>批量上传</h3>
@@ -288,7 +289,13 @@
                     <div class="progress-bar-container" id="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
                     <div class="progress-text" id="progress-text" style="display:none;"><span id="progress-status"></span><span id="progress-percent">0%</span></div>
                 </div>
-                <div class="card"><h3>视频列表</h3><table><tbody id="video-manage-list"></tbody></table></div>
+                <div class="card">
+                    <h3 style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>视频列表</span>
+                        <button class="btn-primary" onclick="translateAllVideos()" style="font-size:12px; padding:4px 10px;">🌍 一键翻译全部语言</button>
+                    </h3>
+                    <div id="video-manage-list"></div>
+                </div>
             </div>
 
             <div id="tab-i18n" class="tab">
@@ -297,7 +304,7 @@
                     <div class="flex">
                         <input type="text" id="deepl-key" placeholder="输入 API Key" style="flex:1;">
                         <button onclick="saveKey()">保存</button>
-                        <button class="btn-secondary" onclick="translateAll()">一键翻译全部</button>
+                        <button class="btn-secondary" onclick="translateAll()">一键翻译全部字典</button>
                     </div>
                 </div>
                 <div class="card">
@@ -743,12 +750,147 @@
         alert('保存成功');
     }
 
+    // 🔴 重写视频列表，支持多语言折叠
     async function loadVideoManage() {
         const cats = await (await fetch(`${API}/api/admin/categories`, { headers: { 'x-admin-token': token } })).json();
         document.getElementById('up-cat').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        
         const vids = await (await fetch(`${API}/api/admin/videos`, { headers: { 'x-admin-token': token } })).json();
-        document.getElementById('video-manage-list').innerHTML = vids.map(v => `<tr><td>${v.name}</td><td>${v.category}</td><td><div class="action-btns"><button class="btn-danger" onclick="delVideo('${v.id}')">删除</button></div></td></tr>`).join('');
+        const s = await (await fetch(`${API}/api/admin/settings`, { headers: { 'x-admin-token': token } })).json();
+        const enabledLangs = s.enabledLangs || ['zh'];
+        
+        const langNames = { 'en':'英语', 'vn':'越南语', 'es':'西班牙语', 'tr':'土耳其语', 'id':'印尼语', 'ja':'日语', 'ko':'韩语', 'fr':'法语', 'de':'德语', 'ru':'俄语', 'pt':'葡萄牙语', 'it':'意大利语', 'ar':'阿拉伯语', 'th':'泰语' };
+
+        document.getElementById('video-manage-list').innerHTML = vids.map(v => {
+            let tHtml = '';
+            let hasMissing = false;
+            
+            enabledLangs.filter(l => l !== 'zh').forEach(lang => {
+                const tName = v.translations?.[lang]?.name || '';
+                const tCat = v.translations?.[lang]?.category || '';
+                const isMissing = !tName || !tCat;
+                if (isMissing) hasMissing = true;
+
+                tHtml += `
+                    <div style="margin-bottom:10px; padding:10px; background:var(--bg-color); border-radius:6px; border-left: 3px solid ${isMissing ? '#f56c6c' : '#67c23a'};">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <strong>${langNames[lang] || lang} (${lang})</strong>
+                            ${isMissing ? '<span style="color:#f56c6c; font-size:12px;">未翻译</span>' : '<span style="color:#67c23a; font-size:12px;">已翻译</span>'}
+                        </div>
+                        <div class="flex" style="gap:8px;">
+                            <input type="text" class="trans-input" data-id="${v.id}" data-lang="${lang}" data-field="name" value="${tName}" placeholder="视频名" style="flex:2;">
+                            <input type="text" class="trans-input" data-id="${v.id}" data-lang="${lang}" data-field="category" value="${tCat}" placeholder="分类" style="flex:1;">
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+            <div style="border:1px solid var(--border-color); border-radius:8px; margin-bottom:10px; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--card-bg);">
+                    <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        <span style="font-weight:bold;">${v.name}</span>
+                        <span style="color:var(--text-muted); font-size:12px; margin-left:10px;">分类: ${v.category}</span>
+                        ${hasMissing ? '<span style="color:#f56c6c; font-size:12px; margin-left:10px;">(有未翻译语种)</span>' : ''}
+                    </div>
+                    <div class="action-btns" style="flex-shrink:0;">
+                        <button class="btn-text" onclick="toggleTransPanel('${v.id}')">🌍 折叠/展开翻译</button>
+                        <button class="btn-text" onclick="translateSingleVideo('${v.id}')" style="color:#e6a23c;">单独翻译</button>
+                        <button class="btn-danger" onclick="delVideo('${v.id}')">删除</button>
+                    </div>
+                </div>
+                <div id="trans-panel-${v.id}" style="display:none; padding:15px; border-top:1px solid var(--border-color); background:rgba(0,0,0,0.02);">
+                    ${tHtml}
+                    <div style="text-align:right; margin-top:10px;">
+                        <button class="btn-success" onclick="saveVideoTranslations('${v.id}')">保存当前修改</button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
     }
+
+    function toggleTransPanel(id) {
+        const panel = document.getElementById(`trans-panel-${id}`);
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function saveVideoTranslations(id) {
+        const inputs = document.querySelectorAll(`.trans-input[data-id="${id}"]`);
+        const translations = {};
+        
+        inputs.forEach(input => {
+            const lang = input.dataset.lang;
+            const field = input.dataset.field;
+            if (!translations[lang]) translations[lang] = {};
+            translations[lang][field] = input.value.trim();
+        });
+
+        const res = await fetch(`${API}/api/admin/videos`, { headers: { 'x-admin-token': token } });
+        const vids = await res.json();
+        const video = vids.find(v => v.id === id);
+        if (!video) return alert('未找到视频');
+
+        const payload = {
+            id: video.id, name: video.name, category: video.category, translations: translations
+        };
+
+        await fetch(`${API}/api/admin/videos/edit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+            body: JSON.stringify(payload)
+        });
+        alert('翻译保存成功');
+        loadVideoManage();
+    }
+
+    async function translateSingleVideo(id) {
+        const key = localStorage.getItem('deepl_key'); 
+        if(!key) return alert('请先在【全局语言】中配置 DeepL API Key');
+        if(!confirm('确定使用 DeepL 翻译该视频的所有启用外语吗？')) return;
+        
+        const btn = event.target;
+        btn.disabled = true; btn.innerText = '翻译中...';
+        
+        try {
+            const res = await fetch(`${API}/api/admin/videos/translate`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                body: JSON.stringify({ apiKey: key, videoId: id })
+            });
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
+            alert(data.message || '翻译成功');
+            loadVideoManage();
+        } catch(e) {
+            alert('翻译失败: ' + e.message);
+            btn.disabled = false; btn.innerText = '单独翻译';
+        }
+    }
+
+    async function translateAllVideos() {
+        const key = localStorage.getItem('deepl_key'); 
+        if(!key) return alert('请先在【全局语言】中配置 DeepL API Key');
+        if(!confirm('确定使用 DeepL 翻译【全部】视频的所有启用外语吗？这可能需要较长时间。')) return;
+        
+        const btn = event.target;
+        btn.disabled = true; btn.innerText = '正在全量翻译，请勿关闭页面...';
+        
+        try {
+            const res = await fetch(`${API}/api/admin/videos/translate`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                body: JSON.stringify({ apiKey: key, videoId: null }) 
+            });
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
+            alert(data.message || '全部翻译完成');
+            loadVideoManage();
+        } catch(e) {
+            alert('翻译失败: ' + e.message);
+        } finally {
+            btn.disabled = false; btn.innerText = '🌍 一键翻译全部语言';
+        }
+    }
+
     async function uploadVideoBatch() {
         const files = document.getElementById('up-file').files; if(files.length === 0) return alert('请选择视频');
         const baseName = document.getElementById('up-name').value.trim(); const category = document.getElementById('up-cat').value;
