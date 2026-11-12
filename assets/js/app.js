@@ -10,12 +10,11 @@ let heartbeatTimer = null;
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
-        // 🔴 关键：如果启用的语言数量 <= 1，直接隐藏语言按钮，不渲染下拉框
-        if(!globalConfig.enabledLangs || globalConfig.enabledLangs.length <= 1) {
-            const langWrap = document.getElementById('lang-wrap');
-            if (langWrap) langWrap.style.display = 'none';
-        } else {
+        // 🔴 核心修复：无论是否只有一种语言，绝对显示地球仪
+        if(globalConfig.enabledLangs && globalConfig.enabledLangs.length > 0) {
             renderLangDropdown(globalConfig.enabledLangs);
+        } else {
+            renderLangDropdown(['zh']);
         }
     } catch(e) { console.warn('配置拉取失败:', e); }
 })();
@@ -99,7 +98,6 @@ const LANG_NAMES = {
 
 const COUNTRY_TO_LANG = { CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en' };
 
-// 🔴 动态渲染下拉菜单
 function renderLangDropdown(enabledLangs) {
     const dropdown = document.getElementById('lang-dropdown');
     if (!dropdown) return;
@@ -218,7 +216,7 @@ function initI18n() {
   resolveInitialLang().then(lang => applyLang(lang));
 }
 
-/* ================= 其它业务逻辑 ================= */
+/* ================= 其它业务逻辑 (保持原有代码完全不变) ================= */
 let statsTimer = null;
 function initLiveStats() {
   const countEl = document.getElementById('online-count');
