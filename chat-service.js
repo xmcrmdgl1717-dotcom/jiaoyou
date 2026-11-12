@@ -15,51 +15,54 @@
 
             console.log('[客服系统] 配置读取成功:', { hasTg, hasWa, livechatId });
 
-            // 如果没有配置任何客服，直接返回
             if (!hasTg && !hasWa && !livechatId) {
                 console.log('[客服系统] 未配置任何客服');
                 return;
             }
 
-            // 2. 注入 LiveChat (如果配置了)
+            // 2. 注入 LiveChat
             if (livechatId) {
                 window.__lc = window.__lc || {};
-                
-                // 🔴 核心修复：兼容新版 UUID 和旧版纯数字
                 if (isNaN(Number(livechatId))) {
-                    // 如果是新版 UUID (比如包含横杠的字符串)
                     window.__lc.organizationId = livechatId;
                     window.__lc.integration_name = "manual_onboarding";
                     window.__lc.product_name = "text";
                 } else {
-                    // 如果是旧版纯数字
                     window.__lc.license = Number(livechatId);
                     window.__lc.integration_name = "manual_channels";
                     window.__lc.product_name = "livechat";
                 }
-
-                // 加载 LiveChat 官方脚本
                 ;(function(n,t,c){
                     function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}
                     var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0;n.type="text/javascript";n.src="https://cdn.livechatinc.com/tracking.js";t.head.appendChild(n)}};
                     !n.__lc.asyncInit&&e.init();
                     n.LiveChatWidget=n.LiveChatWidget||e;
                 }(window,document,[].slice));
-                
                 console.log('[客服系统] LiveChat 脚本已注入');
             }
 
-            // 3. 修复 TG 和 WA 的链接格式
-            let tgUrl = config.contact_tg;
-            if (tgUrl && !tgUrl.startsWith('http')) {
-                tgUrl = 'https://t.me/' + tgUrl.replace('@', '');
-            }
-            let waUrl = config.contact_wa;
-            if (waUrl && !waUrl.startsWith('http')) {
-                waUrl = 'https://wa.me/' + waUrl;
+            // 3. 核心修复：处理 TG 和 WA 的链接格式
+            let tgUrl = '';
+            if (config.contact_tg) {
+                let rawTg = String(config.contact_tg).trim();
+                if (rawTg.startsWith('http')) {
+                    tgUrl = rawTg;
+                } else {
+                    tgUrl = 'https://t.me/' + rawTg.replace('@', '');
+                }
             }
 
-            // 4. 渲染点击联系时的选择弹窗
+            let waUrl = '';
+            if (config.contact_wa) {
+                let rawWa = String(config.contact_wa).trim();
+                if (rawWa.startsWith('http')) {
+                    waUrl = rawWa;
+                } else {
+                    waUrl = 'https://wa.me/' + rawWa;
+                }
+            }
+
+            // 4. 渲染选择弹窗
             const modalHtml = `
                 <div id="custom-service-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:none;justify-content:center;align-items:center;backdrop-filter:blur(4px);">
                     <div style="background:#fff;width:90%;max-width:320px;border-radius:16px;padding:24px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
@@ -77,10 +80,25 @@
 
             // 暴露全局函数
             window.openServiceModal = function() {
+                // 如果只有一种客服，直接跳转/唤起
                 if (livechatId && !hasTg && !hasWa) {
                     if (window.LiveChatWidget) window.LiveChatWidget('maximize');
                     return;
                 }
+                if (!livechatId && hasTg && !hasWa) {
+                    window.open(tgUrl, '_blank');
+                    return;
+                }
+                if (!livechatId && !hasTg && hasWa) {
+                    window.open(waUrl, '_blank');
+                    return;
+                }
+                // 如果都没配
+                if (!livechatId && !hasTg && !hasWa) {
+                    alert('客服暂未上线');
+                    return;
+                }
+                // 如果配了多个，弹出选择框
                 document.getElementById('custom-service-modal').style.display = 'flex';
             };
         })
