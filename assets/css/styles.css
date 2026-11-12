@@ -12,7 +12,10 @@ html,body{
 }
 body{display:flex;justify-content:center;padding:0 0 34px}
 .page{max-width:940px;width:100%;padding:14px 14px 0}
-a{text-decoration:none;color:inherit}
+a{text-decoration:none;color:inherit; cursor:pointer; transition: opacity 0.2s;}
+a:active { opacity: 0.6; }
+button { cursor:pointer; transition: transform 0.1s, opacity 0.2s; }
+button:active { transform: scale(0.96); opacity: 0.8; }
 
 /* ---------- Shared text gradients ---------- */
 .g-pink{background:linear-gradient(90deg,#ff3d8b,#ff8ec9);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -76,7 +79,7 @@ a{text-decoration:none;color:inherit}
   white-space: nowrap;
   transition: background 0.2s;
 }
-.lang-option:hover {
+.lang-option:hover, .lang-option:active {
   background: #fdf2f7;
 }
 
@@ -323,9 +326,9 @@ a{text-decoration:none;color:inherit}
 }
 
 /* ===== 模块D Registration modal ===== */
-.modal-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(40,25,55,.5)}
+.modal-overlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(40,25,55,.5); backdrop-filter: blur(4px);}
 .modal-overlay[hidden]{display:none}
-.modal-dialog{position:relative;width:100%;max-width:400px;max-height:calc(100vh - 36px);overflow-y:auto;background:#fff;border-radius:18px;padding:26px 24px 22px;box-shadow:0 30px 70px rgba(60,20,60,.35)}
+.modal-dialog{position:relative;width:100%;max-width:400px;max-height:calc(100vh - 36px);overflow-y:auto;background:#fff;border-radius:18px;padding:26px 24px 22px;box-shadow:0 30px 70px rgba(60,20,60,.35); z-index: 1000000;}
 @supports (height: 100dvh){
   .modal-dialog{max-height:calc(100dvh - 36px)}
 }
@@ -334,8 +337,8 @@ a{text-decoration:none;color:inherit}
 .modal-view h2{font-size:17px;font-weight:800;color:#1f2551;margin-bottom:14px}
 .modal-field{display:block;margin-bottom:12px}
 .modal-field>span{display:block;font-size:12px;font-weight:700;color:#3a3f5f;margin-bottom:5px}
-.modal-field input{width:100%;border:1px solid #e3e0ec;border-radius:10px;padding:10px 12px;font:inherit;outline:none}
-.modal-field input:focus-visible{border-color:#ff5c9d;box-shadow:0 0 0 3px rgba(255,92,157,.18)}
+.modal-field input{width:100%;border:1px solid #e3e0ec;border-radius:10px;padding:10px 12px;font:inherit;outline:none; transition: all 0.2s;}
+.modal-field input:focus {border-color:#ff5c9d;box-shadow:0 0 0 3px rgba(255,92,157,.18)}
 .modal-field small{display:block;font-size:10px;color:#a7abbd;margin-top:4px}
 .modal-agree{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:#5b5f7e;margin:6px 0 16px}
 .modal-agree a{color:#ff3d8b;text-decoration:underline}
@@ -373,6 +376,12 @@ body.modal-open{overflow:hidden}
   background: linear-gradient(90deg, #ff9a4d, #ff4d94);
   color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
   font-size: 15px; font-weight: bold; cursor: pointer;
+}
+#video-limit-overlay input, #video-limit-overlay select {
+  border: 1px solid #555; background: #222; color: #fff;
+}
+#video-limit-overlay input:focus, #video-limit-overlay select:focus {
+  border-color: #ff6b9d; outline: none;
 }
 
 @media (max-width:560px){.modal-dialog{max-width:none;border-radius:14px;padding:20px 16px 16px}}
