@@ -7,6 +7,9 @@
 <link rel="stylesheet" href="assets/css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
+  /* 🔴 核心修复：初始隐藏页面，防止中文闪烁 */
+  html { visibility: hidden; background: #fbe6ef; }
+
   /* 🔴 修复语言下拉层级遮挡 */
   .hero-wrap { position: relative; z-index: 999; }
   .nav { position: relative; z-index: 1000; background: #fff; border-radius: 20px 20px 0 0; }
