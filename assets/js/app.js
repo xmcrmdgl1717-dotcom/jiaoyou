@@ -2,15 +2,16 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '' };
+let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '', enabledLangs: ['zh', 'en'] };
 let currentVisitId = '';
-let heartbeatTimer = null; // 🔴 心跳定时器
+let heartbeatTimer = null; 
 
 // 提前获取配置（防止部分逻辑依赖）
 (async function initEarlyConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
+        if(globalConfig.enabledLangs) renderLangDropdown(globalConfig.enabledLangs);
     } catch(e) { console.warn('配置拉取失败:', e); }
 })();
 
@@ -25,37 +26,31 @@ async function trackVisit() {
         if(data.visitId) {
             currentVisitId = data.visitId;
             sessionStorage.setItem('hiya_visit_id', data.visitId);
-            startHeartbeat(); // 🔴 开启心跳
+            startHeartbeat(); 
         }
     } catch(e) { console.warn('访客记录失败', e); }
 }
 
-// 🔴 新增：心跳机制与离开信标
 function startHeartbeat() {
     if (heartbeatTimer) clearInterval(heartbeatTimer);
-    
-    // 每 10 秒给后端发一次 ping
     heartbeatTimer = setInterval(() => {
         const vid = currentVisitId || sessionStorage.getItem('hiya_visit_id');
         if (!vid) return;
         fetch(`${API_BASE_URL}/api/visit/ping`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ visitId: vid })
         }).catch(() => {});
     }, 10000);
 
-    // 关闭页面时发送离开通知
     window.addEventListener('beforeunload', () => {
         const vid = currentVisitId || sessionStorage.getItem('hiya_visit_id');
         if (!vid) return;
-        // 使用 sendBeacon，即使页面关闭也能确保发出去
         const blob = new Blob([JSON.stringify({ visitId: vid })], { type: 'application/json' });
         navigator.sendBeacon(`${API_BASE_URL}/api/visit/leave`, blob);
     });
 }
 
-/* ================= 导航菜单修复与登录拦截 ================= */
+/* ================= 导航与侧边栏逻辑 ================= */
 function initNavToggle() {
   const btn = document.querySelector('[data-nav-toggle]');
   const links = document.querySelector('.nav-links');
@@ -89,9 +84,34 @@ const RTL = new Set(['ar']);
 const LS_KEY = 'hiya_lang';
 const dictCache = new Map();      
 let enDict = null;                
+
+const LANG_NAMES = {
+    'zh': '🇨🇳 中文', 'en': '🇺🇸 English', 'vn': '🇻🇳 Tiếng Việt', 
+    'es': '🇪🇸 Español', 'tr': '🇹🇷 Türkçe', 'id': '🇮🇩 Bahasa Indonesia',
+    'ja': '🇯🇵 日本語', 'ko': '🇰🇷 한국어', 'fr': '🇫🇷 Français', 'de': '🇩🇪 Deutsch',
+    'ru': '🇷🇺 Русский', 'pt': '🇵🇹 Português', 'it': '🇮🇹 Italiano', 'ar': '🇸🇦 العربية', 'th': '🇹🇭 ไทย'
+};
+
 const COUNTRY_TO_LANG = { CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en' };
 
+// 🔴 动态渲染下拉菜单
+function renderLangDropdown(enabledLangs) {
+    const dropdown = document.getElementById('lang-dropdown');
+    if (!dropdown) return;
+    dropdown.innerHTML = enabledLangs.map(lang => {
+        return `<div class="lang-option" data-lang="${lang}">${LANG_NAMES[lang] || lang}</div>`;
+    }).join('');
+    initLangSelector();
+}
+
+// 🔴 核心修复：按照要求的顺序判断语言（本地 -> IP -> 设备 -> 英语）
 async function resolveInitialLang() {
+  // 1. 优先手动选择（本地存储）
+  let saved = null;
+  try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
+  if (saved && SUPPORTED.includes(saved)) return saved;
+
+  // 2. 免费接口 IP 识别
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const ipData = await ipRes.json();
@@ -101,14 +121,15 @@ async function resolveInitialLang() {
       if (SUPPORTED.includes(mappedLang)) return mappedLang;
     }
   } catch (e) {}
+
+  // 3. 设备语言
   const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
     if (SUPPORTED.includes(base)) return base;
   }
-  let saved = null;
-  try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-  if (saved && SUPPORTED.includes(saved)) return saved;
+
+  // 4. 兜底英语
   return 'en';
 }
 
@@ -162,13 +183,24 @@ function initLangSelector() {
   const langBtn = document.getElementById('lang-btn');
   const langDropdown = document.getElementById('lang-dropdown');
   if (!langBtn || !langDropdown) return;
-  langBtn.addEventListener('click', (e) => {
+  
+  // 避免重复绑定
+  const newLangBtn = langBtn.cloneNode(true);
+  langBtn.parentNode.replaceChild(newLangBtn, langBtn);
+
+  newLangBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
   });
-  document.addEventListener('click', () => {
-    if (langDropdown) langDropdown.style.display = 'none';
-  });
+  
+  // 确保 document 的点击事件只绑定一次
+  if (!window._langDocClickBound) {
+      document.addEventListener('click', () => {
+        if (langDropdown) langDropdown.style.display = 'none';
+      });
+      window._langDocClickBound = true;
+  }
+
   langDropdown.querySelectorAll('.lang-option').forEach(opt => {
     opt.addEventListener('click', () => {
       applyLang(opt.dataset.lang);
@@ -178,11 +210,10 @@ function initLangSelector() {
 }
 
 function initI18n() {
-  initLangSelector();
   resolveInitialLang().then(lang => applyLang(lang));
 }
 
-/* ================= 实时在线动态模拟 ================= */
+/* ================= 其它业务逻辑 ================= */
 let statsTimer = null;
 function initLiveStats() {
   const countEl = document.getElementById('online-count');
@@ -227,7 +258,6 @@ function initLiveStats() {
   }, 2000);
 }
 
-/* ================= 其它业务逻辑 ================= */
 function parsePlayUrl(urlStr) {
   if (!urlStr) return '';
   if (urlStr.includes('$')) {
@@ -322,7 +352,7 @@ function renderAuthArea() {
           <span style="font-size:13px;font-weight:600;">${user.name}</span>
         </div>
         <div id="user-dropdown" style="display:none;position:absolute;top:110%;right:0;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);padding:8px;min-width:120px;z-index:50;">
-          <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;">🚪 退出登录</a>
+          <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;" data-i18n="btn.logout">🚪 退出登录</a>
         </div>
       </div>
     `;
@@ -333,6 +363,13 @@ function renderAuthArea() {
     document.getElementById('logout-btn').onclick = (e) => {
       e.preventDefault(); localStorage.removeItem('hiya_user'); window.location.reload();
     };
+    
+    // 应用翻译
+    const lang = document.documentElement.lang || 'zh';
+    const dict = dictCache.get(lang) || enDict || {};
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn) { const v = translate(dict, 'btn.logout'); if(v) logoutBtn.textContent = v; }
+
   } else {
     authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>`;
     const lang = document.documentElement.lang || 'zh';
