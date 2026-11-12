@@ -52,13 +52,9 @@
       </div>
       <button class="nav-toggle" type="button" aria-label="菜单" aria-expanded="false" data-nav-toggle>☰</button>
       <div class="nav-links">
-        <a class="active" data-i18n="nav.home">首页</a>
-        <a data-i18n="nav.live" data-register role="button" tabindex="0">直播</a>
-        <a data-i18n="nav.drama" data-register role="button" tabindex="0">AI剧场</a>
-        <a data-i18n="nav.rank" data-register role="button" tabindex="0">排行榜</a>
-        <a data-i18n="nav.community" data-register role="button" tabindex="0">社区</a>
-        <a data-i18n="nav.benefits" data-register role="button" tabindex="0">福利中心</a>
-        <a data-i18n="nav.more">更多</a>
+        <a class="active" data-i18n="nav.home" href="index.html">首页</a>
+        <a data-i18n="nav.live" href="live.html" class="nav-page-link">直播</a>
+        <a data-i18n="nav.drama" href="shorts.html" class="nav-page-link">AI剧场</a>
       </div>
       <div class="lang-wrap" id="lang-wrap">
         <button class="lang-btn" id="lang-btn" type="button" aria-label="Language">🌐</button>
@@ -77,7 +73,7 @@
     </div>
   </div>
 
-  <!-- 2. 免费精选 (新增) -->
+  <!-- 2. 免费精选 -->
   <div class="sec-head">
     <div class="st" data-i18n="free.title">🎁 免费精选</div>
     <a class="more" href="free.html" data-i18n="free.more" style="text-decoration:none; cursor:pointer;">全部免费 ›</a>
@@ -234,36 +230,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="customer-modal" hidden style="display:none;">
-  <div class="modal-dialog" role="dialog" aria-modal="true" style="background: #111; color: #fff; overflow: hidden; padding: 0; max-width: 380px; width: 90%;">
-    <button class="modal-close" type="button" data-customer-close aria-label="关闭" style="position: absolute; top: 12px; right: 14px; z-index: 10; color: #fff; font-size: 20px; background: rgba(0,0,0,0.4); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">×</button>
-    <div style="position: relative; height: 340px; background: url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;">
-      <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, #111 100%);"></div>
-      <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
-        <h3 style="font-size: 22px; font-weight: 900; margin: 0 0 6px; color: #fff; letter-spacing: 1px;" data-i18n="customer.title">深夜同城 专属1V1</h3>
-        <p style="font-size: 13px; color: #ff6b9d; margin: 0; font-weight: 700;" data-i18n="customer.desc">发现附近刚刚上线的心动女孩</p>
-      </div>
-    </div>
-    <div style="padding: 20px 24px 28px; text-align: center;">
-      <div id="customer-countdown-area">
-        <p style="font-size: 14px; color: #ff6b9d; margin: 0 0 8px;" data-i18n="customer.matching">正在为你匹配同城高颜值空姐/学生…</p>
-        <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite;"></span>
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.2s;"></span>
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b9d; animation: pulse 1s infinite 0.4s;"></span>
-        </div>
-        <div style="font-size: 42px; font-weight: 900; color: #ff6b9d; line-height: 1;" id="customer-timer">15</div>
-        <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 6px 0 0;" data-i18n="customer.seconds">秒后为你揭晓神秘联系方式</p>
-      </div>
-      <div id="customer-result-area" style="display: none;">
-        <p style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 6px;" data-i18n="customer.success">匹配成功！🎉</p>
-        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0 0 16px;" data-i18n="customer.tip">添加 Telegram 专属客服，获取同城资源</p>
-        <a id="customer-tg-link" href="https://t.me/yourusername" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(90deg, #ff6b9d, #ff3d8b); color: #fff; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 30px; text-decoration: none; box-shadow: 0 8px 24px rgba(255,107,157,0.4);" data-i18n="customer.btn">添加 Telegram 客服</a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- 播放器弹窗 -->
 <div class="modal-overlay" id="video-player-modal" hidden style="display:none; background: rgba(0,0,0,0.92); z-index: 200;">
   <div style="position: relative; width: 100%; max-width: 480px; height: 90vh; max-height: 750px; margin: auto; background: #000; border-radius: 16px; overflow: hidden;">
@@ -285,16 +251,9 @@
     <div id="video-limit-overlay"></div>
   </div>
 </div>
-<!-- Start of Text (www.text.com) code -->
-<script>
-    window.__lc = window.__lc || {};
-    window.__lc.organizationId = "37120f28-104b-4500-86f1-72857b3a1d28";
-    window.__lc.integration_name = "manual_onboarding";
-    window.__lc.product_name = "text";
-    ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
-</script>
-<noscript><a href="https://www.text.com/chat-with-ai-agent/37120f28-104b-4500-86f1-72857b3a1d28/" rel="nofollow">Chat with AI Agent</a>, powered by <a href="https://www.text.com/" rel="noopener nofollow" target="_blank">Text</a></noscript>
-<!-- End of Text code -->
+
+<!-- 🔴 引入公共的客服系统脚本（维护只需改这一个文件） -->
+<script src="chat-service.js"></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
