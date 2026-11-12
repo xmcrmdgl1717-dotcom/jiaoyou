@@ -2,7 +2,7 @@
 
 /* ================= 核心配置 ================= */
 const API_BASE_URL = 'https://jiaoyouweb.onrender.com'; 
-let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '', enabledLangs: ['zh', 'en'] };
+let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: '', livechat_license: '', contact_tg: '', contact_wa: '', enabledLangs: ['zh'] };
 let currentVisitId = '';
 let heartbeatTimer = null; 
 
@@ -10,8 +10,13 @@ let heartbeatTimer = null;
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
-        // 🔴 只要拿到配置，立刻渲染语言下拉框
-        if(globalConfig.enabledLangs) renderLangDropdown(globalConfig.enabledLangs);
+        // 🔴 关键：如果启用的语言数量 <= 1，直接隐藏语言按钮，不渲染下拉框
+        if(!globalConfig.enabledLangs || globalConfig.enabledLangs.length <= 1) {
+            const langWrap = document.getElementById('lang-wrap');
+            if (langWrap) langWrap.style.display = 'none';
+        } else {
+            renderLangDropdown(globalConfig.enabledLangs);
+        }
     } catch(e) { console.warn('配置拉取失败:', e); }
 })();
 
@@ -94,7 +99,7 @@ const LANG_NAMES = {
 
 const COUNTRY_TO_LANG = { CN: 'zh', TW: 'zh', HK: 'zh', MO: 'zh', VN: 'vn', ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es', CL: 'es', TR: 'tr', ID: 'id', US: 'en', GB: 'en', AU: 'en', CA: 'en' };
 
-// 🔴 核心修复：先清空，再根据后台配置的 langs 渲染
+// 🔴 动态渲染下拉菜单
 function renderLangDropdown(enabledLangs) {
     const dropdown = document.getElementById('lang-dropdown');
     if (!dropdown) return;
@@ -113,7 +118,7 @@ function renderLangDropdown(enabledLangs) {
 async function resolveInitialLang() {
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-  if (saved && SUPPORTED.includes(saved)) return saved;
+  if (saved && SUPPORTED.includes(saved) && globalConfig.enabledLangs.includes(saved)) return saved;
 
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
@@ -121,16 +126,16 @@ async function resolveInitialLang() {
     const countryCode = ipData.country_code; 
     if (countryCode && COUNTRY_TO_LANG[countryCode]) {
       const mappedLang = COUNTRY_TO_LANG[countryCode];
-      if (SUPPORTED.includes(mappedLang)) return mappedLang;
+      if (globalConfig.enabledLangs.includes(mappedLang)) return mappedLang;
     }
   } catch (e) {}
 
   const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
-    if (SUPPORTED.includes(base)) return base;
+    if (globalConfig.enabledLangs.includes(base)) return base;
   }
-  return 'en';
+  return 'zh';
 }
 
 async function loadDict(lang) {
@@ -151,10 +156,10 @@ function translate(dict, key) {
 }
 
 async function applyLang(lang) {
-  if (!SUPPORTED.includes(lang)) lang = 'en';
+  if (!SUPPORTED.includes(lang)) lang = 'zh';
   if (!enDict) { try { enDict = await loadDict('en'); } catch (e) { enDict = {}; } }
   let dict = await loadDict(lang);
-  if (!dict) { dict = enDict; lang = 'en'; } 
+  if (!dict) { dict = enDict; lang = 'zh'; } 
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n'));
@@ -176,7 +181,7 @@ async function applyLang(lang) {
 
   if (window.initLiveStats) window.initLiveStats(); 
   const titleMap = { zh: '嗨呀直播', en: 'Hiya Live', vn: 'Hiya Live', es: 'Hiya Live', tr: 'Hiya Live', id: 'Hiya Live' };
-  document.title = titleMap[lang] || titleMap.en;
+  document.title = titleMap[lang] || titleMap.zh;
   
   renderAuthArea();
 }
@@ -401,7 +406,6 @@ function openRegisterModal() {
   const overlay = document.getElementById('register-modal');
   if (!overlay) return;
   
-  // 关闭语言下拉框，防止遮挡
   const langDropdown = document.getElementById('lang-dropdown');
   if(langDropdown) langDropdown.style.display = 'none';
 
