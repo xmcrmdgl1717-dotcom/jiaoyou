@@ -44,7 +44,7 @@ if (!fs.existsSync(SETTINGS_FILE)) writeJSON(SETTINGS_FILE, {
     freeConfig: { previewLimit: null, regLimit: null, unlockPrice: null },
     enabledLangs: ['zh', 'en'],
     adminPassword: 'admin888',
-    livechat_license: '', // 兼容新旧版，统一叫 LiveChat ID
+    livechat_license: '', 
     contact_tg: '',       
     contact_wa: ''        
 });
@@ -147,6 +147,36 @@ app.post('/api/visit', (req, res) => {
     visits.unshift(newVisit);
     writeJSON(VISITS_FILE, visits);
     res.json({ visitId: newVisit.id });
+});
+
+// 🔴 新增：心跳接口，持续更新最后活跃时间
+app.post('/api/visit/ping', (req, res) => {
+    const { visitId } = req.body;
+    if (!visitId) return res.json({ success: false });
+    let visits = readJSON(VISITS_FILE, []);
+    let visit = visits.find(v => v.id === visitId);
+    if (visit) {
+        visit.lastActive = Date.now();
+        if (visit.status !== 'paid' && visit.status !== 'rejected' && visit.status !== 'pending') {
+            visit.status = 'visiting'; 
+        }
+        writeJSON(VISITS_FILE, visits);
+    }
+    res.json({ success: true });
+});
+
+// 🔴 新增：离开接口，准确记录离开时间
+app.post('/api/visit/leave', (req, res) => {
+    const { visitId } = req.body;
+    if (!visitId) return res.json({ success: false });
+    let visits = readJSON(VISITS_FILE, []);
+    let visit = visits.find(v => v.id === visitId);
+    if (visit) {
+        visit.lastActive = Date.now();
+        visit.leaveTime = Date.now();
+        writeJSON(VISITS_FILE, visits);
+    }
+    res.json({ success: true });
 });
 
 // ================= 前台公共接口 =================
@@ -330,7 +360,7 @@ app.post('/api/admin/translate-all', authMiddleware, async (req, res) => {
     res.json({ success: true, message: `翻译完成！成功: ${successList.join(', ') || '无'}。失败: ${failList.join(', ') || '无'}` });
 });
 
-// ================= 后台：视频分类/采集/上传/用户 =================
+// ================= 后台：分类/采集/上传/用户 =================
 app.get('/api/admin/categories', authMiddleware, (req, res) => res.json(readJSON(CATEGORIES_FILE, [])));
 app.post('/api/admin/categories', authMiddleware, (req, res) => {
     let cats = readJSON(CATEGORIES_FILE, []);
@@ -566,14 +596,29 @@ app.delete('/api/admin/visits/:id', authMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
+// ================= 后台：汇总看板数据 =================
 app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
-    const visits = readJSON(VISITS_FILE, []);
+    let visits = readJSON(VISITS_FILE, []);
     const orders = readJSON(ORDERS_FILE, []);
-    
+    const now = Date.now();
+    let changed = false;
+
+    // 自动判断离线：如果最后活跃时间超过 20 秒，且没有标记离开时间，则自动标记离开
+    visits = visits.map(v => {
+        if (!v.leaveTime && (now - v.lastActive > 20000)) {
+            v.leaveTime = v.lastActive;
+            if (v.status === 'visiting') v.status = 'left'; // 状态设为 left
+            changed = true;
+        }
+        return v;
+    });
+    if (changed) writeJSON(VISITS_FILE, visits);
+
+    // 重新统计
     let stats = {
         total: visits.length,
         visiting: visits.filter(v => v.status === 'visiting').length,
-        noSubmit: visits.filter(v => v.status === 'visiting' || v.status === 'registered').length,
+        noSubmit: visits.filter(v => v.status === 'visiting' || v.status === 'registered' || v.status === 'left').length,
         deviceApple: visits.filter(v => v.device === '苹果').length,
         deviceAndroid: visits.filter(v => v.device === '安卓').length,
         deviceDesktop: visits.filter(v => v.device === '桌面').length,
@@ -584,8 +629,18 @@ app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
 
     const mergedList = visits.map(v => {
         const relatedOrder = orders.find(o => o.visitId === v.id && o.status === 'pending');
+        
+        // 准确计算停留时长
+        let duration = 0;
+        if (v.leaveTime) {
+            duration = v.leaveTime - v.enterTime;
+        } else {
+            duration = now - v.enterTime;
+        }
+
         return {
             ...v,
+            duration,
             orderId: relatedOrder ? relatedOrder.id : null,
             orderAmount: relatedOrder ? relatedOrder.amount : null
         };
