@@ -6,7 +6,6 @@
 <title>嗨呀直播 · 免费精选</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
-  /* 🔴 核心修复：初始隐藏页面，防止中文闪烁 */
   html { visibility: hidden; background: #ffffff; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #ffffff; font-family: -apple-system, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
@@ -74,7 +73,6 @@
   let pageDict = {};
   let enabledLangs = ['zh'];
 
-  // 🔴 先拉取配置（含 enabledLangs），再决定语言
   async function fetchConfig() {
     try {
       const res = await fetch(`${API_BASE}/api/config`);
@@ -84,16 +82,12 @@
       currentConfig.regLimit = data.freeConfig?.regLimit ?? null;
       currentConfig.price = data.freeConfig?.unlockPrice ?? null;
       currentConfig.trc20 = data.trc20 || '';
-    } catch(e) {
-      enabledLangs = ['zh'];
-    }
+    } catch(e) { enabledLangs = ['zh']; }
   }
 
   async function initPageLang() {
-      // 1. 优先使用 localStorage 中记录的语言（需在启用列表内）
       let lang = localStorage.getItem('hiya_lang');
       if (!lang || !enabledLangs.includes(lang)) {
-          // 2. 浏览器语言兜底
           const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
           let found = false;
           for (const tag of cands) {
@@ -103,14 +97,12 @@
           if (!found) lang = enabledLangs[0] || 'zh';
       }
 
-      // 3. 本地缓存优先
       let dict = null;
       try {
           const cached = localStorage.getItem('hiya_dict_' + lang);
           if (cached) dict = JSON.parse(cached);
       } catch(e) {}
 
-      // 4. 网络拉取
       if (!dict || Object.keys(dict).length === 0) {
           try {
               const res = await fetch(`${API_BASE}/api/i18n/${lang}`);
@@ -121,7 +113,6 @@
           } catch (e) {}
       }
 
-      // 5. 兜底到中文
       if (!dict || Object.keys(dict).length === 0) {
           lang = 'zh';
           try {
@@ -141,7 +132,6 @@
 
       pageDict = dict || {};
 
-      // 6. 应用翻译
       document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (pageDict[key]) el.textContent = pageDict[key];
@@ -151,10 +141,18 @@
       document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
       try { localStorage.setItem('hiya_lang', lang); } catch(e) {}
 
-      // 7. 🔴 关键：全部准备完毕后再显示页面
       document.documentElement.style.visibility = 'visible';
   }
   const t = (key, fallback) => pageDict[key] || fallback;
+
+  // 🔴 视频多语言提取
+  function getVideoText(video, field) {
+      const currentLang = localStorage.getItem('hiya_lang') || 'zh';
+      if (video.translations && video.translations[currentLang] && video.translations[currentLang][field]) {
+          return video.translations[currentLang][field];
+      }
+      return video[field];
+  }
 
   function isVideoPurchased(vid) { return JSON.parse(localStorage.getItem('purchased_videos') || '[]').includes(vid); }
   function markVideoPurchased(vid) {
@@ -171,7 +169,11 @@
   function createCard(video) {
     const src = parseUrl(video.playUrl);
     const pic = video.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
-    const title = video.name.length > 20 ? video.name.substring(0, 20) + '...' : video.name;
+    
+    const vName = getVideoText(video, 'name'); 
+    const vCat = getVideoText(video, 'category');
+
+    const title = vName.length > 20 ? vName.substring(0, 20) + '...' : vName;
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
@@ -179,10 +181,10 @@
       <span class="live-tag">FREE</span>
       <div class="card-info">
         <div class="card-title">${title}</div>
-        <div class="card-meta"><span>📍 ${video.category || '免费'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
+        <div class="card-meta"><span>📍 ${vCat || '免费'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
       </div>
     `;
-    div.onclick = () => openPlayer(video.id, src, video.name);
+    div.onclick = () => openPlayer(video.id, src, vName);
     return div;
   }
 
@@ -201,8 +203,8 @@
   }
 
   async function init() {
-    await fetchConfig();      // 先配置
-    await initPageLang();     // 再语言（完成后显示页面）
+    await fetchConfig();      
+    await initPageLang();     
     try {
       const res = await fetch(`${API_BASE}/api/videos/free`);
       allVideos = await res.json();
@@ -375,7 +377,9 @@
     timePrice.innerText = "";
     progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
     const cardData = allVideos.find(v => v.id === currentVideoId);
-    if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
+    if(cardData) {
+        openPlayer(currentVideoId, parseUrl(cardData.playUrl), getVideoText(cardData, 'name'));
+    }
   }
 
   document.getElementById('close-btn').onclick = () => {
