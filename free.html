@@ -6,6 +6,8 @@
 <title>嗨呀直播 · 免费精选</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
+  /* 🔴 核心修复：初始隐藏页面，防止中文闪烁 */
+  html { visibility: hidden; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #ffffff; font-family: -apple-system, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
   .header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0f0f0; }
@@ -69,7 +71,6 @@
   let currentVideoId = null;
   let currentVideoName = '';
   
-  // 🔴 新增：内页轻量级多语言字典
   let pageDict = {};
   
   async function initPageLang() {
@@ -81,7 +82,12 @@
               const key = el.getAttribute('data-i18n');
               if (pageDict[key]) el.textContent = pageDict[key];
           });
-      } catch (e) {}
+      } catch (e) {
+          console.warn("字典加载失败，使用默认语言");
+      } finally {
+          // 🔴 核心修复：无论如何，翻译完或失败后，立即显示页面
+          document.documentElement.style.visibility = 'visible';
+      }
   }
   const t = (key, fallback) => pageDict[key] || fallback;
 
