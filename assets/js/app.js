@@ -6,11 +6,23 @@ let globalConfig = { hotConfig: {}, recommendConfig: {}, freeConfig: {}, trc20: 
 let currentVisitId = '';
 let heartbeatTimer = null; 
 
-(async function initEarlyConfig() {
+// 🔴 字典本地缓存前缀
+const CACHE_PREFIX = 'hiya_dict_';
+function getCachedDict(lang) {
+    try {
+        const cached = localStorage.getItem(CACHE_PREFIX + lang);
+        return cached ? JSON.parse(cached) : null;
+    } catch (e) { return null; }
+}
+function cacheDict(lang, dict) {
+    try { localStorage.setItem(CACHE_PREFIX + lang, JSON.stringify(dict)); } catch (e) {}
+}
+
+// 🔴 可等待的配置 Promise，供 resolveInitialLang / initI18n 使用
+window._configPromise = (async function initEarlyConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/config`);
         globalConfig = await res.json();
-        // 🔴 核心修复：无论是否只有一种语言，绝对显示地球仪
         if(globalConfig.enabledLangs && globalConfig.enabledLangs.length > 0) {
             renderLangDropdown(globalConfig.enabledLangs);
         } else {
@@ -114,9 +126,19 @@ function renderLangDropdown(enabledLangs) {
 }
 
 async function resolveInitialLang() {
+  // 🔴 关键：等待配置加载完成，才能知道 enabledLangs
+  if (window._configPromise) {
+    try { await window._configPromise; } catch(e) {}
+  }
+
   let saved = null;
   try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-  if (saved && SUPPORTED.includes(saved) && globalConfig.enabledLangs.includes(saved)) return saved;
+
+  const enabled = (globalConfig && Array.isArray(globalConfig.enabledLangs) && globalConfig.enabledLangs.length > 0)
+                  ? globalConfig.enabledLangs
+                  : ['zh'];
+
+  if (saved && SUPPORTED.includes(saved) && enabled.includes(saved)) return saved;
 
   try {
     const ipRes = await fetch('https://ipapi.co/json/', { timeout: 3000 });
@@ -124,16 +146,16 @@ async function resolveInitialLang() {
     const countryCode = ipData.country_code; 
     if (countryCode && COUNTRY_TO_LANG[countryCode]) {
       const mappedLang = COUNTRY_TO_LANG[countryCode];
-      if (globalConfig.enabledLangs.includes(mappedLang)) return mappedLang;
+      if (enabled.includes(mappedLang)) return mappedLang;
     }
   } catch (e) {}
 
   const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
   for (const tag of cands) {
     const base = String(tag).toLowerCase().split('-')[0];
-    if (globalConfig.enabledLangs.includes(base)) return base;
+    if (enabled.includes(base)) return base;
   }
-  return 'zh';
+  return enabled[0] || 'zh';
 }
 
 async function loadDict(lang) {
@@ -155,9 +177,37 @@ function translate(dict, key) {
 
 async function applyLang(lang) {
   if (!SUPPORTED.includes(lang)) lang = 'zh';
-  if (!enDict) { try { enDict = await loadDict('en'); } catch (e) { enDict = {}; } }
-  let dict = await loadDict(lang);
-  if (!dict) { dict = enDict; lang = 'zh'; } 
+
+  // 🔴 优先使用本地缓存，秒出翻译
+  let dict = getCachedDict(lang);
+  if (!dict || Object.keys(dict).length === 0) {
+    dict = await loadDict(lang);
+    if (dict) cacheDict(lang, dict);
+  }
+
+  // 兜底策略：先英文再中文
+  if (!dict || Object.keys(dict).length === 0) {
+    if (!enDict) {
+      enDict = getCachedDict('en') || await loadDict('en');
+      if (enDict) cacheDict('en', enDict);
+    }
+    if (!enDict || Object.keys(enDict).length === 0) {
+      const zhFallback = getCachedDict('zh') || await loadDict('zh');
+      if (zhFallback) cacheDict('zh', zhFallback);
+      dict = zhFallback || {};
+    } else {
+      dict = enDict;
+    }
+    lang = 'zh';
+  } else if (!enDict) {
+    // 后台静默预加载英文，用于其他 key 兜底
+    const cachedEn = getCachedDict('en');
+    if (cachedEn) {
+      enDict = cachedEn;
+    } else {
+      loadDict('en').then(d => { if(d) { enDict = d; cacheDict('en', d); } });
+    }
+  }
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = translate(dict, el.getAttribute('data-i18n'));
@@ -182,6 +232,9 @@ async function applyLang(lang) {
   document.title = titleMap[lang] || titleMap.zh;
   
   renderAuthArea();
+
+  // 🔴 关键：所有翻译工作完成，页面显示，杜绝中文闪烁
+  document.documentElement.style.visibility = 'visible';
 }
 
 function initLangSelector() {
@@ -212,8 +265,10 @@ function initLangSelector() {
   });
 }
 
-function initI18n() {
-  resolveInitialLang().then(lang => applyLang(lang));
+async function initI18n() {
+  // 先决定目标语言，再应用（applyLang 中结束会解除 visibility: hidden）
+  const lang = await resolveInitialLang();
+  await applyLang(lang);
 }
 
 /* ================= 其它业务逻辑 (保持原有代码完全不变) ================= */
@@ -699,8 +754,11 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await trackVisit(); 
-  initI18n(); 
+  // 🔴 优先执行 i18n，让页面尽快显示
+  const i18nPromise = initI18n();
+
+  // 其他初始化并行执行
+  trackVisit(); 
   initNavToggle(); 
   initAuthEvents(); 
   initModalEvents(); 
@@ -716,4 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerModal.onclick = (e) => { if (e.target === playerModal) closeVideoPlayer(); };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !playerModal.hidden) closeVideoPlayer(); });
   }
+
+  // 等待 i18n 完成（内部会解除 visibility: hidden）
+  await i18nPromise;
 });
