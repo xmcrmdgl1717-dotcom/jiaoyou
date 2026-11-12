@@ -177,6 +177,9 @@ async function applyLang(lang) {
   if (window.initLiveStats) window.initLiveStats(); 
   const titleMap = { zh: '嗨呀直播', en: 'Hiya Live', vn: 'Hiya Live', es: 'Hiya Live', tr: 'Hiya Live', id: 'Hiya Live' };
   document.title = titleMap[lang] || titleMap.en;
+  
+  // 重新渲染带有翻译的JS组件
+  renderAuthArea();
 }
 
 function initLangSelector() {
@@ -193,7 +196,6 @@ function initLangSelector() {
     langDropdown.style.display = langDropdown.style.display === 'none' ? 'block' : 'none';
   });
   
-  // 确保 document 的点击事件只绑定一次
   if (!window._langDocClickBound) {
       document.addEventListener('click', () => {
         if (langDropdown) langDropdown.style.display = 'none';
@@ -343,8 +345,12 @@ function renderAuthArea() {
   const authArea = document.getElementById('auth-area');
   if (!authArea) return;
   const savedUser = localStorage.getItem('hiya_user');
+  const lang = document.documentElement.lang || 'zh';
+  const dict = dictCache.get(lang) || enDict || {};
+
   if (savedUser) {
     const user = JSON.parse(savedUser);
+    const logoutText = translate(dict, 'btn.logout') || '🚪 退出登录';
     authArea.innerHTML = `
       <div style="position:relative;">
         <div id="user-trigger" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;">
@@ -352,7 +358,7 @@ function renderAuthArea() {
           <span style="font-size:13px;font-weight:600;">${user.name}</span>
         </div>
         <div id="user-dropdown" style="display:none;position:absolute;top:110%;right:0;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);padding:8px;min-width:120px;z-index:50;">
-          <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;" data-i18n="btn.logout">🚪 退出登录</a>
+          <a href="#" id="logout-btn" style="display:block;padding:8px 12px;font-size:13px;color:#ff3d8b;">${logoutText}</a>
         </div>
       </div>
     `;
@@ -363,18 +369,9 @@ function renderAuthArea() {
     document.getElementById('logout-btn').onclick = (e) => {
       e.preventDefault(); localStorage.removeItem('hiya_user'); window.location.reload();
     };
-    
-    // 应用翻译
-    const lang = document.documentElement.lang || 'zh';
-    const dict = dictCache.get(lang) || enDict || {};
-    const logoutBtn = document.getElementById('logout-btn');
-    if(logoutBtn) { const v = translate(dict, 'btn.logout'); if(v) logoutBtn.textContent = v; }
-
   } else {
-    authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">登录 / 注册</a>`;
-    const lang = document.documentElement.lang || 'zh';
-    const dict = dictCache.get(lang) || enDict || {};
-    if (dict['nav.login']) authArea.querySelector('.login-btn').textContent = dict['nav.login'];
+    const loginText = translate(dict, 'nav.login') || '登录 / 注册';
+    authArea.innerHTML = `<a class="login-btn" data-i18n="nav.login" data-register role="button" tabindex="0">${loginText}</a>`;
   }
 }
 
@@ -439,13 +436,15 @@ function onSubmitRegister(e) {
   e.preventDefault(); if (submitting) return;
   const form = e.currentTarget; if (!form.checkValidity()) { form.reportValidity(); return; }
   const btn = form.querySelector('.modal-submit'), errorBox = form.querySelector('[data-form-error]');
+  const dict = dictCache.get(document.documentElement.lang) || {};
   const data = { 
       name: form.name.value.trim(), 
       email: form.email.value.trim(), 
       password: form.password.value,
       visitId: currentVisitId || sessionStorage.getItem('hiya_visit_id') 
   };
-  btn.disabled = true; btn.textContent = '提交中…'; if (errorBox) errorBox.style.display = 'none'; submitting = true;
+  btn.disabled = true; btn.textContent = translate(dict, 'btn.submitting') || '提交中…'; 
+  if (errorBox) errorBox.style.display = 'none'; submitting = true;
 
   fetch(`${API_BASE_URL}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
   .then(async (res) => { const r = await res.json().catch(()=>({})); if (!res.ok) throw new Error(r.error || '失败'); return r; })
@@ -453,7 +452,7 @@ function onSubmitRegister(e) {
     localStorage.setItem('hiya_user', JSON.stringify(r.user)); submitting = false; form.reset();
     showView('welcome'); renderAuthArea();
   }).catch((err) => {
-    submitting = false; btn.disabled = false; btn.textContent = '免费注册';
+    submitting = false; btn.disabled = false; btn.textContent = translate(dict, 'btn.register') || '免费注册';
     if (errorBox) { errorBox.textContent = err.message; errorBox.style.display = 'block'; }
   });
 }
@@ -462,8 +461,10 @@ function onSubmitLogin(e) {
   e.preventDefault(); if (submitting) return;
   const form = e.currentTarget; if (!form.checkValidity()) { form.reportValidity(); return; }
   const btn = form.querySelector('.modal-submit'), errorBox = form.querySelector('[data-login-error]');
+  const dict = dictCache.get(document.documentElement.lang) || {};
   const data = { email: form.email.value.trim(), password: form.password.value };
-  btn.disabled = true; btn.textContent = '登录中…'; if (errorBox) errorBox.style.display = 'none'; submitting = true;
+  btn.disabled = true; btn.textContent = translate(dict, 'btn.logging') || '登录中…'; 
+  if (errorBox) errorBox.style.display = 'none'; submitting = true;
 
   fetch(`${API_BASE_URL}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
   .then(async (res) => { const r = await res.json().catch(()=>({})); if (!res.ok) throw new Error(r.error || '失败'); return r; })
@@ -471,7 +472,7 @@ function onSubmitLogin(e) {
     localStorage.setItem('hiya_user', JSON.stringify(r.user)); submitting = false; form.reset();
     showView('welcome'); renderAuthArea();
   }).catch((err) => {
-    submitting = false; btn.disabled = false; btn.textContent = '登录';
+    submitting = false; btn.disabled = false; btn.textContent = translate(dict, 'btn.login') || '登录';
     if (errorBox) { errorBox.textContent = err.message; errorBox.style.display = 'block'; }
   });
 }
@@ -500,13 +501,14 @@ function openVideoPlayer(card) {
   const timePrice = document.getElementById('video-time-price');
   
   if (!playerModal || !videoEl) return;
+  const dict = dictCache.get(document.documentElement.lang) || {};
   
   const src = card.getAttribute('data-video-src');
   const vid = card.getAttribute('data-video-id');
   const configType = card.getAttribute('data-config-type') || 'hot';
   currentVideoName = card.querySelector('.nm')?.textContent || '未知视频';
   
-  if (!src) { alert('该视频暂未配置播放源'); return; }
+  if (!src) { alert(translate(dict, 'alert.no.source') || '该视频暂未配置播放源'); return; }
 
   currentVideoId = vid;
   limitOverlay.style.display = 'none';
@@ -534,16 +536,16 @@ function openVideoPlayer(card) {
   if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
 
   if (isPurchased || maxTime === null || maxTime <= 0) {
-    timeText.innerText = "已解锁完整版";
+    timeText.innerText = translate(dict, 'video.text.locked') || "已解锁完整版";
     timePrice.innerText = "";
     progressFill.style.width = '0%';
     progressFill.style.background = '#4ade80';
   } else {
     if (!isLogin) {
-      timeText.innerText = `试看剩余: ${maxTime} 秒（注册解锁）`;
+      timeText.innerText = (translate(dict, 'video.text.preview.reg') || '试看剩余: {n} 秒（注册解锁）').replace('{n}', maxTime);
     } else {
-      timeText.innerText = `试看剩余: ${maxTime} 秒`;
-      if (price !== null) timePrice.innerText = `解锁需 ${price} USDT`;
+      timeText.innerText = (translate(dict, 'video.text.preview.normal') || '试看剩余: {n} 秒').replace('{n}', maxTime);
+      if (price !== null) timePrice.innerText = (translate(dict, 'video.text.unlock.price') || '解锁需 {p} USDT').replace('{p}', price);
     }
     progressFill.style.width = '0%';
     progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
@@ -555,9 +557,9 @@ function openVideoPlayer(card) {
     if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
       const remain = Math.max(0, maxTime - curTime);
       if (!isLogin) {
-        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒（注册解锁）`;
+        timeText.innerText = (translate(dict, 'video.text.preview.reg') || '试看剩余: {n} 秒（注册解锁）').replace('{n}', Math.ceil(remain));
       } else {
-        timeText.innerText = `试看剩余: ${Math.ceil(remain)} 秒`;
+        timeText.innerText = (translate(dict, 'video.text.preview.normal') || '试看剩余: {n} 秒').replace('{n}', Math.ceil(remain));
       }
       progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
       
@@ -575,62 +577,63 @@ function openVideoPlayer(card) {
 }
 
 function showVideoPaywall(overlay, vid, isLogin, price, trc20, configType) {
+  const dict = dictCache.get(document.documentElement.lang) || {};
+  
   if (!isLogin) {
-    overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">请先登录/注册观看完整版</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">去登录</button>`;
+    overlay.innerHTML = `<h3>${translate(dict, 'paywall.title') || '试看已结束'}</h3><p style="font-size:13px; opacity:0.8; margin-bottom:20px;">${translate(dict, 'paywall.login.tip') || '请先登录/注册观看完整版'}</p><button onclick="window.closeVideoPlayer(); window.openRegisterModal();" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">${translate(dict, 'paywall.login.btn') || '去登录'}</button>`;
     overlay.style.display = 'flex'; return;
   }
   if (price === null) {
-    overlay.innerHTML = `<h3>试看已结束</h3><p style="font-size:13px; opacity:0.8;">请联系客服开通观看权限</p>`;
+    overlay.innerHTML = `<h3>${translate(dict, 'paywall.title') || '试看已结束'}</h3><p style="font-size:13px; opacity:0.8;">${translate(dict, 'paywall.contact.tip') || '请联系客服开通观看权限'}</p>`;
     overlay.style.display = 'flex'; return;
   }
 
   overlay.innerHTML = `
-    <h3>试看已结束</h3>
-    <p>开通全集需支付 <strong style="color:#ff1a75;">${price} USDT</strong></p>
-    <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">TRC20 转账地址:</p>
+    <h3>${translate(dict, 'paywall.title') || '试看已结束'}</h3>
+    <p>${(translate(dict, 'paywall.price.tip') || '开通全集需支付 {p} USDT').replace('{p}', `<strong style="color:#ff1a75;">${price}</strong>`)}</p>
+    <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">${translate(dict, 'paywall.address.tip') || 'TRC20 转账地址:'}</p>
     <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:20px; width:100%;">${trc20}</div>
-    
-    <button onclick="showPayForm('${vid}', ${price}, '${configType}')" id="go-pay-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">我已转账，去填写凭证</button>
+    <button onclick="showPayForm('${vid}', ${price}, '${configType}')" id="go-pay-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">${translate(dict, 'paywall.transfer.btn') || '我已转账，去填写凭证'}</button>
     <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
   `;
   overlay.style.display = 'flex';
 }
 
 window.showPayForm = function(vid, price, configType) {
+  const dict = dictCache.get(document.documentElement.lang) || {};
   const overlay = document.getElementById('video-limit-overlay');
   overlay.innerHTML = `
-    <h3>提交付款凭证</h3>
+    <h3>${translate(dict, 'payform.title') || '提交付款凭证'}</h3>
     <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%; max-width: 300px;">
-      <label style="display:block; margin-bottom:5px; color:#aaa;">选择联系方式并填写：</label>
+      <label style="display:block; margin-bottom:5px; color:#aaa;">${translate(dict, 'payform.contact.label') || '选择联系方式并填写：'}</label>
       <div style="display:flex; gap:10px; margin-bottom:10px;">
         <select id="pay-contact-type" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
           <option value="Telegram">Telegram</option>
           <option value="WhatsApp">WhatsApp</option>
         </select>
-        <input type="text" id="pay-contact-value" placeholder="输入账号" style="flex:2; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+        <input type="text" id="pay-contact-value" placeholder="${translate(dict, 'payform.contact.placeholder') || '输入账号'}" style="flex:2; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
       </div>
-      
-      <label style="display:block; margin-bottom:5px; color:#aaa;">你的付款TRC20地址：</label>
-      <input type="text" id="pay-address" placeholder="请输入你的付款地址" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
+      <label style="display:block; margin-bottom:5px; color:#aaa;">${translate(dict, 'payform.address.label') || '你的付款TRC20地址：'}</label>
+      <input type="text" id="pay-address" placeholder="${translate(dict, 'payform.address.placeholder') || '请输入你的付款地址'}" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
     </div>
-    
-    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">确认提交</button>
+    <button onclick="generateHomeOrder('${vid}', ${price}, '${configType}')" id="gen-home-order-btn" style="background:linear-gradient(90deg,#ff9a4d,#ff4d94); color:#fff; border:none; padding:12px 30px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; margin-top:10px;">${translate(dict, 'payform.submit.btn') || '确认提交'}</button>
     <div id="home-pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
   `;
 }
 
 async function generateHomeOrder(vid, price, configType) {
   const btn = document.getElementById('gen-home-order-btn');
+  const dict = dictCache.get(document.documentElement.lang) || {};
   
   const cType = document.getElementById('pay-contact-type').value;
   const cVal = document.getElementById('pay-contact-value').value.trim();
   const payAddress = document.getElementById('pay-address').value.trim();
   const contact = cVal ? `${cType}: ${cVal}` : '';
 
-  if(!cVal) return alert('请填写联系方式账号');
-  if(!payAddress) return alert('请填写您的付款 TRC20 地址');
+  if(!cVal) return alert(translate(dict, 'alert.no.contact') || '请填写联系方式账号');
+  if(!payAddress) return alert(translate(dict, 'alert.no.address') || '请填写您的付款 TRC20 地址');
 
-  btn.disabled = true; btn.innerText = '提交中...';
+  btn.disabled = true; btn.innerText = translate(dict, 'btn.submitting') || '提交中...';
   
   const userStr = localStorage.getItem('hiya_user');
   let user = { id: 'guest', name: '游客', email: '未知' };
@@ -652,22 +655,23 @@ async function generateHomeOrder(vid, price, configType) {
     if (data.error) throw new Error(data.error);
     
     document.getElementById('home-pay-detail').innerHTML = `
-      <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">提交成功！</p>
-      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">请等待客服审核，通过后即可观看</p>
-      <button onclick="mockHomePaySuccess('${vid}')" class="unlock-btn" style="background:#4ade80; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">【测试】立即解锁</button>
+      <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">${translate(dict, 'pay.success.title') || '提交成功！'}</p>
+      <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">${translate(dict, 'pay.success.desc') || '请等待客服审核，通过后即可观看'}</p>
+      <button onclick="mockHomePaySuccess('${vid}')" class="unlock-btn" style="background:#4ade80; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">${translate(dict, 'pay.test.btn') || '【测试】立即解锁'}</button>
     `;
   } catch(e) {
-    alert('提交失败: ' + e.message);
-    btn.disabled = false; btn.innerText = '确认提交';
+    alert((translate(dict, 'alert.pay.fail') || '提交失败: ') + e.message);
+    btn.disabled = false; btn.innerText = translate(dict, 'payform.submit.btn') || '确认提交';
   }
 }
 
 function mockHomePaySuccess(vid) {
+  const dict = dictCache.get(document.documentElement.lang) || {};
   markVideoPurchased(vid); 
-  alert('支付成功！已解锁该视频完整版');
+  alert(translate(dict, 'alert.pay.success') || '支付成功！已解锁该视频完整版');
   document.getElementById('video-limit-overlay').style.display = 'none';
   
-  document.getElementById('video-time-text').innerText = "已解锁完整版";
+  document.getElementById('video-time-text').innerText = translate(dict, 'video.text.locked') || "已解锁完整版";
   document.getElementById('video-time-price').innerText = "";
   const fill = document.getElementById('video-progress-fill');
   fill.style.width = '0%'; fill.style.background = '#4ade80';
