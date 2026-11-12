@@ -114,10 +114,7 @@ function renderLangDropdown(enabledLangs) {
     const dropdown = document.getElementById('lang-dropdown');
     if (!dropdown) return;
     
-    // 强制清空旧的写死内容
     dropdown.innerHTML = '';
-    
-    // 仅渲染后台启用的语言
     dropdown.innerHTML = enabledLangs.map(lang => {
         return `<div class="lang-option" data-lang="${lang}">${LANG_NAMES[lang] || lang}</div>`;
     }).join('');
@@ -126,7 +123,6 @@ function renderLangDropdown(enabledLangs) {
 }
 
 async function resolveInitialLang() {
-  // 🔴 关键：等待配置加载完成，才能知道 enabledLangs
   if (window._configPromise) {
     try { await window._configPromise; } catch(e) {}
   }
@@ -178,14 +174,12 @@ function translate(dict, key) {
 async function applyLang(lang) {
   if (!SUPPORTED.includes(lang)) lang = 'zh';
 
-  // 🔴 优先使用本地缓存，秒出翻译
   let dict = getCachedDict(lang);
   if (!dict || Object.keys(dict).length === 0) {
     dict = await loadDict(lang);
     if (dict) cacheDict(lang, dict);
   }
 
-  // 兜底策略：先英文再中文
   if (!dict || Object.keys(dict).length === 0) {
     if (!enDict) {
       enDict = getCachedDict('en') || await loadDict('en');
@@ -200,13 +194,8 @@ async function applyLang(lang) {
     }
     lang = 'zh';
   } else if (!enDict) {
-    // 后台静默预加载英文，用于其他 key 兜底
     const cachedEn = getCachedDict('en');
-    if (cachedEn) {
-      enDict = cachedEn;
-    } else {
-      loadDict('en').then(d => { if(d) { enDict = d; cacheDict('en', d); } });
-    }
+    if (cachedEn) { enDict = cachedEn; } else { loadDict('en').then(d => { if(d) { enDict = d; cacheDict('en', d); } }); }
   }
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
@@ -233,7 +222,6 @@ async function applyLang(lang) {
   
   renderAuthArea();
 
-  // 🔴 关键：所有翻译工作完成，页面显示，杜绝中文闪烁
   document.documentElement.style.visibility = 'visible';
 }
 
@@ -266,12 +254,20 @@ function initLangSelector() {
 }
 
 async function initI18n() {
-  // 先决定目标语言，再应用（applyLang 中结束会解除 visibility: hidden）
   const lang = await resolveInitialLang();
   await applyLang(lang);
 }
 
-/* ================= 其它业务逻辑 (保持原有代码完全不变) ================= */
+/* ================= 🔴 视频多语言辅助函数 ================= */
+function getVideoText(video, field) {
+    const currentLang = localStorage.getItem('hiya_lang') || 'zh';
+    if (video.translations && video.translations[currentLang] && video.translations[currentLang][field]) {
+        return video.translations[currentLang][field];
+    }
+    return video[field]; 
+}
+
+/* ================= 其它业务逻辑 ================= */
 let statsTimer = null;
 function initLiveStats() {
   const countEl = document.getElementById('online-count');
@@ -335,14 +331,16 @@ async function loadFreeVideos() {
 
     freeRow.innerHTML = videos.slice(0, 7).map((v, i) => {
       const realUrl = parsePlayUrl(v.playUrl);
-      const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
+      const vName = getVideoText(v, 'name'); 
+      const vCat = getVideoText(v, 'category'); 
+      const city = vCat || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
       return `
         <div class="hcard" data-register role="button" tabindex="0" 
              data-config-type="free" data-video-id="${v.id}"
              data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
           <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
           <span class="live">FREE</span>
-          <div class="ov"><div class="nm">${v.name}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
+          <div class="ov"><div class="nm">${vName}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
         </div>
       `;
     }).join('');
@@ -359,14 +357,16 @@ async function loadHomeVideos() {
 
     hotRow.innerHTML = videos.slice(0, 7).map((v, i) => {
       const realUrl = parsePlayUrl(v.playUrl);
-      const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
+      const vName = getVideoText(v, 'name');
+      const vCat = getVideoText(v, 'category');
+      const city = vCat || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
       return `
         <div class="hcard" data-register role="button" tabindex="0" 
              data-config-type="hot" data-video-id="${v.id}"
              data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
           <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
           <span class="live">LIVE</span>
-          <div class="ov"><div class="nm">${v.name}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
+          <div class="ov"><div class="nm">${vName}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
         </div>
       `;
     }).join('');
@@ -383,14 +383,16 @@ async function loadRecommendVideos() {
 
     recommendRow.innerHTML = videos.slice(0, 7).map((v, i) => {
       const realUrl = parsePlayUrl(v.playUrl);
-      const city = v.category || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
+      const vName = getVideoText(v, 'name');
+      const vCat = getVideoText(v, 'category');
+      const city = vCat || ['北京','上海','广州','成都','杭州','深圳','重庆'][i%7];
       return `
         <div class="hcard" data-register role="button" tabindex="0" 
              data-config-type="recommend" data-video-id="${v.id}"
              data-video-src="${realUrl}" data-video-poster="${v.pic || 'assets/img/live/1.webp'}">
           <video class="hvideo" autoplay loop muted playsinline poster="${v.pic || 'assets/img/live/1.webp'}"></video>
           <span class="live">LIVE</span>
-          <div class="ov"><div class="nm">${v.name}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
+          <div class="ov"><div class="nm">${vName}</div><div class="meta"><span class="cty">🇨🇳 <span>${city}</span></span><span>🔥 ${(Math.random() * 5 + 1).toFixed(1)}K</span></div></div>
         </div>
       `;
     }).join('');
@@ -754,15 +756,16 @@ function closeVideoPlayer() {
 window.closeVideoPlayer = closeVideoPlayer;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 🔴 优先执行 i18n，让页面尽快显示
   const i18nPromise = initI18n();
 
-  // 其他初始化并行执行
   trackVisit(); 
   initNavToggle(); 
   initAuthEvents(); 
   initModalEvents(); 
   renderAuthArea(); 
+  
+  await i18nPromise; // 确保多语言设置完成后再加载视频列表，以便正确显示视频名称
+
   loadFreeVideos(); 
   loadHomeVideos();
   loadRecommendVideos(); 
@@ -774,7 +777,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerModal.onclick = (e) => { if (e.target === playerModal) closeVideoPlayer(); };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !playerModal.hidden) closeVideoPlayer(); });
   }
-
-  // 等待 i18n 完成（内部会解除 visibility: hidden）
-  await i18nPromise;
 });
