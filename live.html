@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <style>
   /* 🔴 核心修复：初始隐藏页面，防止中文闪烁 */
-  html { visibility: hidden; }
+  html { visibility: hidden; background: #fdf7fa; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #fdf7fa; font-family: sans-serif; padding-bottom: env(safe-area-inset-bottom); }
   .header { position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.95); border-bottom: 1px solid #eee; }
@@ -72,261 +72,41 @@
   let currentVideoName = '';
   
   let pageDict = {};
-  
-  async function initPageLang() {
-      let lang = localStorage.getItem('hiya_lang') || 'zh';
-      try {
-          const res = await fetch(`${API}/api/i18n/${lang}`);
-          pageDict = await res.json();
-          document.querySelectorAll('[data-i18n]').forEach(el => {
-              const key = el.getAttribute('data-i18n');
-              if (pageDict[key]) el.textContent = pageDict[key];
-          });
-      } catch (e) {
-          console.warn("字典加载失败，使用默认语言");
-      } finally {
-          // 🔴 核心修复：无论如何，翻译完或失败后，立即显示页面
-          document.documentElement.style.visibility = 'visible';
-      }
-  }
-  const t = (key, fallback) => pageDict[key] || fallback;
-
-  function isVideoPurchased(vid) { return JSON.parse(localStorage.getItem('purchased_videos') || '[]').includes(vid); }
-  function markVideoPurchased(vid) {
-    let p = JSON.parse(localStorage.getItem('purchased_videos') || '[]');
-    if(!p.includes(vid)) { p.push(vid); localStorage.setItem('purchased_videos', JSON.stringify(p)); }
-  }
+  let enabledLangs = ['zh'];
 
   async function fetchConfig() {
     try {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
+      enabledLangs = (data.enabledLangs && data.enabledLangs.length > 0) ? data.enabledLangs : ['zh'];
       currentConfig.previewLimit = data.recommendConfig?.previewLimit ?? null;
       currentConfig.regLimit = data.recommendConfig?.regLimit ?? null;
       currentConfig.price = data.recommendConfig?.unlockPrice ?? null;
       currentConfig.trc20 = data.trc20 || '';
-    } catch(e) {}
-  }
-
-  function parseUrl(urlStr) {
-    if (!urlStr) return '';
-    if (urlStr.includes('$')) return urlStr.split('#')[0].split('$')[1];
-    return urlStr;
-  }
-
-  function createCard(v) {
-    const src = parseUrl(v.playUrl);
-    const pic = v.pic || 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=400&q=80';
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <img src="${pic}" loading="lazy">
-      <span class="live-tag">LIVE</span>
-      <div class="card-info">
-        <div class="card-title">${v.name}</div>
-        <div class="card-meta"><span>📍 ${v.category || '同城'}</span><span>🔥 ${(Math.random()*5+1).toFixed(1)}K</span></div>
-      </div>
-    `;
-    div.onclick = () => openPlayer(v.id, src, v.name);
-    return div;
-  }
-
-  function loadBatch() {
-    if(isLoading || !hasMore) return;
-    isLoading = true; sentinel.innerText = t('page.loading', '加载中...');
-    setTimeout(() => {
-      const next = allVideos.slice(rendered, rendered + BATCH);
-      if(next.length === 0) { hasMore = false; sentinel.innerText = t('page.no.more', '到底啦~'); isLoading = false; return; }
-      const frag = document.createDocumentFragment();
-      next.forEach(v => frag.appendChild(createCard(v)));
-      grid.appendChild(frag);
-      rendered += next.length; isLoading = false;
-      sentinel.innerText = rendered >= allVideos.length ? t('page.no.more', '到底啦~') : t('page.load.more', '上滑加载更多');
-    }, 200);
-  }
-
-  async function init() {
-    await initPageLang();
-    await fetchConfig(); 
-    try {
-      const res = await fetch(`${API}/api/videos/recommend`);
-      allVideos = await res.json();
-      if(allVideos.length > 0) { hasMore = true; loadBatch(); }
-      else sentinel.innerText = t('page.no.data', '暂无推荐视频');
-    } catch(e) { sentinel.innerText = t('page.no.data', '暂无数据'); }
-  }
-
-  window.addEventListener('scroll', () => {
-    if(!hasMore || isLoading) return;
-    if(document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 300) loadBatch();
-  });
-
-  const playerModal = document.getElementById('player-modal');
-  const videoEl = document.getElementById('video-el');
-  const limitMask = document.getElementById('limit-mask');
-  const progressFill = document.getElementById('progress-fill');
-  const timeText = document.getElementById('time-text');
-  const timePrice = document.getElementById('time-price');
-
-  function openPlayer(vid, src, name) {
-    if (!src) return alert(t('alert.no.source', '该视频暂未配置播放源'));
-    currentVideoId = vid;
-    currentVideoName = name;
-    limitMask.style.display = 'none';
-    playerModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
-    if (src.includes('.m3u8') && window.Hls && Hls.isSupported()) {
-      if (hls) hls.destroy();
-      hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-    } else { videoEl.src = src; }
-    
-    videoEl.play().catch(e => console.log('播放失败'));
-
-    const isLogin = !!localStorage.getItem('hiya_user');
-    const isPurchased = isVideoPurchased(vid);
-    let maxTime = isPurchased ? Infinity : (isLogin ? currentConfig.regLimit : currentConfig.previewLimit);
-
-    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-
-    if (isPurchased || maxTime === null || maxTime <= 0) {
-      timeText.innerText = t('video.text.locked', "已解锁完整版");
-      timePrice.innerText = "";
-      progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
-    } else {
-      timeText.innerText = isLogin ? t('video.text.preview.normal', `试看剩余: ${maxTime} 秒`).replace('{n}', maxTime) : t('video.text.preview.reg', `试看剩余: ${maxTime} 秒（注册解锁）`).replace('{n}', maxTime);
-      if (isLogin && currentConfig.price !== null) timePrice.innerText = t('video.text.unlock.price', `解锁需 ${currentConfig.price} USDT`).replace('{p}', currentConfig.price);
-      progressFill.style.width = '0%'; progressFill.style.background = 'linear-gradient(90deg, #ff9a4d, #ff4d94)';
-    }
-
-    let isBlocked = false;
-    videoLimitHandler = () => {
-      const curTime = videoEl.currentTime;
-      if (!isBlocked && maxTime !== Infinity && maxTime > 0) {
-        const remain = Math.max(0, maxTime - curTime);
-        timeText.innerText = isLogin ? t('video.text.preview.normal', `试看剩余: ${Math.ceil(remain)} 秒`).replace('{n}', Math.ceil(remain)) : t('video.text.preview.reg', `试看剩余: ${Math.ceil(remain)} 秒（注册解锁）`).replace('{n}', Math.ceil(remain));
-        progressFill.style.width = `${Math.min(100, (curTime / maxTime) * 100)}%`;
-
-        if (curTime >= maxTime) {
-          videoEl.pause(); isBlocked = true; showPaywall();
-        }
-      }
-      if (isBlocked && curTime < maxTime - 1) {
-        isBlocked = false; limitMask.style.display = 'none'; videoEl.play();
-      }
-    };
-    videoEl.addEventListener('timeupdate', videoLimitHandler);
-  }
-
-  function showPaywall() {
-    const isLogin = !!localStorage.getItem('hiya_user');
-    if (!isLogin) {
-      limitMask.innerHTML = `<h3>${t('paywall.title', '试看已结束')}</h3><p style="font-size:13px; opacity:0.8;">${t('paywall.login.tip', '请先登录/注册观看完整版')}</p><button onclick="window.location.href='index.html'">${t('paywall.login.btn', '去登录')}</button>`;
-      limitMask.style.display = 'flex';
-      return;
-    }
-    
-    if (currentConfig.price === null) {
-      limitMask.innerHTML = `<h3>${t('paywall.title', '试看已结束')}</h3><p style="font-size:13px; opacity:0.8;">${t('paywall.contact.tip', '请联系客服开通观看权限')}</p>`;
-      limitMask.style.display = 'flex';
-      return;
-    }
-
-    limitMask.innerHTML = `
-      <h3>${t('paywall.title', '试看已结束')}</h3>
-      <p>${t('paywall.price.tip', '开通全集需支付 {p} USDT').replace('{p}', `<strong style="color:#ff1a75;">${currentConfig.price}</strong>`)}</p>
-      <p style="font-size:12px;opacity:0.7;margin-bottom:10px;">${t('paywall.address.tip', 'TRC20 转账地址:')}</p>
-      <div style="background:#333; padding:8px; border-radius:4px; font-family:monospace; word-break:break-all; font-size:12px; margin-bottom:10px;">${currentConfig.trc20}</div>
-      
-      <button onclick="showPayForm()" id="go-pay-btn">${t('paywall.transfer.btn', '我已转账，去填写凭证')}</button>
-      <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
-    `;
-    limitMask.style.display = 'flex';
-  }
-
-  window.showPayForm = function() {
-    limitMask.innerHTML = `
-      <h3>${t('payform.title', '提交付款凭证')}</h3>
-      <div style="text-align:left; font-size:12px; margin-bottom:10px; width: 100%;">
-        <label style="display:block; margin-bottom:5px; color:#aaa;">${t('payform.contact.label', '选择联系方式并填写：')}</label>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <select id="pay-contact-type" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
-            <option value="Telegram">Telegram</option>
-            <option value="WhatsApp">WhatsApp</option>
-          </select>
-          <input type="text" id="pay-contact-value" placeholder="${t('payform.contact.placeholder', '输入账号')}" style="flex:2; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
-        </div>
-        
-        <label style="display:block; margin-bottom:5px; color:#aaa;">${t('payform.address.label', '你的付款TRC20地址：')}</label>
-        <input type="text" id="pay-address" placeholder="${t('payform.address.placeholder', '请输入你付款的TRC20地址')}" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; color:#000;">
-      </div>
-      
-      <button onclick="generateOrder()" id="gen-order-btn" style="margin-top:10px;">${t('payform.submit.btn', '确认提交')}</button>
-      <div id="pay-detail" style="margin-top:15px; font-size:14px; color:#fff;"></div>
-    `;
-  }
-
-  async function generateOrder() {
-    const btn = document.getElementById('gen-order-btn');
-    
-    const cType = document.getElementById('pay-contact-type').value;
-    const cVal = document.getElementById('pay-contact-value').value.trim();
-    const payAddress = document.getElementById('pay-address').value.trim();
-    const contact = cVal ? `${cType}: ${cVal}` : '';
-
-    if(!cVal) return alert(t('alert.no.contact', '请填写联系方式账号'));
-    if(!payAddress) return alert(t('alert.no.address', '请填写您的付款 TRC20 地址'));
-
-    btn.disabled = true; btn.innerText = t('btn.submitting', '提交中...');
-    
-    const userStr = localStorage.getItem('hiya_user');
-    let user = { id: 'guest', name: '游客', email: '未知' };
-    if (userStr) { const parsed = JSON.parse(userStr); user = { id: parsed.id, name: parsed.name, email: parsed.email }; }
-
-    try {
-      const res = await fetch(`${API}/api/orders/create`, { 
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-              baseAmount: currentConfig.price, 
-              userId: user.id, userName: user.name, userEmail: user.email, 
-              videoId: currentVideoId, videoName: currentVideoName, configType: 'recommend',
-              visitId: sessionStorage.getItem('hiya_visit_id'),
-              contact: contact, payAddress: payAddress
-          })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      document.getElementById('pay-detail').innerHTML = `
-        <p style="color:#4ade80; font-weight:bold; margin-bottom:5px;">${t('pay.success.title', '提交成功！')}</p>
-        <p style="font-size:11px; opacity:0.7; margin-bottom:15px;">${t('pay.success.desc', '请等待客服审核，通过后即可观看')}</p>
-        <button class="unlock-btn" onclick="mockPaySuccess()">${t('pay.test.btn', '【测试】我已支付，立即解锁')}</button>
-      `;
     } catch(e) {
-      alert(t('alert.pay.fail', '提交失败: ') + e.message);
-      btn.disabled = false; btn.innerText = t('payform.submit.btn', '确认提交');
+      enabledLangs = ['zh'];
     }
   }
 
-  function mockPaySuccess() {
-    markVideoPurchased(currentVideoId); 
-    alert(t('alert.pay.success', '支付成功！已解锁该视频完整版'));
-    limitMask.style.display = 'none';
-    timeText.innerText = t('video.text.locked', "已解锁完整版");
-    timePrice.innerText = "";
-    progressFill.style.width = '0%'; progressFill.style.background = '#4ade80';
-    const cardData = allVideos.find(v => v.id === currentVideoId);
-    if(cardData) openPlayer(currentVideoId, parseUrl(cardData.playUrl), cardData.name);
-  }
+  async function initPageLang() {
+      let lang = localStorage.getItem('hiya_lang');
+      if (!lang || !enabledLangs.includes(lang)) {
+          const cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+          let found = false;
+          for (const tag of cands) {
+              const base = String(tag).toLowerCase().split('-')[0];
+              if (enabledLangs.includes(base)) { lang = base; found = true; break; }
+          }
+          if (!found) lang = enabledLangs[0] || 'zh';
+      }
 
-  document.getElementById('close-btn').onclick = () => {
-    playerModal.classList.remove('active');
-    document.body.style.overflow = '';
-    if (hls) { hls.destroy(); hls = null; }
-    if (videoLimitHandler) videoEl.removeEventListener('timeupdate', videoLimitHandler);
-    videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
-  };
+      let dict = null;
+      try {
+          const cached = localStorage.getItem('hiya_dict_' + lang);
+          if (cached) dict = JSON.parse(cached);
+      } catch(e) {}
 
-  init();
-</script>
-</body>
-</html>
+      if (!dict || Object.keys(dict).length === 0) {
+          try {
+              const res = await fetch(`${API}/api/i18n/${lang}`);
+              if
